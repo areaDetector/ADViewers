@@ -15,7 +15,7 @@ Release Notes
 R1-0 (April XXX, 2017)
 ======================
 
-# ImageJ/EPICS_areaDetector/EPICS_NTNDA_Viewer.java
+### ImageJ/EPICS_areaDetector/EPICS_NTNDA_Viewer.java
 * This is a new plugin written by Tim Madden.  It is essentially identical to EPICS_AD_Viewer.java except
   that it displays NTNDArrays from the NDPluginPva plugin, i.e. using pvAccess to transport the images rather
   than NDPluginStdArrays which uses Channel Access.  
