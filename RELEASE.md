@@ -8,7 +8,7 @@ Prior to the release of [ADCore](https://github.com/areaDetector/ADCore) R3-0 th
 was in the Viewers subdirectory of ADCore.
 
 Tagged source code releases can be obtained at 
-https://github.com/areaDetector/ADViewers/releases.
+https://github.com/areaDetector/ADViewers/releases .
 
 Release Notes
 =============
