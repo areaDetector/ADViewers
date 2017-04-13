@@ -40,6 +40,18 @@ R1-0 (April XXX, 2017)
 
    Users are encouraged to switch to using pvAccess with this new plugin. 
 
+### Viewers/ImageJ/EPICS_AD_Viewer.java 
+* Previously this ImageJ plugin monitored the UniqueId_RBV PV in the NDPluginStdArrays plugin, 
+  and read the new image from this plugin when UniqueId_RBV changed.  
+  However, this does not work correctly with the new ProcessPlugin feature in NDPluginDriver, 
+  because that does not increment the UniqueId.
+  EPICS_AD_Viewer.java was changed so that it now monitors the ArrayCounter_RBV PV in NDPluginStdArrays
+  rather than UniqueId_RBV.  ArrayCounter_RBV will increment every time the plugin receives 
+  a new NDArray, which fixes the problem.  
+  Note that ArrayCounter_RBV will also change if the user manually changes ArrayCounter, for example by
+  setting it back to 0.  This will also cause ImageJ to display the image, when it would not have done 
+  so previously.  This should not be a problem.
+
 ADCore R2-6 and earlier
 ==================
 Release notes are part of the
