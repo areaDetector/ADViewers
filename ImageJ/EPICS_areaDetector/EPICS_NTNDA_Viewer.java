@@ -24,6 +24,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -90,6 +91,12 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         quit
     }
     private volatile State state = State.idle;
+    private volatile boolean isStarted = false;
+    private volatile boolean isPluginRunning = false;
+    private volatile boolean isSaveToStack = false;
+    private volatile boolean isNewStack = false;
+    
+
     // These are used for the frames/second calculation
     private long prevTime = 0;
     private volatile int numImageUpdates = 0;
@@ -101,20 +108,61 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private JTextField nzTest = null;
     private JTextField fpsText = null;
     private JTextField statusText = null;
+    private JButton connectButton = null;
     private JButton startButton = null;
-    private JButton stopButton = null;
     private JButton snapButton = null;
 
-    private boolean isPluginRunning = false;
-    private boolean isSaveToStack = false;
-    private boolean isNewStack = false;
-
+    
     private javax.swing.Timer timer = null;
 
     private static PvaClient pva=PvaClient.get();
+    private static Convert convert = ConvertFactory.getConvert();
+    private final ReentrantLock lock = new ReentrantLock();
     private PvaClientChannel mychannel = null;
     private PvaClientMonitor pvamon = null;
-    private Convert converter = ConvertFactory.getConvert();
+    
+    private void setStart(boolean startTrue, boolean enabled) {
+        if(startTrue) {
+            isStarted = true;
+            startButton.setText("stop");
+        } else {
+            isStarted = false;
+            startButton.setText("start");
+        }
+        startButton.setEnabled(enabled);
+    }
+    
+    private synchronized void setState(State newState)
+    {
+        switch(newState) {
+        case idle:
+        case quit:
+        {
+            setStart(false,false);
+            channelNameText.setBackground(Color.white);
+            snapButton.setEnabled(false);
+            connectButton.setText("connect");
+            break;
+        }
+        case connect:
+        {
+            setStart(false,false);
+            channelNameText.setBackground(Color.white);
+            snapButton.setEnabled(false);
+            connectButton.setText("disconnect");
+            break;
+        }
+        case connected:
+        {
+            setStart(false,true);
+            channelNameText.setBackground(Color.white);
+            snapButton.setEnabled(true);
+            connectButton.setText("disconnect");
+            break;
+        }
+        }
+        state = newState;
+    }
     /**
      * Constructor
      */
@@ -142,84 +190,92 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             }
             while (isPluginRunning)
             {
+                State state = this.state;
+//System.out.println("state " + state);
                 if(state==State.idle) {
                     Thread.sleep(1000);
-                    continue;
-                }
-                if(state==State.quit) {
+                } else if(state==State.quit) {
+                    setState(State.idle);
                     if(mychannel!=null) mychannel.destroy();
                     if(img!=null) img.close();
                     img = null;
                     mychannel = null;
                     pvamon = null;
-                    state = State.idle;
-                    channelNameText.setBackground(Color.white);
                     continue;
-                }
-                if(state==State.connect) {
+                } else if(state==State.connect) {
                     try
                     {
                         channelName = channelNameText.getText();
                         logMessage("Trying to connect to : " + channelName, true, true);
                         mychannel = pva.createChannel(channelName,"pva");
-                        mychannel.connect(5.0); 
+                        mychannel.connect(2.0); 
                         pvamon=mychannel.createMonitor("field()");
-                        pvamon.start();        
-                        logMessage("connected to " + channelName, true,true);
-                        state = State.connected;
+                        pvamon.start();
+                        setState(State.connected);
+                        setStart(true,true);
                         channelNameText.setBackground(Color.green);
+                        logMessage("connected to " + channelName, true,true);
                     }
                     catch (Exception ex)
                     {
                         logMessage("Could not connect to : " + channelName + ex.getMessage(), true, true);
+                        setState(State.connect);
                         mychannel = null;
                         pvamon = null;
                         channelNameText.setBackground(Color.red);
                     }
-                }
-                if(state==State.connected) {
-                    boolean is_image;
+                } else if(state==State.connected) {
                     if(!mychannel.getChannel().isConnected()) {
                         mychannel.destroy();
                         if(img!=null) img.close();
                         img = null;
                         mychannel = null;
                         pvamon = null;
-                        state = State.connect;
-                        channelNameText.setBackground(Color.white);
+                        setState(State.connect);
                         continue;
                     }
-                    channelNameText.setBackground(Color.green);
+                    if(!isStarted) {
+                        Thread.sleep(1000);
+                        continue;
+                    }
+                    boolean is_image = false;
                     try{
                         is_image = pvamon.waitEvent(1);
                     }
                     catch(Exception ex)
                     {
                         if (isDebugMessages)
-                            IJ.log("run: waitEvent throws ");
+                            logMessage("run: waitEvent throws ",true,false);
                         is_image=false;
 
                     }
-                    if (is_image)
-                    {
-                        if (isDebugMessages) IJ.log("calling updateImage");
-                        try {
-                            updateImage(pvamon.getData());
-                            if (isDebugMessages) IJ.log("run:to call releaseEvent ");
-                            pvamon.releaseEvent();
-                            if (isDebugMessages) IJ.log("run: called releaseEvent ");
-                        }
-                        catch(Exception ex)
+                    lock.lock();
+                    try {
+                        if (is_image)
                         {
-                            startButton.setEnabled(true);
-                            stopButton.setEnabled(false);
-                            snapButton.setEnabled(false);
-                            state = State.quit;
+                            if (isDebugMessages) IJ.log("calling updateImage");
+                            try {
+
+                                updateImage(pvamon.getData());
+                                if (isDebugMessages) IJ.log("run:to call releaseEvent ");
+                                pvamon.releaseEvent();
+                                if (isDebugMessages) IJ.log("run: called releaseEvent ");
+
+                            }
+                            catch(Exception ex)
+                            {
+                                logMessage("caught exception " + ex,true,true);
+                                setState(State.quit);
+                            }
+
+                        } else {
+                            logMessage("no new image available ",true,false);
                         }
-                        
-                    }// if (is_image)
-                }
-            }
+                    } finally {
+                        lock.unlock();
+                    }
+                } // state==State.connected
+            } // isPluginRunning
             if (isDebugMessages) logMessage("run: Plugin stopping", true, true);
             if (isDebugFile)
             {
@@ -454,19 +510,19 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             if(dataType==ScalarType.pvByte||dataType==ScalarType.pvUByte)
             {            
                 byte[] pixels= new byte[arraylen];
-                converter.toByteArray(imagedata, 0, arraylen, pixels, 0);
+                convert.toByteArray(imagedata, 0, arraylen, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             }
             else if(dataType==ScalarType.pvShort||dataType==ScalarType.pvUShort)
             {
                 short[] pixels = new short[arraylen];
-                converter.toShortArray(imagedata, 0, arraylen, pixels, 0);
+                convert.toShortArray(imagedata, 0, arraylen, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             }
             else if (dataType.isNumeric()) 
             {
                 float[] pixels =new float[arraylen];
-                converter.toFloatArray(imagedata, 0, arraylen, pixels, 0);
+                convert.toFloatArray(imagedata, 0, arraylen, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             } else {
                 throw new RuntimeException("illegal array type " + dataType);
@@ -479,7 +535,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             //byte inpixels[] = epicsGetByteArray(ch_image, getsize);
             byte inpixels[]=new byte[getsize];
 
-            converter.toByteArray(imagedata, 0, getsize, inpixels, 0);
+            convert.toByteArray(imagedata, 0, getsize, inpixels, 0);
             switch (colorMode)
             {
             case 2:
@@ -558,11 +614,9 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         statusText.setEditable(false);
 
         channelNameText = new JTextField(channelName, 15);
-        startButton = new JButton("Start");
-        stopButton = new JButton("Stop");
-        stopButton.setEnabled(false);
-        snapButton = new JButton("Snap");
-        snapButton.setEnabled(false);
+        connectButton = new JButton("disconnect");
+        startButton = new JButton("start");
+        snapButton = new JButton("snap");
         JCheckBox captureCheckBox = new JCheckBox("");
 
         frame = new JFrame("Image J EPICS_NTNDA_Viewer Plugin");
@@ -580,15 +634,15 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         c.gridx = 0;
         c.gridy = 0;
         panel.add(new JLabel("channelName"), c);
-        c.gridx = 1;
-        panel.add(new JLabel("NX"), c);
-        c.gridx = 2;
-        panel.add(new JLabel("NY"), c);
         c.gridx = 3;
-        panel.add(new JLabel("NZ"), c);
+        panel.add(new JLabel("NX"), c);
         c.gridx = 4;
-        panel.add(new JLabel("Frames/s"), c);
+        panel.add(new JLabel("NY"), c);
         c.gridx = 5;
+        panel.add(new JLabel("NZ"), c);
+        c.gridx = 6;
+        panel.add(new JLabel("Frames/s"), c);
+        c.gridx = 7;
         panel.add(new JLabel("Capture to Stack"), c);
 
         // Middle row
@@ -598,22 +652,22 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         c.gridx = 0;
         panel.add(channelNameText, c);
         c.gridx = 1;
-        panel.add(nxTest, c);
+        panel.add(connectButton, c);
         c.gridx = 2;
-        panel.add(nyTest, c);
-        c.gridx = 3;
-        panel.add(nzTest, c);
-        c.gridx = 4;
-        panel.add(fpsText, c);
-        c.gridx = 5;
-        panel.add(captureCheckBox, c);
-        c.gridx = 6;
-        panel.add(snapButton, c);
-        c.gridx = 7;
         panel.add(startButton, c);
+        c.gridx = 3;
+        panel.add(nxTest, c);
+        c.gridx = 4;
+        panel.add(nyTest, c);
+        c.gridx = 5;
+        panel.add(nzTest, c);
+        c.gridx = 6;
+        panel.add(fpsText, c);
+        c.gridx = 7;
+        panel.add(captureCheckBox, c);
         c.gridx = 8;
-        panel.add(stopButton, c);
-
+        panel.add(snapButton, c);
+        
         // Bottom row
         c.gridy = 2;
         c.gridx = 0;
@@ -627,8 +681,10 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         //Display the window.
         frame.pack();
         frame.addWindowListener(new FrameExitListener());
+        connectButton.setText("connect");
+        setState(State.idle);
         frame.setVisible(true);
-
+        
         int timerDelay = 2000;  // 2 seconds 
         timer = new javax.swing.Timer(timerDelay, new ActionListener()
         {
@@ -645,30 +701,47 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             }
         });
         timer.start();
+         
+        connectButton.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent event)
+            {
+                lock.lock();
+                try {
+                    if(state==State.idle) {
+                        setState(State.connect);
+                        logMessage("Connect", true, true);
+                    } else if(state==State.connected || state==State.connect) {
+                        setState(State.quit);
+                        logMessage("Disconnect", true, true);    
+                    }
+                } finally {
+                    lock.unlock();
+                }
+
+            }
+        });
 
         startButton.addActionListener(new ActionListener()
         {
             public void actionPerformed(ActionEvent event)
             {
-                startButton.setEnabled(false);
-                stopButton.setEnabled(true);
-                snapButton.setEnabled(true);
-                state = State.connect;
-                logMessage("Image display started", true, true);
+                lock.lock();
+                try {
+                    if(isStarted) {
+                        pvamon.stop();
+                        setStart(false,true);
+                    } else {
+                        pvamon.start();
+                        setStart(true,true);
+                    }
+                } finally {
+                    lock.unlock();
+                }
             }
         });
 
-        stopButton.addActionListener(new ActionListener()
-        {
-            public void actionPerformed(ActionEvent event)
-            {
-                startButton.setEnabled(true);
-                stopButton.setEnabled(false);
-                snapButton.setEnabled(false);
-                state = State.quit;
-                logMessage("Image display stopped", true, true);
-            }
-        });
+        
 
         snapButton.addActionListener(new ActionListener()
         {
