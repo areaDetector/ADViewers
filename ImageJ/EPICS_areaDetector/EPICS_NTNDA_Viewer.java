@@ -255,8 +255,8 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                         {
                             if (isDebugMessages) IJ.log("calling updateImage");
                             try {
-
-                                updateImage(pvamon.getData());
+                                boolean result = updateImage(pvamon.getData());
+                                if(!result) Thread.sleep(1000);
                                 if (isDebugMessages) IJ.log("run:to call releaseEvent ");
                                 pvamon.releaseEvent();
                                 if (isDebugMessages) IJ.log("run: called releaseEvent ");
@@ -320,7 +320,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         imgcopy.show();
     }
 
-    private void updateImage(PvaClientMonitorData monitorData)
+    private boolean updateImage(PvaClientMonitorData monitorData)
     {
         monitorData = pvamon.getData();                 
         Point oldWindowLocation =null;
@@ -328,13 +328,13 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         PVStructure pvs = monitorData.getPVStructure();
         PVStructureArray dimArray = pvs.getSubField(PVStructureArray.class,"dimension");
         if(dimArray==null) {
-            logMessage("dimension not found",false,true);
-            throw new RuntimeException("dimension not found");
+            logMessage("dimension not found",true,true);
+            return false;
         }
         int ndim = dimArray.getLength();
         if(ndim<1) {
-            logMessage("dimension is empty",false,true);
-            throw new RuntimeException("dimension is empty");
+            logMessage("dimension is empty",true,true);
+            return false;
         }
         int dimsint[] = new int[ndim];
         StructureArrayData dimdata=new StructureArrayData();
@@ -343,8 +343,8 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             PVStructure dim = (PVStructure)dimdata.data[i];
             PVInt pvLen = dim.getSubField(PVInt.class,"size");
             if(pvLen==null) {
-                logMessage("dimension size not found",false,true);
-                throw new RuntimeException("dimension size not found");
+                logMessage("dimension size not found",true,true);
+                return false;
             }
             dimsint[i] = pvLen.get();
         }
@@ -356,8 +356,8 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         int cm = -1;
         PVStructureArray attrArray = pvs.getSubField(PVStructureArray.class,"attribute");
         if(attrArray==null) {
-            logMessage("attribute array not found",false,true);
-            throw new RuntimeException("attribute array not found");
+            logMessage("attribute array not found",true,true);
+            return false;
         }
         int nattr = attrArray.getLength();
         StructureArrayData attrdata=new StructureArrayData();
@@ -367,37 +367,37 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             PVStructure pvAttr = attrdata.data[i];
             PVString pvName = pvAttr.getSubField(PVString.class,"name");
             if(pvName==null) {
-                logMessage("attribute name not found",false,true);
-                throw new RuntimeException("attribute name not found");
+                logMessage("attribute name not found",true,true);
+                return false;
             }
             String name = pvName.get();
             if(!name.equals("ColorMode")) continue;
             PVUnion pvUnion = pvAttr.getSubField(PVUnion.class,"value");
             if(pvUnion==null) {
-                logMessage("attribute value not found",false,true);
-                throw new RuntimeException("attribute value not found");
+                logMessage("attribute value not found",true,true);
+                return false;
             }
             PVInt pvcm = pvUnion.get(PVInt.class);
             if(pvcm==null) {
-                logMessage("color mode is not an int",false,true);
-                throw new RuntimeException("color mode is not an int");
+                logMessage("color mode is not an int",true,true);
+                return false;
             }
             cm = pvcm.get();
             break;
         }
         if(cm<0) {
-            logMessage("ColorMode not foud",false,true);
-            throw new RuntimeException("ColorMode not found");
+            logMessage("ColorMode not found",true,true);
+            return false;
         }
         PVUnion pvUnion = pvs.getSubField(PVUnion.class,"value");
         if(pvUnion==null) {
-            logMessage("value not found",false,true);
-            throw new RuntimeException("value not found");
+            logMessage("value not found",true,true);
+            return false;
         }
         PVScalarArray imagedata = pvUnion.get(PVScalarArray.class);
         if(imagedata==null) {
-            logMessage("value is not a scalar array",false,true);
-            throw new RuntimeException("value is not a scalar array");
+            logMessage("value is not a scalar array",true,true);
+            return false;
         }
         int arraylen = imagedata.getLength();
         ScalarType scalarType = imagedata.getScalarArray().getElementType();
@@ -408,7 +408,10 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             logMessage("UpdateImage: got image, sizes: " + nx + " " + ny + " " + nz,true,true);
 
         int getsize = nx * ny * nz;
-        if (getsize == 0) return;  // Not valid dimensions
+        if (getsize == 0) {
+            logMessage("array size = 0",true,true);
+            return false;
+        }
 
         if (isDebugMessages)
             logMessage("UpdateImage dt,dataType" + scalarType, true, true);
@@ -589,6 +592,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         numImageUpdates++;
         // Automatically set brightness and contrast if we made a new window
         if (madeNewWindow) new ContrastEnhancer().stretchHistogram(img, 0.5);
+        return true;
     }
     /**
      * Create the GUI and show it.  For thread safety,
