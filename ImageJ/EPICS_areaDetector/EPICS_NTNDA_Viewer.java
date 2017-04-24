@@ -234,6 +234,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                         setState(State.connect);
                         continue;
                     }
+                    channelNameText.setBackground(Color.green);
                     if(!isStarted) {
                         Thread.sleep(1000);
                         continue;
