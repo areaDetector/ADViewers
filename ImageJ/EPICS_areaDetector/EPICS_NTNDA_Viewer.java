@@ -205,6 +205,11 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                 } else if(state==State.connect) {
                     try
                     {
+                        if(mychannel!=null) mychannel.destroy();
+                        if(img!=null) img.close();
+                        img = null;
+                        mychannel = null;
+                        pvamon = null;
                         channelName = channelNameText.getText();
                         logMessage("Trying to connect to : " + channelName, true, true);
                         mychannel = pva.createChannel(channelName,"pva");
