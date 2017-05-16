@@ -124,10 +124,10 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private void setStart(boolean startTrue, boolean enabled) {
         if(startTrue) {
             isStarted = true;
-            startButton.setText("stop");
+            startButton.setText("Stop");
         } else {
             isStarted = false;
-            startButton.setText("start");
+            startButton.setText("Start");
         }
         startButton.setEnabled(enabled);
     }
@@ -141,7 +141,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             setStart(false,false);
             channelNameText.setBackground(Color.white);
             snapButton.setEnabled(false);
-            connectButton.setText("connect");
+            connectButton.setText("Connect");
             break;
         }
         case connect:
@@ -149,7 +149,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             setStart(false,false);
             channelNameText.setBackground(Color.white);
             snapButton.setEnabled(false);
-            connectButton.setText("disconnect");
+            connectButton.setText("Disconnect");
             break;
         }
         case connected:
@@ -157,7 +157,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             setStart(false,true);
             channelNameText.setBackground(Color.white);
             snapButton.setEnabled(true);
-            connectButton.setText("disconnect");
+            connectButton.setText("Disconnect");
             break;
         }
         }
@@ -354,7 +354,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         int nz = 1;
         if (ndim>=3)
             nz = dimsint[2];
-        int cm = -1;
+        int cm = 0;
         PVStructureArray attrArray = pvs.getSubField(PVStructureArray.class,"attribute");
         if(attrArray==null) {
             logMessage("attribute array not found",true,true);
@@ -385,10 +385,6 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             }
             cm = pvcm.get();
             break;
-        }
-        if(cm<0) {
-            logMessage("ColorMode not found",true,true);
-            return false;
         }
         PVUnion pvUnion = pvs.getSubField(PVUnion.class,"value");
         if(pvUnion==null) {
@@ -619,9 +615,9 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         statusText.setEditable(false);
 
         channelNameText = new JTextField(channelName, 15);
-        connectButton = new JButton("disconnect");
-        startButton = new JButton("start");
-        snapButton = new JButton("snap");
+        connectButton = new JButton("Disconnect");
+        startButton = new JButton("Start");
+        snapButton = new JButton("Snap");
         JCheckBox captureCheckBox = new JCheckBox("");
 
         frame = new JFrame("Image J EPICS_NTNDA_Viewer Plugin");
@@ -686,7 +682,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         //Display the window.
         frame.pack();
         frame.addWindowListener(new FrameExitListener());
-        connectButton.setText("connect");
+        connectButton.setText("Connect");
         setState(State.idle);
         frame.setVisible(true);
         
@@ -706,6 +702,21 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             }
         });
         timer.start();
+        
+        channelNameText.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent event)
+            {
+                lock.lock();
+                try {
+                    setState(State.connect);
+                    logMessage("Connect", true, true);
+                } finally {
+                    lock.unlock();
+                }
+
+            }
+        });
          
         connectButton.addActionListener(new ActionListener()
         {
