@@ -361,35 +361,27 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             nz = dimsint[2];
         int cm = 0;
         PVStructureArray attrArray = pvs.getSubField(PVStructureArray.class,"attribute");
-        if(attrArray==null) {
-            logMessage("attribute array not found",true,true);
-            return false;
-        }
-        int nattr = attrArray.getLength();
-        StructureArrayData attrdata=new StructureArrayData();
-        attrArray.get(0,nattr,attrdata);
-        for (int i = 0; i<nattr; i++)
-        {
-            PVStructure pvAttr = attrdata.data[i];
-            PVString pvName = pvAttr.getSubField(PVString.class,"name");
-            if(pvName==null) {
-                logMessage("attribute name not found",true,true);
-                return false;
+        if(attrArray!=null) {
+            int nattr = attrArray.getLength();
+            StructureArrayData attrdata=new StructureArrayData();
+            attrArray.get(0,nattr,attrdata);
+            for (int i = 0; i<nattr; i++)
+            {
+                PVStructure pvAttr = attrdata.data[i];
+                PVString pvName = pvAttr.getSubField(PVString.class,"name");
+                if(pvName==null) continue;
+                String name = pvName.get();
+                if(!name.equals("ColorMode")) continue;
+                PVUnion pvUnion = pvAttr.getSubField(PVUnion.class,"value");
+                if(pvUnion==null) continue;
+                PVInt pvcm = pvUnion.get(PVInt.class);
+                if(pvcm==null) {
+                    logMessage("color mode is not an int",true,true);
+                    continue;
+                }
+                cm = pvcm.get();
+                break;
             }
-            String name = pvName.get();
-            if(!name.equals("ColorMode")) continue;
-            PVUnion pvUnion = pvAttr.getSubField(PVUnion.class,"value");
-            if(pvUnion==null) {
-                logMessage("attribute value not found",true,true);
-                return false;
-            }
-            PVInt pvcm = pvUnion.get(PVInt.class);
-            if(pvcm==null) {
-                logMessage("color mode is not an int",true,true);
-                return false;
-            }
-            cm = pvcm.get();
-            break;
         }
         PVUnion pvUnion = pvs.getSubField(PVUnion.class,"value");
         if(pvUnion==null) {
