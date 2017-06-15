@@ -197,8 +197,6 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                 } else if(state==State.quit) {
                     setState(State.idle);
                     if(mychannel!=null) mychannel.destroy();
-                    if(img!=null) img.close();
-                    img = null;
                     mychannel = null;
                     pvamon = null;
                     continue;
