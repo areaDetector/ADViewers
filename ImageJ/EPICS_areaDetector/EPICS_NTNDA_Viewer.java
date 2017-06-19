@@ -204,8 +204,6 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                     try
                     {
                         if(mychannel!=null) mychannel.destroy();
-                        if(img!=null) img.close();
-                        img = null;
                         mychannel = null;
                         pvamon = null;
                         channelName = channelNameText.getText();
@@ -230,8 +228,6 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                 } else if(state==State.connected) {
                     if(!mychannel.getChannel().isConnected()) {
                         mychannel.destroy();
-                        if(img!=null) img.close();
-                        img = null;
                         mychannel = null;
                         pvamon = null;
                         setState(State.connect);
