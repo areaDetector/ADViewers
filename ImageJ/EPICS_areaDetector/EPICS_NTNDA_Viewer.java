@@ -185,7 +185,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             {
                 if (isConnected && isStarted) {
                     boolean is_image = false;
-                    try{
+                    try {
                         is_image = pvamon.waitEvent(1);
                     }
                     catch(Exception ex)
@@ -193,7 +193,6 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                         if (isDebugMessages)
                             logMessage("run: waitEvent throws ",true,false);
                         is_image=false;
-
                     }
                     lock.lock();
                     try {
@@ -289,7 +288,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         channelName = channelNameText.getText();
         logMessage("Trying to connect to : " + channelName, true, true);
         mychannel = pva.createChannel(channelName,"pva");
-        mychannel.connect(5.0); 
+        mychannel.connect(2.0); 
         // We don't create the monitor here because we need to do that each time we start displaying
         ///pvamon=mychannel.createMonitor("field()");
         setConnected(true);
