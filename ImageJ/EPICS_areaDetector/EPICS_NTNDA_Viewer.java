@@ -85,7 +85,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private Properties properties = new Properties();
 
     private volatile boolean isConnected = false;
-    private volatile boolean isConnected = false;
+    private volatile boolean tryConnect = true;
     private volatile boolean isStarted = false;
     private volatile boolean isPluginRunning = false;
     private volatile boolean isSaveToStack = false;
@@ -116,27 +116,38 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private PvaClientChannel mychannel = null;
     private PvaClientMonitor pvamon = null;
     
-    private void setStart(boolean startTrue, boolean enabled) {
+    private void setStart(boolean startTrue) {
         if(startTrue) {
+            // It seems like we should just call pvamon.start() here, 
+            // but we need to create it because of problem described below
+            if (pvamon != null) pvamon.destroy();
+            pvamon=mychannel.createMonitor("field()");
+            pvamon.start();
             isStarted = true;
             startButton.setText("Stop");
         } else {
+            // It seems like we should just call pvamon.stop() here.  
+            // However, that does not stop the pvAccess callbacks as seen with a network monitor
+            // So we destroy the monitor instead
+            //pvamon.stop();
+            if (pvamon != null) pvamon.destroy();
+            pvamon = null;
             isStarted = false;
             startButton.setText("Start");
         }
-        startButton.setEnabled(enabled);
     }
     
     private void setConnected(boolean connected)
     {
         if (connected) {
-            setStart(false,true);
             channelNameText.setBackground(Color.green);
+            startButton.setEnabled(true);
             snapButton.setEnabled(true);
             connectButton.setText("Disconnect");
+            if (isStarted) setStart(true);
         } else {
-            setStart(false,false);
             channelNameText.setBackground(Color.red);
+            startButton.setEnabled(false);
             snapButton.setEnabled(false);
             connectButton.setText("Connect");
         }
@@ -212,8 +223,16 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                 else {
                     Thread.sleep(1000);
                 }
-                if (isConnected && !mychannel.getChannel().isConnected()) {
-                    channelNameText.setBackground(Color.white);
+                boolean currentlyConnected;
+                if (mychannel != null) {
+                    currentlyConnected = mychannel.getChannel().isConnected();
+                    if (currentlyConnected != isConnected) {
+                        setConnected(currentlyConnected);
+                    }
+                }
+                if (!isConnected && tryConnect) {
+                    Thread.sleep(1000);
+                    connectPV();
                 }
             } // isPluginRunning
 
@@ -700,8 +719,10 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                 lock.lock();
                 try {
                     if(!isConnected) {
+                        tryConnect = true;
                         connectPV();
                     } else {
+                        tryConnect = false;
                         disconnectPV();
                    }
                 } finally {
@@ -718,20 +739,9 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                 lock.lock();
                 try {
                     if(isStarted) {
-                        // It seems like we should just call pvamon.stop() here.  
-                        // However, that does not stop the pvAccess callbacks as seen with a network monitor
-                        // So we destroy the monitor instead
-                        //pvamon.stop();
-                        if (pvamon != null) pvamon.destroy();
-                        pvamon = null;
-                        setStart(false,true);
+                        setStart(false);
                     } else {
-                        // It seems like we should just call pvamon.start() here, 
-                        // but we need to create it because of problem described above
-                        if (pvamon != null) pvamon.destroy();
-                        pvamon=mychannel.createMonitor("field()");
-                        pvamon.start();
-                        setStart(true,true);
+                        setStart(true);
                     }
                 } finally {
                     lock.unlock();
