@@ -83,14 +83,9 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private FileOutputStream debugFile = null;
     private PrintStream debugPrintStream = null;
     private Properties properties = new Properties();
-    
-    private enum State {
-        idle,
-        connect,
-        connected,
-        quit
-    }
-    private volatile State state = State.idle;
+
+    private volatile boolean isConnected = false;
+    private volatile boolean isConnected = false;
     private volatile boolean isStarted = false;
     private volatile boolean isPluginRunning = false;
     private volatile boolean isSaveToStack = false;
@@ -103,9 +98,9 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private JFrame frame = null;
 
     private JTextField channelNameText = null;
-    private JTextField nxTest = null;
-    private JTextField nyTest = null;
-    private JTextField nzTest = null;
+    private JTextField nxText = null;
+    private JTextField nyText = null;
+    private JTextField nzText = null;
     private JTextField fpsText = null;
     private JTextField statusText = null;
     private JButton connectButton = null;
@@ -132,36 +127,20 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         startButton.setEnabled(enabled);
     }
     
-    private synchronized void setState(State newState)
+    private void setConnected(boolean connected)
     {
-        switch(newState) {
-        case idle:
-        case quit:
-        {
-            setStart(false,false);
-            channelNameText.setBackground(Color.white);
-            snapButton.setEnabled(false);
-            connectButton.setText("Connect");
-            break;
-        }
-        case connect:
-        {
-            setStart(false,false);
-            channelNameText.setBackground(Color.white);
-            snapButton.setEnabled(false);
-            connectButton.setText("Disconnect");
-            break;
-        }
-        case connected:
-        {
+        if (connected) {
             setStart(false,true);
-            channelNameText.setBackground(Color.white);
+            channelNameText.setBackground(Color.green);
             snapButton.setEnabled(true);
             connectButton.setText("Disconnect");
-            break;
+        } else {
+            setStart(false,false);
+            channelNameText.setBackground(Color.red);
+            snapButton.setEnabled(false);
+            connectButton.setText("Connect");
         }
-        }
-        state = newState;
+        isConnected = connected;
     }
     /**
      * Constructor
@@ -188,56 +167,12 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                         System.getProperty("file.separator") + "IJEPICS_debug.txt");
                 debugPrintStream = new PrintStream(debugFile);
             }
+            // Try to connect to the PV initially
+            connectPV();
+
             while (isPluginRunning)
             {
-                State state = this.state;
-//System.out.println("state " + state);
-                if(state==State.idle) {
-                    Thread.sleep(1000);
-                } else if(state==State.quit) {
-                    setState(State.idle);
-                    if(mychannel!=null) mychannel.destroy();
-                    mychannel = null;
-                    pvamon = null;
-                    continue;
-                } else if(state==State.connect) {
-                    try
-                    {
-                        if(mychannel!=null) mychannel.destroy();
-                        mychannel = null;
-                        pvamon = null;
-                        channelName = channelNameText.getText();
-                        logMessage("Trying to connect to : " + channelName, true, true);
-                        mychannel = pva.createChannel(channelName,"pva");
-                        mychannel.connect(2.0); 
-                        pvamon=mychannel.createMonitor("field()");
-                        pvamon.start();
-                        setState(State.connected);
-                        setStart(true,true);
-                        channelNameText.setBackground(Color.green);
-                        logMessage("connected to " + channelName, true,true);
-                    }
-                    catch (Exception ex)
-                    {
-                        logMessage("Could not connect to : " + channelName + ex.getMessage(), true, true);
-                        setState(State.connect);
-                        mychannel = null;
-                        pvamon = null;
-                        channelNameText.setBackground(Color.red);
-                    }
-                } else if(state==State.connected) {
-                    if(!mychannel.getChannel().isConnected()) {
-                        mychannel.destroy();
-                        mychannel = null;
-                        pvamon = null;
-                        setState(State.connect);
-                        continue;
-                    }
-                    channelNameText.setBackground(Color.green);
-                    if(!isStarted) {
-                        Thread.sleep(1000);
-                        continue;
-                    }
+                if (isConnected && isStarted) {
                     boolean is_image = false;
                     try{
                         is_image = pvamon.waitEvent(1);
@@ -265,7 +200,6 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                             catch(Exception ex)
                             {
                                 logMessage("caught exception " + ex,true,true);
-                                setState(State.quit);
                             }
 
                         } else {
@@ -274,8 +208,15 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                     } finally {
                         lock.unlock();
                     }
-                } // state==State.connected
+                } // (isConnected && isStarted)
+                else {
+                    Thread.sleep(1000);
+                }
+                if (isConnected && !mychannel.getChannel().isConnected()) {
+                    channelNameText.setBackground(Color.white);
+                }
             } // isPluginRunning
+
             if (isDebugMessages) logMessage("run: Plugin stopping", true, true);
             if (isDebugFile)
             {
@@ -284,6 +225,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                 logMessage("Closed debug file", true, true);
             }
 
+            disconnectPV();
             timer.stop();
             writeProperties();
 
@@ -320,9 +262,52 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         imgcopy.show();
     }
 
+    public void connectPV()
+    {
+      disconnectPV();
+      try
+      {
+        channelName = channelNameText.getText();
+        logMessage("Trying to connect to : " + channelName, true, true);
+        mychannel = pva.createChannel(channelName,"pva");
+        mychannel.connect(5.0); 
+        // We don't create the monitor here because we need to do that each time we start displaying
+        ///pvamon=mychannel.createMonitor("field()");
+        setConnected(true);
+        logMessage("connected to " + channelName, true,true);
+      }
+      catch (Exception ex)
+      {
+          logMessage("Could not connect to : " + channelName + " " + ex.getMessage(), true, true);
+          setConnected(false);
+          mychannel = null;
+          pvamon = null;
+      }
+    }
+
+    public void disconnectPV()
+    {
+      try
+      {
+        if (pvamon!=null) {
+          pvamon.destroy();
+          pvamon = null;
+        }
+        if (mychannel!=null) {
+          mychannel.destroy();
+          logMessage("Disconnected from EPICS PV:" + channelName, true, true);
+          mychannel = null;
+          setConnected(false);
+        }
+      }
+      catch (Exception ex)
+      {
+        logMessage("Cannot disconnect from EPICS PV:" + channelName + ex.getMessage(), true, true);
+      }
+    }
+
     private boolean updateImage(PvaClientMonitorData monitorData)
     {
-        monitorData = pvamon.getData();                 
         Point oldWindowLocation =null;
         boolean madeNewWindow = false;
         PVStructure pvs = monitorData.getPVStructure();
@@ -417,9 +402,9 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             imageSizeZ = nz;
             colorMode = cm;
             dataType = scalarType;
-            nxTest.setText("" + imageSizeX);
-            nyTest.setText("" + imageSizeY);
-            nzTest.setText("" + imageSizeZ);
+            nxText.setText("" + imageSizeX);
+            nyText.setText("" + imageSizeY);
+            nzText.setText("" + imageSizeZ);
         }
 
         // If we are making a new stack close the window
@@ -590,15 +575,15 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private void createAndShowGUI()
     {
         //Create and set up the window.
-        nxTest = new JTextField(6);
-        nxTest.setEditable(false);
-        nxTest.setHorizontalAlignment(JTextField.CENTER);
-        nyTest = new JTextField(6);
-        nyTest.setEditable(false);
-        nyTest.setHorizontalAlignment(JTextField.CENTER);
-        nzTest = new JTextField(6);
-        nzTest.setEditable(false);
-        nzTest.setHorizontalAlignment(JTextField.CENTER);
+        nxText = new JTextField(6);
+        nxText.setEditable(false);
+        nxText.setHorizontalAlignment(JTextField.CENTER);
+        nyText = new JTextField(6);
+        nyText.setEditable(false);
+        nyText.setHorizontalAlignment(JTextField.CENTER);
+        nzText = new JTextField(6);
+        nzText.setEditable(false);
+        nzText.setHorizontalAlignment(JTextField.CENTER);
         fpsText = new JTextField(6);
         fpsText.setEditable(false);
         fpsText.setHorizontalAlignment(JTextField.CENTER);
@@ -648,11 +633,11 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         c.gridx = 2;
         panel.add(startButton, c);
         c.gridx = 3;
-        panel.add(nxTest, c);
+        panel.add(nxText, c);
         c.gridx = 4;
-        panel.add(nyTest, c);
+        panel.add(nyText, c);
         c.gridx = 5;
-        panel.add(nzTest, c);
+        panel.add(nzText, c);
         c.gridx = 6;
         panel.add(fpsText, c);
         c.gridx = 7;
@@ -674,7 +659,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         frame.pack();
         frame.addWindowListener(new FrameExitListener());
         connectButton.setText("Connect");
-        setState(State.idle);
+        setConnected(false);
         frame.setVisible(true);
         
         int timerDelay = 2000;  // 2 seconds 
@@ -700,8 +685,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             {
                 lock.lock();
                 try {
-                    setState(State.connect);
-                    logMessage("Connect", true, true);
+                    connectPV();
                 } finally {
                     lock.unlock();
                 }
@@ -715,13 +699,11 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             {
                 lock.lock();
                 try {
-                    if(state==State.idle) {
-                        setState(State.connect);
-                        logMessage("Connect", true, true);
-                    } else if(state==State.connected || state==State.connect) {
-                        setState(State.quit);
-                        logMessage("Disconnect", true, true);    
-                    }
+                    if(!isConnected) {
+                        connectPV();
+                    } else {
+                        disconnectPV();
+                   }
                 } finally {
                     lock.unlock();
                 }
@@ -736,9 +718,18 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                 lock.lock();
                 try {
                     if(isStarted) {
-                        pvamon.stop();
+                        // It seems like we should just call pvamon.stop() here.  
+                        // However, that does not stop the pvAccess callbacks as seen with a network monitor
+                        // So we destroy the monitor instead
+                        //pvamon.stop();
+                        if (pvamon != null) pvamon.destroy();
+                        pvamon = null;
                         setStart(false,true);
                     } else {
+                        // It seems like we should just call pvamon.start() here, 
+                        // but we need to create it because of problem described above
+                        if (pvamon != null) pvamon.destroy();
+                        pvamon=mychannel.createMonitor("field()");
                         pvamon.start();
                         setStart(true,true);
                     }
@@ -794,7 +785,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private void logMessage(String message, boolean logDisplay, boolean logFile)
     {
         Date date = new Date();
-        SimpleDateFormat simpleDate = new SimpleDateFormat("d/M/y k:m:s.S");
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd/MMM/yyyy kk:mm:ss.SSS");
         String completeMessage;
 
         completeMessage = simpleDate.format(date) + ": " + message;
