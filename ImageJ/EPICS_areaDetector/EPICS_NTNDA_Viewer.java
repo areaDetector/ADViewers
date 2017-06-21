@@ -793,7 +793,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private void logMessage(String message, boolean logDisplay, boolean logFile)
     {
         Date date = new Date();
-        SimpleDateFormat simpleDate = new SimpleDateFormat("dd/MMM/yyyy kk:mm:ss.SSS");
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MMM-yyyy kk:mm:ss.SSS");
         String completeMessage;
 
         completeMessage = simpleDate.format(date) + ": " + message;
