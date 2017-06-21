@@ -24,7 +24,6 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -84,6 +83,10 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private PrintStream debugPrintStream = null;
     private Properties properties = new Properties();
 
+    private volatile boolean requestConnect = false;
+    private volatile boolean requestDisconnect = false;
+    private volatile boolean requestStart = false;
+    private volatile boolean requestStop = false;
     private volatile boolean isConnected = false;
     private volatile boolean tryConnect = true;
     private volatile boolean isStarted = false;
@@ -107,14 +110,14 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private JButton startButton = null;
     private JButton snapButton = null;
 
-    
     private javax.swing.Timer timer = null;
 
     private static PvaClient pva=PvaClient.get();
     private static Convert convert = ConvertFactory.getConvert();
-    private final ReentrantLock lock = new ReentrantLock();
     private PvaClientChannel mychannel = null;
     private PvaClientMonitor pvamon = null;
+    
+    private static final int MS_WAIT = 100;
     
     private void setStart(boolean startTrue) {
         if(startTrue) {
@@ -158,6 +161,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
      */
     public EPICS_NTNDA_Viewer()
     {
+        readProperties();
         createAndShowGUI();
     }
     /* (non-Javadoc)
@@ -171,7 +175,6 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             isPluginRunning = true;
             Date date = new Date();
             prevTime = date.getTime();
-            readProperties();
             if (isDebugFile)
             {
                 debugFile = new FileOutputStream(System.getProperty("user.home") +
@@ -183,6 +186,26 @@ public class EPICS_NTNDA_Viewer implements PlugIn
 
             while (isPluginRunning)
             {
+                // Check for requests to connect or disconnect
+                if (isConnected && requestDisconnect) {
+                    requestDisconnect = false;
+                    tryConnect = false;
+                    disconnectPV();
+                }
+                if (requestConnect) {
+                    requestConnect = false;
+                    tryConnect = true;
+                    connectPV();
+                }
+                // Check for requests to start or stop
+                if (isStarted && requestStop) {
+                    requestStop = false;
+                    setStart(false);
+                }
+                if (!isStarted && requestStart) {
+                    requestStart = false;
+                    setStart(true);
+                }
                 if (isConnected && isStarted) {
                     boolean is_image = false;
                     try {
@@ -194,33 +217,28 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                             logMessage("run: waitEvent throws ",true,false);
                         is_image=false;
                     }
-                    lock.lock();
-                    try {
-                        if (is_image)
-                        {
-                            if (isDebugMessages) IJ.log("calling updateImage");
-                            try {
-                                boolean result = updateImage(pvamon.getData());
-                                if(!result) Thread.sleep(1000);
-                                if (isDebugMessages) IJ.log("run:to call releaseEvent ");
-                                pvamon.releaseEvent();
-                                if (isDebugMessages) IJ.log("run: called releaseEvent ");
+                    if (is_image)
+                    {
+                        if (isDebugMessages) IJ.log("calling updateImage");
+                        try {
+                            boolean result = updateImage(pvamon.getData());
+                            if(!result) Thread.sleep(MS_WAIT);
+                            if (isDebugMessages) IJ.log("run:to call releaseEvent ");
+                            pvamon.releaseEvent();
+                            if (isDebugMessages) IJ.log("run: called releaseEvent ");
 
-                            }
-                            catch(Exception ex)
-                            {
-                                logMessage("caught exception " + ex,true,true);
-                            }
-
-                        } else {
-                            logMessage("no new image available ",true,false);
                         }
-                    } finally {
-                        lock.unlock();
+                        catch(Exception ex)
+                        {
+                            logMessage("caught exception " + ex,true,true);
+                        }
+
+                    } else {
+                        logMessage("no new image available ",true,false);
                     }
-                } // (isConnected && isStarted)
+                 } // (isConnected && isStarted)
                 else {
-                    Thread.sleep(1000);
+                    Thread.sleep(MS_WAIT);
                 }
                 boolean currentlyConnected;
                 if (mychannel != null) {
@@ -230,7 +248,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                     }
                 }
                 if (!isConnected && tryConnect) {
-                    Thread.sleep(1000);
+                    Thread.sleep(MS_WAIT);
                     connectPV();
                 }
             } // isPluginRunning
@@ -701,13 +719,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         {
             public void actionPerformed(ActionEvent event)
             {
-                lock.lock();
-                try {
-                    connectPV();
-                } finally {
-                    lock.unlock();
-                }
-
+                requestConnect = true;
             }
         });
          
@@ -715,19 +727,11 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         {
             public void actionPerformed(ActionEvent event)
             {
-                lock.lock();
-                try {
-                    if(!isConnected) {
-                        tryConnect = true;
-                        connectPV();
-                    } else {
-                        tryConnect = false;
-                        disconnectPV();
-                   }
-                } finally {
-                    lock.unlock();
+                if (isConnected) {
+                    requestDisconnect = true;
+                } else {
+                    requestConnect = true;
                 }
-
             }
         });
 
@@ -735,15 +739,10 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         {
             public void actionPerformed(ActionEvent event)
             {
-                lock.lock();
-                try {
-                    if(isStarted) {
-                        setStart(false);
-                    } else {
-                        setStart(true);
-                    }
-                } finally {
-                    lock.unlock();
+                if (isStarted) {
+                    requestStop = true;
+                } else {
+                    requestStart = true;
                 }
             }
         });
@@ -831,7 +830,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             path = System.getProperty("user.home") + fileSep + propertyFile;
             properties.setProperty("channelName", channelName);
             FileOutputStream file = new FileOutputStream(path);
-            properties.store(file, "EPICS_AD_Viewer Properties");
+            properties.store(file, "EPICS_NTNDA_Viewer Properties");
             file.close();
             IJ.log("Wrote properties file: " + path);
         }
