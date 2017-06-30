@@ -304,7 +304,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
       try
       {
         channelName = channelNameText.getText();
-        logMessage("Trying to connect to : " + channelName, true, true);
+        logMessage("Trying to connect to : " + channelName, true, false);
         mychannel = pva.createChannel(channelName,"pva");
         mychannel.connect(2.0); 
         // We don't create the monitor here because we need to do that each time we start displaying
@@ -314,7 +314,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
       }
       catch (Exception ex)
       {
-          logMessage("Could not connect to : " + channelName + " " + ex.getMessage(), true, true);
+          logMessage("Could not connect to : " + channelName + " " + ex.getMessage(), true, false);
           setConnected(false);
           mychannel = null;
           pvamon = null;
@@ -704,11 +704,13 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             public void actionPerformed(ActionEvent event)
             {
                 long time = new Date().getTime();
-                double fps = 1000. * numImageUpdates / (double)(time - prevTime);
+                double elapsedTime = (double)(time - prevTime)/1000.;
+                double fps = numImageUpdates / elapsedTime;
                 NumberFormat form = DecimalFormat.getInstance();
                 ((DecimalFormat)form).applyPattern("0.0");
                 fpsText.setText("" + form.format(fps));
-                if (isPluginRunning && numImageUpdates > 0) logMessage("New images=" + numImageUpdates, true, false);
+                if (isPluginRunning && numImageUpdates > 0) 
+                    logMessage(String.format("Received %d images in %.2f sec", numImageUpdates, elapsedTime), true, false);
                 prevTime = time;
                 numImageUpdates = 0;
             }
