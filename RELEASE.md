@@ -12,13 +12,17 @@ https://github.com/areaDetector/ADViewers/releases .
 
 Release Notes
 =============
-R1-0 (April XXX, 2017)
+R1-0 (July 1, 2017)
 ======================
 
+### Initial release.  
+* Prior to the release of [ADCore](https://github.com/areaDetector/ADCore) R3-0 the code in ADViewers
+  was in the Viewers subdirectory of ADCore.
+
 ### ImageJ/EPICS_areaDetector/EPICS_NTNDA_Viewer.java
-* This is a new plugin written by Tim Madden.  It is essentially identical to EPICS_AD_Viewer.java except
-  that it displays NTNDArrays from the NDPluginPva plugin, i.e. using pvAccess to transport the images rather
-  than NDPluginStdArrays which uses Channel Access.  
+* This is a new plugin written by Tim Madden and Marty Kraimer.  
+  It is essentially identical to EPICS_AD_Viewer.java except that it displays NTNDArrays from the NDPluginPva plugin, 
+  i.e. using pvAccess to transport the images rather than NDPluginStdArrays which uses Channel Access.  
   This has a number of advantages:
     - The NTNDArray data is transmitted "atomically" over the network, rather than using separate PVs for the
       image data and the metadata (image dimensions, color mode, etc.)
