@@ -316,7 +316,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
       {
           logMessage("Could not connect to : " + channelName + " " + ex.getMessage(), true, false);
           setConnected(false);
-          mychannel = null;
+          disconnectPV();
           pvamon = null;
       }
     }
