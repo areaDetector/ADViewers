@@ -1,0 +1,2 @@
+java -cp "./epics-pvaclient-4.3.1.jar:./epics-pvdata-6.1.1.jar:./epics-pvaccess-5.1.1.jar:." PVATest
+
