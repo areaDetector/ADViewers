@@ -12,6 +12,26 @@ https://github.com/areaDetector/ADViewers/releases .
 
 Release Notes
 =============
+R1-1 (October 4, 2018)
+======================
+
+### EPICS_NTNDAViewer
+* Found a serious bug in epics-pvaclient-4.3.1.jar.  A destroy() function was not being called when it should have been.
+  The result was that when the NTNDArray was not reachable (i.e. IOC not running) the broadcast search requests added
+  additional copies of the same PV with time.  This caused the request to grow in size until it required many
+  packets.  The network was thus flooded with broadcast packets if the ImageJ plugin ran for many hours or days without
+  being able to connect to the IOC.  This was sufficient to cause VME IOCs on the subnet to be 95% CPU bound just processing 
+  these broadcast packets.
+* Fixed the logic in connectPV() when a connect attempt failed.  This was also incorrect, and could contribute to the above
+  problem.
+
+* Marty Kraimer fixed the problem in epics-pvaclient-4.3.2.jar, which is now included in this release of ADViewer.
+
+### pvAccess jar files
+* All of the other pvAccess jar files were updated to the latest versions.
+
+
+=============
 R1-0 (July 1, 2017)
 ======================
 
