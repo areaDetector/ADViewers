@@ -35,6 +35,7 @@ import javax.swing.border.EmptyBorder;
 
 import org.epics.pvaClient.PvaClient;
 import org.epics.pvaClient.PvaClientChannel;
+import org.epics.pvaClient.PvaClientChannelStateChangeRequester;
 import org.epics.pvaClient.PvaClientMonitor;
 import org.epics.pvaClient.PvaClientMonitorData;
 import org.epics.pvdata.factory.ConvertFactory;
@@ -64,7 +65,7 @@ import ij.process.ShortProcessor;
  * ImageJ viewer for NTNDArray data.
  *
  */
-public class EPICS_NTNDA_Viewer implements PlugIn
+public class EPICS_NTNDA_Viewer implements PvaClientChannelStateChangeRequester,PlugIn
 {
     // may want to change these
     private String channelName = "13SIM1:Pva1:Image";
@@ -83,12 +84,15 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     private PrintStream debugPrintStream = null;
     private Properties properties = new Properties();
 
+    private volatile boolean connectedToNetwork = false;
     private volatile boolean requestConnect = false;
-    private volatile boolean requestDisconnect = false;
+    private volatile boolean requestDisconnect = true;
     private volatile boolean requestStart = false;
     private volatile boolean requestStop = false;
+    private volatile boolean gotFirstConnect = false;
+    private volatile boolean justConnected = false;
+    private volatile boolean justDisconnected = false;
     private volatile boolean isConnected = false;
-    private volatile boolean tryConnect = true;
     private volatile boolean isStarted = false;
     private volatile boolean isPluginRunning = false;
     private volatile boolean isSaveToStack = false;
@@ -119,43 +123,6 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     
     private static final int MS_WAIT = 100;
     
-    private void setStart(boolean startTrue) {
-        if(startTrue) {
-            // It seems like we should just call pvamon.start() here, 
-            // but we need to create it because of problem described below
-            if (pvamon != null) pvamon.destroy();
-            pvamon=mychannel.createMonitor("field()");
-            pvamon.start();
-            isStarted = true;
-            startButton.setText("Stop");
-        } else {
-            // It seems like we should just call pvamon.stop() here.  
-            // However, that does not stop the pvAccess callbacks as seen with a network monitor
-            // So we destroy the monitor instead
-            //pvamon.stop();
-            if (pvamon != null) pvamon.destroy();
-            pvamon = null;
-            isStarted = false;
-            startButton.setText("Start");
-        }
-    }
-    
-    private void setConnected(boolean connected)
-    {
-        if (connected) {
-            channelNameText.setBackground(Color.green);
-            startButton.setEnabled(true);
-            snapButton.setEnabled(true);
-            connectButton.setText("Disconnect");
-            if (isStarted) setStart(true);
-        } else {
-            channelNameText.setBackground(Color.red);
-            startButton.setEnabled(false);
-            snapButton.setEnabled(false);
-            connectButton.setText("Connect");
-        }
-        isConnected = connected;
-    }
     /**
      * Constructor
      */
@@ -163,6 +130,113 @@ public class EPICS_NTNDA_Viewer implements PlugIn
     {
         readProperties();
         createAndShowGUI();
+    }
+    
+    private void connectPV()
+    {
+        try
+        {
+            gotFirstConnect = false;
+            channelName = channelNameText.getText();
+            logMessage("Trying to connect to : " + channelName, true, false);
+            mychannel = pva.createChannel(channelName,"pva");
+            mychannel.setStateChangeRequester(this);
+            mychannel.issueConnect();
+
+        }
+        catch (Exception ex)
+        {
+            logMessage("Could not connect to : " + channelName + " " + ex.getMessage(), true, false);
+            disconnectPV();
+        }
+    }
+
+    private void disconnectPV()
+    {
+        try
+        {
+            channelNameText.setBackground(Color.red);
+            isConnected = false;
+            if (pvamon!=null) {
+                pvamon.destroy();
+                pvamon = null;
+            }
+            if (mychannel!=null) {
+                mychannel.destroy();
+                logMessage("Disconnected from EPICS PV:" + channelName, true, true);
+                mychannel = null;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            logMessage("Cannot disconnect from EPICS PV:" + channelName + ex.getMessage(), true, true);
+        }
+    }
+
+    
+    private void startMonitor()
+    {
+        if (pvamon != null) pvamon.destroy();
+        pvamon = null;
+        
+        if(!isConnected) return;
+        pvamon=mychannel.createMonitor("field()");
+        pvamon.start();
+    }
+    
+    private void stopMonitor()
+    {
+        if (pvamon != null) pvamon.destroy();
+        pvamon = null;
+    }
+    
+    private void handleEvents()
+    {
+        boolean is_image = false;
+        try {
+            is_image = pvamon.waitEvent(1);
+        }
+        catch(Exception ex)
+        {
+            if (isDebugMessages)
+                logMessage("run: waitEvent throws ",true,false);
+            is_image=false;
+        }
+        if (is_image)
+        {
+            if (isDebugMessages) IJ.log("calling updateImage");
+            try {
+                boolean result = updateImage(pvamon.getData());
+                if(!result) Thread.sleep(MS_WAIT);
+                if (isDebugMessages) IJ.log("run:to call releaseEvent ");
+                pvamon.releaseEvent();
+                if (isDebugMessages) IJ.log("run: called releaseEvent ");
+
+            }
+            catch(Exception ex)
+            {
+                logMessage("caught exception " + ex,true,true);
+            }
+
+        } else {
+            logMessage("no new image available ",true,false);
+        }
+    }
+    
+    @Override
+    public void channelStateChange(PvaClientChannel channel, boolean connected) {
+System.out.println("channelStateChange connected " + connected
++ " gotFirstConnect " + gotFirstConnect);
+        if(connected && !gotFirstConnect) {
+            justConnected = true;
+            gotFirstConnect = true;
+        }
+        if(!connected && gotFirstConnect){
+            justDisconnected = true;
+            gotFirstConnect = false;
+        }
+        connectedToNetwork = connected;
     }
     /* (non-Javadoc)
      * @see ij.plugin.PlugIn#run(java.lang.String)
@@ -181,75 +255,47 @@ public class EPICS_NTNDA_Viewer implements PlugIn
                         System.getProperty("file.separator") + "IJEPICS_debug.txt");
                 debugPrintStream = new PrintStream(debugFile);
             }
-            // Try to connect to the PV initially
-            connectPV();
-
+            requestConnect = true;
             while (isPluginRunning)
             {
+                if(justConnected) {
+                    justConnected = false;
+                    isConnected = true;
+System.out.println("set isConnected " + isConnected);
+                    channelNameText.setBackground(Color.green);
+                    if(isStarted) startMonitor();
+                }
+                if(justDisconnected) {
+                    justDisconnected = false;
+System.out.println("set isConnected " + isConnected);
+                    channelNameText.setBackground(Color.red);
+                    if(isStarted) stopMonitor();
+                }
                 // Check for requests to connect or disconnect
-                if (isConnected && requestDisconnect) {
+                if (requestDisconnect) {
                     requestDisconnect = false;
-                    tryConnect = false;
+                    
                     disconnectPV();
                 }
                 if (requestConnect) {
                     requestConnect = false;
-                    tryConnect = true;
                     connectPV();
                 }
                 // Check for requests to start or stop
-                if (isStarted && requestStop) {
+                if (requestStop) {
                     requestStop = false;
-                    setStart(false);
+                    isStarted = false;
+                    stopMonitor();
                 }
-                if (!isStarted && requestStart) {
+                if (requestStart) {
                     requestStart = false;
-                    setStart(true);
+                    isStarted = true;
+                    startMonitor();
                 }
-                if (isConnected && isStarted) {
-                    boolean is_image = false;
-                    try {
-                        is_image = pvamon.waitEvent(1);
-                    }
-                    catch(Exception ex)
-                    {
-                        if (isDebugMessages)
-                            logMessage("run: waitEvent throws ",true,false);
-                        is_image=false;
-                    }
-                    if (is_image)
-                    {
-                        if (isDebugMessages) IJ.log("calling updateImage");
-                        try {
-                            boolean result = updateImage(pvamon.getData());
-                            if(!result) Thread.sleep(MS_WAIT);
-                            if (isDebugMessages) IJ.log("run:to call releaseEvent ");
-                            pvamon.releaseEvent();
-                            if (isDebugMessages) IJ.log("run: called releaseEvent ");
-
-                        }
-                        catch(Exception ex)
-                        {
-                            logMessage("caught exception " + ex,true,true);
-                        }
-
-                    } else {
-                        logMessage("no new image available ",true,false);
-                    }
-                 } // (isConnected && isStarted)
-                else {
+                if (connectedToNetwork && isConnected && isStarted) {
+                    handleEvents();
+                } else {
                     Thread.sleep(MS_WAIT);
-                }
-                boolean currentlyConnected;
-                if (mychannel != null) {
-                    currentlyConnected = mychannel.getChannel().isConnected();
-                    if (currentlyConnected != isConnected) {
-                        setConnected(currentlyConnected);
-                    }
-                }
-                if (!isConnected && tryConnect) {
-                    Thread.sleep(MS_WAIT);
-                    connectPV();
                 }
             } // isPluginRunning
 
@@ -298,49 +344,6 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         imgcopy.show();
     }
 
-    public void connectPV()
-    {
-      disconnectPV();
-      try
-      {
-        channelName = channelNameText.getText();
-        logMessage("Trying to connect to : " + channelName, true, false);
-        mychannel = pva.createChannel(channelName,"pva");
-        mychannel.connect(2.0); 
-        // We don't create the monitor here because we need to do that each time we start displaying
-        ///pvamon=mychannel.createMonitor("field()");
-        setConnected(true);
-        logMessage("connected to " + channelName, true,true);
-      }
-      catch (Exception ex)
-      {
-          logMessage("Could not connect to : " + channelName + " " + ex.getMessage(), true, false);
-          setConnected(false);
-          disconnectPV();
-          pvamon = null;
-      }
-    }
-
-    public void disconnectPV()
-    {
-      try
-      {
-        if (pvamon!=null) {
-          pvamon.destroy();
-          pvamon = null;
-        }
-        if (mychannel!=null) {
-          mychannel.destroy();
-          logMessage("Disconnected from EPICS PV:" + channelName, true, true);
-          mychannel = null;
-          setConnected(false);
-        }
-      }
-      catch (Exception ex)
-      {
-        logMessage("Cannot disconnect from EPICS PV:" + channelName + ex.getMessage(), true, true);
-      }
-    }
 
     private boolean updateImage(PvaClientMonitorData monitorData)
     {
@@ -694,8 +697,7 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         //Display the window.
         frame.pack();
         frame.addWindowListener(new FrameExitListener());
-        connectButton.setText("Connect");
-        setConnected(false);
+        connectButton.setText("Disconnect");
         frame.setVisible(true);
         
         int timerDelay = 2000;  // 2 seconds 
@@ -716,24 +718,17 @@ public class EPICS_NTNDA_Viewer implements PlugIn
             }
         });
         timer.start();
-        
-        channelNameText.addActionListener(new ActionListener()
-        {
-            public void actionPerformed(ActionEvent event)
-            {
-                requestConnect = true;
-            }
-        });
-         
         connectButton.addActionListener(new ActionListener()
         {
             public void actionPerformed(ActionEvent event)
             {
-                if (isConnected) {
-                    requestDisconnect = true;
-                } else {
+                if(connectButton.getText().equals("Connect")) {
                     requestConnect = true;
-                }
+                    connectButton.setText("Disconnect");
+                } else {
+                    requestDisconnect = true;
+                    connectButton.setText("Connect");
+                } 
             }
         });
 
@@ -741,11 +736,13 @@ public class EPICS_NTNDA_Viewer implements PlugIn
         {
             public void actionPerformed(ActionEvent event)
             {
-                if (isStarted) {
-                    requestStop = true;
-                } else {
+                if(startButton.getText().equals("Start")) {
                     requestStart = true;
-                }
+                    startButton.setText("Stop");
+                } else {
+                    requestStop = true;
+                    startButton.setText("Start");
+                } 
             }
         });
 
