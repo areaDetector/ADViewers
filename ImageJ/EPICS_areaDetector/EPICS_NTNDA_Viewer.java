@@ -226,8 +226,6 @@ public class EPICS_NTNDA_Viewer implements PvaClientChannelStateChangeRequester,
     
     @Override
     public void channelStateChange(PvaClientChannel channel, boolean connected) {
-System.out.println("channelStateChange connected " + connected
-+ " gotFirstConnect " + gotFirstConnect);
         if(connected && !gotFirstConnect) {
             justConnected = true;
             gotFirstConnect = true;
@@ -261,13 +259,11 @@ System.out.println("channelStateChange connected " + connected
                 if(justConnected) {
                     justConnected = false;
                     isConnected = true;
-System.out.println("set isConnected " + isConnected);
                     channelNameText.setBackground(Color.green);
                     if(isStarted) startMonitor();
                 }
                 if(justDisconnected) {
                     justDisconnected = false;
-System.out.println("set isConnected " + isConnected);
                     channelNameText.setBackground(Color.red);
                     if(isStarted) stopMonitor();
                 }
