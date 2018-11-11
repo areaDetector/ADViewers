@@ -13,6 +13,24 @@ https://github.com/areaDetector/ADViewers/releases .
 Release Notes
 =============
 
+R1-2 (November 11, 2018)
+======================
+### EPICS_NTNDA_Viewer
+* Changed connection management to use callbacks rather than polling.  Thanks to Marty Kraimer for this.
+* Previously this viewer was incorrectly treating signed 8-bit and 16-bit images as unsigned.
+  Changed so that signed 8-bit and 16-bit data are now converted to float, so ImageJ correctly displays
+  negative values.
+  Conversion to float is required because the ImageJ ByteProcessor and ShortProcessor
+  only support unsigned integers.
+* Improved the status messages in the display to show when the display is stopped, and when connect and
+  disconnect events occur.
+### EPICS_AD_Viewer
+* Previously this viewer was incorrectly treating signed 8-bit and 16-bit images as unsigned.
+  Changed so that signed 8-bit and 16-bit data are now converted to float, so ImageJ correctly displays
+  negative values. 
+  Conversion to float is required because the ImageJ ByteProcessor and ShortProcessor
+  only support unsigned integers.
+
 
 R1-1 (October 4, 2018)
 ======================
