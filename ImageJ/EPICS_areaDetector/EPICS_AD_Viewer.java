@@ -30,6 +30,7 @@ public class EPICS_AD_Viewer implements PlugIn
     int imageSizeZ = 0;
     int colorMode;
     DBRType dataType;
+    int ADDataType;
 
     FileOutputStream debugFile;
     PrintStream debugPrintStream;
@@ -49,6 +50,7 @@ public class EPICS_AD_Viewer implements PlugIn
     Channel ch_ny;
     Channel ch_nz;
     Channel ch_colorMode;
+    Channel ch_dataType;
     Channel ch_image;
     Channel ch_image_id;
     volatile int ArrayCounter;
@@ -201,6 +203,7 @@ public class EPICS_AD_Viewer implements PlugIn
             ch_ny = createEPICSChannel(PVPrefix + "ArraySize1_RBV");
             ch_nz = createEPICSChannel(PVPrefix + "ArraySize2_RBV");
             ch_colorMode = createEPICSChannel(PVPrefix + "ColorMode_RBV");
+            ch_dataType = createEPICSChannel(PVPrefix + "DataType_RBV");
             ch_image = createEPICSChannel(PVPrefix + "ArrayData");
             ch_image_id = createEPICSChannel(PVPrefix + "ArrayCounter_RBV");
             ch_image_id.addMonitor(
@@ -224,6 +227,7 @@ public class EPICS_AD_Viewer implements PlugIn
             ch_ny.destroy();
             ch_nz.destroy();
             ch_colorMode.destroy();
+            ch_dataType.destroy();
             ch_image.destroy();
             ch_image_id.destroy();
             isConnected = false;
@@ -309,6 +313,7 @@ public class EPICS_AD_Viewer implements PlugIn
                          ch_ny != null && ch_ny.getConnectionState() == Channel.ConnectionState.CONNECTED &&
                          ch_nz != null && ch_nz.getConnectionState() == Channel.ConnectionState.CONNECTED &&
                          ch_colorMode != null && ch_colorMode.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                         ch_dataType != null && ch_dataType.getConnectionState() == Channel.ConnectionState.CONNECTED &&
                          ch_image != null && ch_image.getConnectionState() == Channel.ConnectionState.CONNECTED &&
                          ch_image_id != null && ch_image_id.getConnectionState() == Channel.ConnectionState.CONNECTED);
             if (connected && !isConnected)
@@ -347,6 +352,7 @@ public class EPICS_AD_Viewer implements PlugIn
             int ny = epicsGetInt(ch_ny);
             int nz = epicsGetInt(ch_nz);
             int cm = epicsGetInt(ch_colorMode);
+            int ad_dt = epicsGetInt(ch_dataType);
             Point oldWindowLocation=null;
             boolean madeNewWindow = false;
             DBRType dt = ch_image.getFieldType();
@@ -361,7 +367,7 @@ public class EPICS_AD_Viewer implements PlugIn
 
             // if image size changes we must close window and make a new one.
             boolean makeNewWindow = false;
-            if (nx != imageSizeX || ny != imageSizeY || nz != imageSizeZ || cm != colorMode || dt != dataType)
+            if (nx != imageSizeX || ny != imageSizeY || nz != imageSizeZ || cm != colorMode || dt != dataType || ad_dt != ADDataType)
             {
                 makeNewWindow = true;
                 imageSizeX = nx;
@@ -369,6 +375,7 @@ public class EPICS_AD_Viewer implements PlugIn
                 imageSizeZ = nz;
                 colorMode = cm;
                 dataType = dt;
+                ADDataType = ad_dt;
                 NXText.setText("" + imageSizeX);
                 NYText.setText("" + imageSizeY);
                 NZText.setText("" + imageSizeZ);
@@ -403,15 +410,15 @@ public class EPICS_AD_Viewer implements PlugIn
                 {
                     case 0:
                     case 1:
-                        if (dataType.isBYTE())
+                        if (ADDataType == 1)
                         {
                             img = new ImagePlus(PVPrefix, new ByteProcessor(imageSizeX, imageSizeY));
                         }
-                        else if (dataType.isSHORT())
+                        else if (ADDataType == 3)
                         {
                             img = new ImagePlus(PVPrefix, new ShortProcessor(imageSizeX, imageSizeY));
                         }
-                        else if (dataType.isINT() || dataType.isFLOAT() || dataType.isDOUBLE())
+                        else
                         {
                             img = new ImagePlus(PVPrefix, new FloatProcessor(imageSizeX, imageSizeY));
                         }
@@ -447,17 +454,17 @@ public class EPICS_AD_Viewer implements PlugIn
             if (isDebugMessages) IJ.log("about to get pixels");
             if (colorMode == 0 || colorMode == 1)
             {
-                if (dataType.isBYTE())
+                if (ADDataType == 1)
                 {
                     byte[] pixels = epicsGetByteArray(ch_image, getsize);
                     img.getProcessor().setPixels(pixels);
                 }
-                else if (dataType.isSHORT())
+                else if (ADDataType == 3)
                 {
                     short[] pixels = epicsGetShortArray(ch_image, getsize);
                     img.getProcessor().setPixels(pixels);
                 }
-                else if (dataType.isINT() || dataType.isFLOAT() || dataType.isDOUBLE())
+                else
                 {
                     float[] pixels = epicsGetFloatArray(ch_image, getsize);
                     img.getProcessor().setPixels(pixels);
@@ -562,6 +569,16 @@ public class EPICS_AD_Viewer implements PlugIn
         ctxt.pendIO(10.0);
         DBR_Float xi = (DBR_Float)x;
         float zz[] = xi.getFloatValue();
+        int i;
+        if (ADDataType == 0) {
+            for (i=0; i<num; i++) {
+                if (zz[i] > 127.) zz[i] = -256 + zz[i];
+            }
+        } else if (ADDataType == 2) {
+            for (i=0; i<num; i++) {
+                if (zz[i] > 65535.) zz[i] = -65536 + zz[i];
+            }
+        }
         return (zz);
     }
 
