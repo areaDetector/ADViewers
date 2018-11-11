@@ -134,12 +134,15 @@ public class EPICS_NTNDA_Viewer
         isChannelConnected = connected;
         if(isChannelConnected) {
             channelNameText.setBackground(Color.green);
+            logMessage("State changed to connected for " + channelName, true, true);
             if(connectIsTrue && pvaClientMonitor==null) {
                 pvaClientMonitor=pvaClientChannel.createMonitor("record[queueSize=3]field()");
                 pvaClientMonitor.issueConnect();
             }
         } else if(pvaClientMonitor!=null) {
             channelNameText.setBackground(Color.red);
+            logMessage("State changed to disconnected for " + channelName, true, true);
+            numImageUpdates = 0;
         }
     }
     
@@ -154,6 +157,7 @@ public class EPICS_NTNDA_Viewer
             isChannelConnected = false;
             channelNameText.setBackground(Color.red);
             pvaClientChannel.issueConnect();
+            logMessage("Connected to : " + channelName, true, true);
         }
         catch (Exception ex)
         {
@@ -432,11 +436,11 @@ public class EPICS_NTNDA_Viewer
             {
             case 0:
             case 1:
-                if(dataType==ScalarType.pvByte||dataType==ScalarType.pvUByte)
+                if(dataType==ScalarType.pvUByte)
                 {
                     img = new ImagePlus(channelName, new ByteProcessor(imageSizeX, imageSizeY));
                 }
-                else if(dataType==ScalarType.pvShort||dataType==ScalarType.pvUShort)
+                else if(dataType==ScalarType.pvUShort)
                 {
                     img = new ImagePlus(channelName, new ShortProcessor(imageSizeX, imageSizeY));
                 }
@@ -478,13 +482,13 @@ public class EPICS_NTNDA_Viewer
         if (isDebugMessages) IJ.log("about to get pixels");
         if (colorMode == 0 || colorMode == 1)
         {
-            if(dataType==ScalarType.pvByte||dataType==ScalarType.pvUByte)
+            if(dataType==ScalarType.pvUByte)
             {            
                 byte[] pixels= new byte[arraylen];
                 convert.toByteArray(imagedata, 0, arraylen, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             }
-            else if(dataType==ScalarType.pvShort||dataType==ScalarType.pvUShort)
+            else if(dataType==ScalarType.pvUShort)
             {
                 short[] pixels = new short[arraylen];
                 convert.toShortArray(imagedata, 0, arraylen, pixels, 0);
@@ -667,7 +671,7 @@ public class EPICS_NTNDA_Viewer
                 NumberFormat form = DecimalFormat.getInstance();
                 ((DecimalFormat)form).applyPattern("0.0");
                 fpsText.setText("" + form.format(fps));
-                if (isPluginRunning && numImageUpdates > 0) 
+                if (isPluginRunning && startIsTrue && numImageUpdates > 0) 
                     logMessage(String.format("Received %d images in %.2f sec", numImageUpdates, elapsedTime), true, false);
                 prevTime = time;
                 numImageUpdates = 0;
@@ -684,7 +688,7 @@ public class EPICS_NTNDA_Viewer
                 if(connectIsTrue) {
                     connectIsTrue = false;
                     disconnect = true;
-                    channelNameText.setBackground(Color.white);
+                    channelNameText.setBackground(Color.red);
                     connectButton.setText("Connect");
                 } else {
                     connectIsTrue = true;
@@ -704,10 +708,12 @@ public class EPICS_NTNDA_Viewer
                     stop = true;
                     startIsTrue = false;
                     startButton.setText("Start");
+                    logMessage("Display stopped", true, false);
                 } else {
                     startMonitor();
                     startIsTrue = true;
                     startButton.setText("Stop");
+                    logMessage("Display started", true, false);
                 }
             }
         });
