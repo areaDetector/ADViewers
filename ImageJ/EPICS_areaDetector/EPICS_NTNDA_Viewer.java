@@ -41,6 +41,7 @@ import org.epics.pvaClient.PvaClientMonitorData;
 import org.epics.pvdata.factory.ConvertFactory;
 import org.epics.pvdata.pv.Convert;
 import org.epics.pvdata.pv.PVInt;
+import org.epics.pvdata.pv.PVLong;
 import org.epics.pvdata.pv.PVScalarArray;
 import org.epics.pvdata.pv.PVString;
 import org.epics.pvdata.pv.PVStructure;
@@ -48,6 +49,14 @@ import org.epics.pvdata.pv.PVStructureArray;
 import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.StructureArrayData;
+
+import java.nio.ByteBuffer;
+import org.blosc.JBlosc;
+import org.blosc.PrimitiveSizes;
+import org.blosc.Util;
+import com.sun.jna.NativeLong;
+
+//import decompressJPEGDll;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -108,6 +117,14 @@ public class EPICS_NTNDA_Viewer
     private volatile int numImageUpdates = 0;
     private JFrame frame = null;
 
+    private JBlosc jBlosc = null;
+    
+    private decompressJPEGDll jpegDll = null;
+    
+    private static final int INITIAL_BLOSC_SIZE = 10 * 1024 * 1024;
+    private ByteBuffer decompressInBuffer = ByteBuffer.allocateDirect(INITIAL_BLOSC_SIZE);
+    private ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(INITIAL_BLOSC_SIZE);
+ 
     private JTextField channelNameText = null;
     private JTextField nxText = null;
     private JTextField nyText = null;
@@ -371,7 +388,42 @@ public class EPICS_NTNDA_Viewer
             logMessage("value is not a scalar array",true,true);
             return false;
         }
-        int arraylen = imagedata.getLength();
+        PVStructure pvCodecStruct = pvs.getSubField(PVStructure.class,"codec");
+        PVString pvCodec = pvCodecStruct.getSubField(PVString.class, "name");
+        String codec = pvCodec.get();
+        PVLong pvCompressedSize = pvs.getSubField(PVLong.class,"compressedSize");
+        long compressedSize = pvCompressedSize.get();
+        PVLong pvUncompressedSize = pvs.getSubField(PVLong.class,"uncompressedSize");
+        long uncompressedSize = pvUncompressedSize.get();
+        if (codec.isEmpty()) {
+        } else {
+            if (decompressInBuffer.capacity() < compressedSize) {
+                    decompressInBuffer = ByteBuffer.allocateDirect((int)uncompressedSize);
+            }
+            if (decompressOutBuffer.capacity() < uncompressedSize) {
+                    decompressOutBuffer = ByteBuffer.allocateDirect((int)uncompressedSize);
+            }
+            byte[] compressedBuffer = new byte[(int)compressedSize];
+            convert.toByteArray(imagedata, 0, (int)compressedSize, compressedBuffer, 0);
+            decompressInBuffer.put(compressedBuffer);
+            if (codec.equals("blosc")) {
+                if (jBlosc == null) {
+                    jBlosc = new JBlosc();
+                }
+                jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
+            } else if (codec.equals("jpeg")) {
+                if (jpegDll == null) {
+                    jpegDll = new decompressJPEGDll();
+                }
+                decompressInBuffer.position(0);
+                decompressOutBuffer.position(0);
+                jpegDll.jpegDecompress(decompressInBuffer, new NativeLong(compressedSize), decompressOutBuffer, new NativeLong(uncompressedSize));
+                logMessage("jpeg compression, compressedSize=" + compressedSize + ", uncompressedSize=" + uncompressedSize, true, true);
+            } else {
+                logMessage("unknown compression, compressedSize=" + compressedSize + ", uncompressedSize=" + uncompressedSize, true, true);
+                return false;
+            }
+        }
         ScalarType scalarType = imagedata.getScalarArray().getElementType();
         if (nz == 0) nz = 1;  // 2-D images without color
         if (ny == 0) ny = 1;  // 1-D images which are OK, useful with dynamic profiler
@@ -379,8 +431,8 @@ public class EPICS_NTNDA_Viewer
         if (isDebugMessages)
             logMessage("UpdateImage: got image, sizes: " + nx + " " + ny + " " + nz,true,true);
 
-        int getsize = nx * ny * nz;
-        if (getsize == 0) {
+        int numElements = nx * ny * nz;
+        if (numElements == 0) {
             logMessage("array size = 0",true,true);
             return false;
         }
@@ -484,20 +536,28 @@ public class EPICS_NTNDA_Viewer
         {
             if(dataType==ScalarType.pvUByte)
             {            
-                byte[] pixels= new byte[arraylen];
-                convert.toByteArray(imagedata, 0, arraylen, pixels, 0);
+                byte[] pixels= new byte[numElements];
+                if (codec.isEmpty()) {
+                    convert.toByteArray(imagedata, 0, numElements, pixels, 0);
+                } else if (codec.equals("blosc")) {
+                    decompressOutBuffer.get(pixels);
+                }
                 img.getProcessor().setPixels(pixels);
             }
             else if(dataType==ScalarType.pvUShort)
             {
-                short[] pixels = new short[arraylen];
-                convert.toShortArray(imagedata, 0, arraylen, pixels, 0);
+                short[] pixels = new short[numElements];
+                if (codec.isEmpty()) {
+                    convert.toShortArray(imagedata, 0, numElements, pixels, 0);
+                } else if (codec.equals("blosc")) {
+                //pixels = Util.byteBufferToShortArray(bloscOutBuffer);
+                }
                 img.getProcessor().setPixels(pixels);
             }
             else if (dataType.isNumeric()) 
             {
-                float[] pixels =new float[arraylen];
-                convert.toFloatArray(imagedata, 0, arraylen, pixels, 0);
+                float[] pixels =new float[numElements];
+                convert.toFloatArray(imagedata, 0, numElements, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             } else {
                 throw new RuntimeException("illegal array type " + dataType);
@@ -507,16 +567,15 @@ public class EPICS_NTNDA_Viewer
         {
             int[] pixels = (int[])img.getProcessor().getPixels();
 
-            //byte inpixels[] = epicsGetByteArray(ch_image, getsize);
-            byte inpixels[]=new byte[getsize];
+            byte inpixels[]=new byte[numElements];
 
-            convert.toByteArray(imagedata, 0, getsize, inpixels, 0);
+            convert.toByteArray(imagedata, 0, numElements, inpixels, 0);
             switch (colorMode)
             {
             case 2:
             {
                 int in = 0, out = 0;
-                while (in < getsize)
+                while (in < numElements)
                 {
                     pixels[out++] = (inpixels[in++] & 0xFF) << 16 | (inpixels[in++] & 0xFF) << 8 | (inpixels[in++] & 0xFF);
                 }
@@ -811,3 +870,4 @@ public class EPICS_NTNDA_Viewer
         }
     }
  }
+
