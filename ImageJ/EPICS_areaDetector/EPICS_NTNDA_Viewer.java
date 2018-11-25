@@ -43,6 +43,11 @@ import org.epics.pvdata.pv.Convert;
 import org.epics.pvdata.pv.PVInt;
 import org.epics.pvdata.pv.PVLong;
 import org.epics.pvdata.pv.PVScalarArray;
+import org.epics.pvdata.pv.PVByteArray;
+import org.epics.pvdata.pv.PVShortArray;
+import org.epics.pvdata.pv.PVIntArray;
+import org.epics.pvdata.pv.PVFloatArray;
+import org.epics.pvdata.pv.PVDoubleArray;
 import org.epics.pvdata.pv.PVString;
 import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.PVStructureArray;
@@ -51,9 +56,9 @@ import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.StructureArrayData;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import org.blosc.JBlosc;
 import org.blosc.PrimitiveSizes;
-import org.blosc.Util;
 import com.sun.jna.NativeLong;
 
 //import decompressJPEGDll;
@@ -120,10 +125,6 @@ public class EPICS_NTNDA_Viewer
     private JBlosc jBlosc = null;
     
     private decompressJPEGDll jpegDll = null;
-    
-    private static final int INITIAL_BLOSC_SIZE = 10 * 1024 * 1024;
-    private ByteBuffer decompressInBuffer = ByteBuffer.allocateDirect(INITIAL_BLOSC_SIZE);
-    private ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(INITIAL_BLOSC_SIZE);
  
     private JTextField channelNameText = null;
     private JTextField nxText = null;
@@ -392,39 +393,11 @@ public class EPICS_NTNDA_Viewer
         PVString pvCodec = pvCodecStruct.getSubField(PVString.class, "name");
         String codec = pvCodec.get();
         PVLong pvCompressedSize = pvs.getSubField(PVLong.class,"compressedSize");
-        long compressedSize = pvCompressedSize.get();
+        int compressedSize = (int)pvCompressedSize.get();
         PVLong pvUncompressedSize = pvs.getSubField(PVLong.class,"uncompressedSize");
-        long uncompressedSize = pvUncompressedSize.get();
-        if (codec.isEmpty()) {
-        } else {
-            if (decompressInBuffer.capacity() < compressedSize) {
-                    decompressInBuffer = ByteBuffer.allocateDirect((int)uncompressedSize);
-            }
-            if (decompressOutBuffer.capacity() < uncompressedSize) {
-                    decompressOutBuffer = ByteBuffer.allocateDirect((int)uncompressedSize);
-            }
-            byte[] compressedBuffer = new byte[(int)compressedSize];
-            convert.toByteArray(imagedata, 0, (int)compressedSize, compressedBuffer, 0);
-            decompressInBuffer.put(compressedBuffer);
-            if (codec.equals("blosc")) {
-                if (jBlosc == null) {
-                    jBlosc = new JBlosc();
-                }
-                jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
-            } else if (codec.equals("jpeg")) {
-                if (jpegDll == null) {
-                    jpegDll = new decompressJPEGDll();
-                }
-                decompressInBuffer.position(0);
-                decompressOutBuffer.position(0);
-                jpegDll.jpegDecompress(decompressInBuffer, new NativeLong(compressedSize), decompressOutBuffer, new NativeLong(uncompressedSize));
-                logMessage("jpeg compression, compressedSize=" + compressedSize + ", uncompressedSize=" + uncompressedSize, true, true);
-            } else {
-                logMessage("unknown compression, compressedSize=" + compressedSize + ", uncompressedSize=" + uncompressedSize, true, true);
-                return false;
-            }
-        }
+        int uncompressedSize = (int)pvUncompressedSize.get();
         ScalarType scalarType = imagedata.getScalarArray().getElementType();
+
         if (nz == 0) nz = 1;  // 2-D images without color
         if (ny == 0) ny = 1;  // 1-D images which are OK, useful with dynamic profiler
 
@@ -443,6 +416,130 @@ public class EPICS_NTNDA_Viewer
         if (isDebugMessages)
             logMessage("UpdateImage cm,colorMode" + cm+ " "+colorMode, true, true);
 
+
+        if (!codec.isEmpty()) {
+            if (codec.equals("blosc")) {
+                if (jBlosc == null) {
+                    jBlosc = new JBlosc();
+                }
+                if ((scalarType==ScalarType.pvByte) || (scalarType==ScalarType.pvUByte)) {            
+                    int inSize  = compressedSize;
+                    int outSize = uncompressedSize;
+                    ByteBuffer decompressInBuffer  = ByteBuffer.allocateDirect(inSize);
+                    ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(outSize);
+                    byte[] compressedBuffer = new byte[inSize];
+                    convert.toByteArray(imagedata, 0, inSize, compressedBuffer, 0);
+                    decompressInBuffer.put(compressedBuffer);
+                    decompressInBuffer.position(0);
+                    decompressOutBuffer.position(0);
+                    int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
+                    if (status != uncompressedSize) {
+                        System.out.println("jBlosc.decompress returned status="+status);
+                        return false;
+                    }
+                    byte[] temp = new byte[numElements];
+                    decompressOutBuffer.get(temp);
+                    convert.fromByteArray(imagedata, 0, outSize, temp, 0);
+                } else if ((scalarType==ScalarType.pvShort) || (scalarType==ScalarType.pvUShort)) {
+                    int inSize   = compressedSize/2;
+                    int outSize  = uncompressedSize/2;
+                    short[] compressedBuffer = new short[inSize];
+                    convert.toShortArray(imagedata, 0, inSize, compressedBuffer, 0);
+                    if (compressedBuffer.length*2 != compressedSize) {
+                        System.out.println("Warning: compressedSize="+compressedSize+" != length*2="+compressedBuffer.length*2);
+                    }
+                    ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
+                    ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(uncompressedSize);
+                    decompressOutBuffer.order(ByteOrder.nativeOrder());
+                    int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
+                    if (status != uncompressedSize) {
+                        System.out.println("jBlosc.decompress returned status="+status);
+                        return false;
+                    }
+                    short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
+                    convert.fromShortArray(imagedata, 0, outSize, temp, 0);
+                } else if ((scalarType==ScalarType.pvInt) || (scalarType==ScalarType.pvUInt)) {
+                    int inSize  = compressedSize/4;
+                    int outSize = uncompressedSize/4;
+                    int[] compressedBuffer = new int[inSize];
+                    convert.toIntArray(imagedata, 0, inSize, compressedBuffer, 0);
+                    if (compressedBuffer.length*4 != compressedSize) {
+                        System.out.println("Warning: compressedSize="+compressedSize+" != length*4="+compressedBuffer.length*4);
+                    }
+                    ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
+                    ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(uncompressedSize);
+                    decompressOutBuffer.order(ByteOrder.nativeOrder());
+                    int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
+                    if (status != uncompressedSize) {
+                        System.out.println("jBlosc.decompress returned status="+status);
+                        return false;
+                    }
+                    int temp[] = myUtil.byteBufferToIntArray(decompressOutBuffer);
+                    convert.fromIntArray(imagedata, 0, outSize, temp, 0);
+                } else if (scalarType==ScalarType.pvFloat) {
+                    int inSize  = compressedSize/4;
+                    int outSize = compressedSize/4;
+                    float[] compressedBuffer = new float[inSize];
+                    convert.toFloatArray(imagedata, 0, inSize, compressedBuffer, 0);
+                    if (compressedBuffer.length*4 != compressedSize) {
+                        System.out.println("Warning: compressedSize="+compressedSize+" != length*4="+compressedBuffer.length*4);
+                    }
+                    ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
+                    ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(uncompressedSize);
+                    decompressOutBuffer.order(ByteOrder.nativeOrder());
+                    int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
+                    if (status != uncompressedSize) {
+                        System.out.println("jBlosc.decompress returned status="+status);
+                        return false;
+                    }
+                    float temp[] = myUtil.byteBufferToFloatArray(decompressOutBuffer);
+                    convert.fromFloatArray(imagedata, 0, outSize, temp, 0);
+                } else if (scalarType==ScalarType.pvDouble) {
+                    int inSize  = compressedSize/8;
+                    int outSize = compressedSize/8;
+                    double[] compressedBuffer = new double[inSize];
+                    convert.toDoubleArray(imagedata, 0, inSize, compressedBuffer, 0);
+                    if (compressedBuffer.length*8 != compressedSize) {
+                        System.out.println("Warning: compressedSize="+compressedSize+" != length*8="+compressedBuffer.length*8);
+                    }
+                    ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
+                    ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(uncompressedSize);
+                    decompressOutBuffer.order(ByteOrder.nativeOrder());
+                    int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
+                    if (status != uncompressedSize) {
+                        System.out.println("jBlosc.decompress returned status="+status);
+                        return false;
+                    }
+                    double temp[] = myUtil.byteBufferToDoubleArray(decompressOutBuffer);
+                    convert.fromDoubleArray(imagedata, 0, outSize, temp, 0);
+                }
+            } else if (codec.equals("jpeg")) {
+                if (jpegDll == null) {
+                    jpegDll = new decompressJPEGDll();
+                }
+                if (scalarType==ScalarType.pvUByte) {            
+                    int inSize  = compressedSize;
+                    int outSize = uncompressedSize;
+                    ByteBuffer decompressInBuffer  = ByteBuffer.allocateDirect(inSize);
+                    ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(outSize);
+                    byte[] compressedBuffer = new byte[inSize];
+                    convert.toByteArray(imagedata, 0, inSize, compressedBuffer, 0);
+                    decompressInBuffer.put(compressedBuffer);
+                    decompressInBuffer.position(0);
+                    decompressOutBuffer.position(0);
+                    jpegDll.decompressJPEG(decompressInBuffer, new NativeLong(inSize), decompressOutBuffer, new NativeLong(outSize));
+                    byte[] temp = new byte[numElements];
+                    decompressOutBuffer.get(temp);
+                    convert.fromByteArray(imagedata, 0, outSize, temp, 0);
+                } else {
+                    logMessage("Compression " + codec + " not supported for ScalerType.pvByte", true, true);
+                    return false;
+                }
+            } else {
+                logMessage("unknown compression, compressedSize=" + compressedSize + ", uncompressedSize=" + uncompressedSize, true, true);
+                return false;
+            }
+        }
         // if image size changes we must close window and make a new one.
         boolean makeNewWindow = false;
         if (nx != imageSizeX || ny != imageSizeY || nz != imageSizeZ || cm != colorMode || scalarType !=dataType)
@@ -534,28 +631,17 @@ public class EPICS_NTNDA_Viewer
         if (isDebugMessages) IJ.log("about to get pixels");
         if (colorMode == 0 || colorMode == 1)
         {
-            if(dataType==ScalarType.pvUByte)
-            {            
+            if(dataType==ScalarType.pvUByte) {
                 byte[] pixels= new byte[numElements];
-                if (codec.isEmpty()) {
-                    convert.toByteArray(imagedata, 0, numElements, pixels, 0);
-                } else if (codec.equals("blosc")) {
-                    decompressOutBuffer.get(pixels);
-                }
+                convert.toByteArray(imagedata, 0, numElements, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             }
-            else if(dataType==ScalarType.pvUShort)
-            {
+            else if(dataType==ScalarType.pvUShort) {
                 short[] pixels = new short[numElements];
-                if (codec.isEmpty()) {
-                    convert.toShortArray(imagedata, 0, numElements, pixels, 0);
-                } else if (codec.equals("blosc")) {
-                //pixels = Util.byteBufferToShortArray(bloscOutBuffer);
-                }
+                convert.toShortArray(imagedata, 0, numElements, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             }
-            else if (dataType.isNumeric()) 
-            {
+            else if (dataType.isNumeric()) {
                 float[] pixels =new float[numElements];
                 convert.toFloatArray(imagedata, 0, numElements, pixels, 0);
                 img.getProcessor().setPixels(pixels);
@@ -870,4 +956,3 @@ public class EPICS_NTNDA_Viewer
         }
     }
  }
-
