@@ -434,7 +434,7 @@ public class EPICS_NTNDA_Viewer
                     decompressOutBuffer.position(0);
                     int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
                     if (status != uncompressedSize) {
-                        System.out.println("jBlosc.decompress returned status="+status);
+                        logMessage("jBlosc.decompress returned status="+status, true, true);
                         return false;
                     }
                     byte[] temp = new byte[numElements];
@@ -446,14 +446,14 @@ public class EPICS_NTNDA_Viewer
                     short[] compressedBuffer = new short[inSize];
                     convert.toShortArray(imagedata, 0, inSize, compressedBuffer, 0);
                     if (compressedBuffer.length*2 != compressedSize) {
-                        System.out.println("Warning: compressedSize="+compressedSize+" != length*2="+compressedBuffer.length*2);
+                        logMessage("Warning: compressedSize="+compressedSize+" != length*2="+compressedBuffer.length*2, true, true);
                     }
                     ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
                     ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(uncompressedSize);
                     decompressOutBuffer.order(ByteOrder.nativeOrder());
                     int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
                     if (status != uncompressedSize) {
-                        System.out.println("jBlosc.decompress returned status="+status);
+                        logMessage("jBlosc.decompress returned status="+status, true, true);
                         return false;
                     }
                     short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
@@ -464,14 +464,14 @@ public class EPICS_NTNDA_Viewer
                     int[] compressedBuffer = new int[inSize];
                     convert.toIntArray(imagedata, 0, inSize, compressedBuffer, 0);
                     if (compressedBuffer.length*4 != compressedSize) {
-                        System.out.println("Warning: compressedSize="+compressedSize+" != length*4="+compressedBuffer.length*4);
+                        logMessage("Warning: compressedSize="+compressedSize+" != length*4="+compressedBuffer.length*4, true, true);
                     }
                     ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
                     ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(uncompressedSize);
                     decompressOutBuffer.order(ByteOrder.nativeOrder());
                     int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
                     if (status != uncompressedSize) {
-                        System.out.println("jBlosc.decompress returned status="+status);
+                        logMessage("jBlosc.decompress returned status="+status, true, true);
                         return false;
                     }
                     int temp[] = myUtil.byteBufferToIntArray(decompressOutBuffer);
@@ -482,14 +482,14 @@ public class EPICS_NTNDA_Viewer
                     float[] compressedBuffer = new float[inSize];
                     convert.toFloatArray(imagedata, 0, inSize, compressedBuffer, 0);
                     if (compressedBuffer.length*4 != compressedSize) {
-                        System.out.println("Warning: compressedSize="+compressedSize+" != length*4="+compressedBuffer.length*4);
+                        logMessage("Warning: compressedSize="+compressedSize+" != length*4="+compressedBuffer.length*4, true, true);
                     }
                     ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
                     ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(uncompressedSize);
                     decompressOutBuffer.order(ByteOrder.nativeOrder());
                     int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
                     if (status != uncompressedSize) {
-                        System.out.println("jBlosc.decompress returned status="+status);
+                        logMessage("jBlosc.decompress returned status="+status, true, true);
                         return false;
                     }
                     float temp[] = myUtil.byteBufferToFloatArray(decompressOutBuffer);
@@ -500,14 +500,14 @@ public class EPICS_NTNDA_Viewer
                     double[] compressedBuffer = new double[inSize];
                     convert.toDoubleArray(imagedata, 0, inSize, compressedBuffer, 0);
                     if (compressedBuffer.length*8 != compressedSize) {
-                        System.out.println("Warning: compressedSize="+compressedSize+" != length*8="+compressedBuffer.length*8);
+                        logMessage("Warning: compressedSize="+compressedSize+" != length*8="+compressedBuffer.length*8, true, true);
                     }
                     ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
                     ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(uncompressedSize);
                     decompressOutBuffer.order(ByteOrder.nativeOrder());
                     int status = jBlosc.decompress(decompressInBuffer, decompressOutBuffer, uncompressedSize);
                     if (status != uncompressedSize) {
-                        System.out.println("jBlosc.decompress returned status="+status);
+                        logMessage("jBlosc.decompress returned status="+status, true, true);
                         return false;
                     }
                     double temp[] = myUtil.byteBufferToDoubleArray(decompressOutBuffer);
