@@ -5,7 +5,7 @@ import com.sun.jna.NativeLong;
 public class decompressJPEGDll {
 
 	static {
-		Native.register("jpegDecompress" + getArchPlatform());
+		Native.register("decompressJPEG" + getArchPlatform());
 	}
 
 	public static String getArchPlatform() {
@@ -16,6 +16,6 @@ public class decompressJPEGDll {
 		return archDataModel;
 	}
 
-	public static native int jpegDecompress(Buffer src, NativeLong srcSize, Buffer dest, NativeLong destSize);
+	public static native void decompressJPEG(Buffer src, NativeLong srcSize, Buffer dest, NativeLong destSize);
 
 }
