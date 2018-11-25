@@ -1,4 +1,5 @@
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
@@ -31,6 +32,7 @@ public class myUtil {
 
 	public static ByteBuffer array2ByteBuffer(double[] values) {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(PrimitiveSizes.DOUBLE_FIELD_SIZE * values.length);
+		buffer.order(ByteOrder.nativeOrder());
 
 		for (double value : values) {
 			buffer.putDouble(value);
@@ -41,6 +43,7 @@ public class myUtil {
 
 	public static ByteBuffer array2ByteBuffer(float[] values) {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(PrimitiveSizes.FLOAT_FIELD_SIZE * values.length);
+		buffer.order(ByteOrder.nativeOrder());
 
 		for (float value : values) {
 			buffer.putFloat(value);
@@ -51,6 +54,7 @@ public class myUtil {
 
 	public static ByteBuffer array2ByteBuffer(long[] values) {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(PrimitiveSizes.LONG_FIELD_SIZE * values.length);
+		buffer.order(ByteOrder.nativeOrder());
 
 		for (long value : values) {
 			buffer.putLong(value);
@@ -61,6 +65,7 @@ public class myUtil {
 
 	public static ByteBuffer array2ByteBuffer(int[] values) {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(PrimitiveSizes.INT_FIELD_SIZE * values.length);
+		buffer.order(ByteOrder.nativeOrder());
 
 		for (int value : values) {
 			buffer.putInt(value);
@@ -71,6 +76,7 @@ public class myUtil {
 
 	public static ByteBuffer array2ByteBuffer(short[] values) {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(PrimitiveSizes.SHORT_FIELD_SIZE * values.length);
+		buffer.order(ByteOrder.nativeOrder());
 
 		for (short value : values) {
 			buffer.putShort(value);
