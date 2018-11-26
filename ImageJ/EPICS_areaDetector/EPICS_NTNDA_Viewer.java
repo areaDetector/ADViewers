@@ -441,11 +441,11 @@ public class EPICS_NTNDA_Viewer
                     decompressOutBuffer.get(temp);
                     convert.fromByteArray(imagedata, 0, outSize, temp, 0);
                 } else if ((scalarType==ScalarType.pvShort) || (scalarType==ScalarType.pvUShort)) {
-                    int inSize   = compressedSize/2;
+                    int inSize   = compressedSize/2 + 1;
                     int outSize  = uncompressedSize/2;
                     short[] compressedBuffer = new short[inSize];
                     convert.toShortArray(imagedata, 0, inSize, compressedBuffer, 0);
-                    if (compressedBuffer.length*2 != compressedSize) {
+                    if (compressedBuffer.length*2 < compressedSize) {
                         logMessage("Warning: compressedSize="+compressedSize+" != length*2="+compressedBuffer.length*2, true, true);
                     }
                     ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
@@ -459,11 +459,11 @@ public class EPICS_NTNDA_Viewer
                     short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
                     convert.fromShortArray(imagedata, 0, outSize, temp, 0);
                 } else if ((scalarType==ScalarType.pvInt) || (scalarType==ScalarType.pvUInt)) {
-                    int inSize  = compressedSize/4;
+                    int inSize  = compressedSize/4 + 1;
                     int outSize = uncompressedSize/4;
                     int[] compressedBuffer = new int[inSize];
                     convert.toIntArray(imagedata, 0, inSize, compressedBuffer, 0);
-                    if (compressedBuffer.length*4 != compressedSize) {
+                    if (compressedBuffer.length*4 < compressedSize) {
                         logMessage("Warning: compressedSize="+compressedSize+" != length*4="+compressedBuffer.length*4, true, true);
                     }
                     ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
@@ -477,11 +477,11 @@ public class EPICS_NTNDA_Viewer
                     int temp[] = myUtil.byteBufferToIntArray(decompressOutBuffer);
                     convert.fromIntArray(imagedata, 0, outSize, temp, 0);
                 } else if (scalarType==ScalarType.pvFloat) {
-                    int inSize  = compressedSize/4;
+                    int inSize  = compressedSize/4 + 1;
                     int outSize = compressedSize/4;
                     float[] compressedBuffer = new float[inSize];
                     convert.toFloatArray(imagedata, 0, inSize, compressedBuffer, 0);
-                    if (compressedBuffer.length*4 != compressedSize) {
+                    if (compressedBuffer.length*4 < compressedSize) {
                         logMessage("Warning: compressedSize="+compressedSize+" != length*4="+compressedBuffer.length*4, true, true);
                     }
                     ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
@@ -495,11 +495,11 @@ public class EPICS_NTNDA_Viewer
                     float temp[] = myUtil.byteBufferToFloatArray(decompressOutBuffer);
                     convert.fromFloatArray(imagedata, 0, outSize, temp, 0);
                 } else if (scalarType==ScalarType.pvDouble) {
-                    int inSize  = compressedSize/8;
+                    int inSize  = compressedSize/8 + 1;
                     int outSize = compressedSize/8;
                     double[] compressedBuffer = new double[inSize];
                     convert.toDoubleArray(imagedata, 0, inSize, compressedBuffer, 0);
-                    if (compressedBuffer.length*8 != compressedSize) {
+                    if (compressedBuffer.length*8 < compressedSize) {
                         logMessage("Warning: compressedSize="+compressedSize+" != length*8="+compressedBuffer.length*8, true, true);
                     }
                     ByteBuffer decompressInBuffer  = myUtil.array2ByteBuffer(compressedBuffer);
