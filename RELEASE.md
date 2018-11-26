@@ -27,7 +27,7 @@ R1-3 (November XXX, 2018)
 * ImageJ needs to be able to find these shareable libraries to handle compressed arrays.
   One way to do this is to add areaDetector/ADSupport/lib/linux-x86_64/ to the LD_LIBRARY_PATH environment
   variable on Linux, and areaDetector/ADSupport/lib/windows-x86 to the PATH environment variable on Windows.
-  This assumes that ADSupport was built using WITH_BLOSC=YES, WITH_JPEG=YES, BLOSC_EXTERNAL=NO, and JPEG-EXTERNAL=NO.
+  This assumes that ADSupport was built using WITH_BLOSC=YES, WITH_JPEG=YES, BLOSC_EXTERNAL=NO, and JPEG_EXTERNAL=NO.
 * In principle another way to do this is to set the jna.library.path property to point to that directory when starting ImageJ, e.g.
   `java -Djna.library.path=/home/epics/support/areaDetector/ADSupport/lib/linux-x86_64 -jar ij.jar` 
   However, ImageJ is normally started via an executable file rather than a script invoking ij.jar on both Linux and Windows,
@@ -35,9 +35,9 @@ R1-3 (November XXX, 2018)
 * The ADViewers distribution includes two new jar files, jna-5.1.0.jar and jblosc-1.0.1.dev.jar.
   The jna file provides support for Java Native Access, which is the interface to calling the shareable libraries.
   The jblosc file provides a Java wrapper around the blosc shareable library. These files need to be copied to
-  ImageJ/plugins/EPICS_areaDetector along with the other files in ADViewers/ImageJ/EPICS_areaDetector directory.
+  ImageJ/plugins/EPICS_areaDetector along with the other files in the ADViewers/ImageJ/EPICS_areaDetector directory.
 * The ADViewers distribution also includes two new .java files,  decompressJPEGDll.java and myUtil.java. 
-  These files need to be compiled once in ImageJ using the Plugins/Compile and Run ..." menu.  The files
+  These files need to be compiled once in ImageJ using the `Plugins/Compile and Run ...` menu.  The files
   are actually just compiled and not run, since they are just support files, not plugins.
   decompressJPEGDll.java is a wrapper around the C JPEG library. 
   myUtil.java is a modified version of Util.java that is included in the JBlosc package.  The version in that
