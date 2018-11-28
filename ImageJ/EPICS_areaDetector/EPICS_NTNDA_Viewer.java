@@ -50,6 +50,8 @@ import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.StructureArrayData;
 import org.epics.pvdata.factory.BaseScalarArray;
+import org.epics.pvdata.factory.BasePVByteArray;
+import org.epics.pvdata.factory.BasePVUByteArray;
 import org.epics.pvdata.factory.BasePVShortArray;
 import org.epics.pvdata.factory.BasePVUShortArray;
 import org.epics.pvdata.factory.BasePVIntArray;
@@ -547,10 +549,18 @@ public class EPICS_NTNDA_Viewer
                     logMessage("jBlosc.decompress returned status="+status, true, true);
                     return false;
                 }
-                if ((scalarType==ScalarType.pvByte) || (scalarType==ScalarType.pvUByte)) {            
+                if (scalarType==ScalarType.pvByte) {            
                     byte[] temp = new byte[numElements];
                     decompressOutBuffer.get(temp);
-                    convert.fromByteArray(imagedata, 0, numElements, temp, 0);
+                    BasePVByteArray pvArray = new BasePVByteArray(new BaseScalarArray(scalarType));
+                    pvArray.put(0, numElements, temp, 0);
+                    pvUnionValue.set("byteValue", pvArray);
+                } else if (scalarType==ScalarType.pvUByte) {            
+                    byte[] temp = new byte[numElements];
+                    decompressOutBuffer.get(temp);
+                    BasePVUByteArray pvArray = new BasePVUByteArray(new BaseScalarArray(scalarType));
+                    pvArray.put(0, numElements, temp, 0);
+                    pvUnionValue.set("ubyteValue", pvArray);
                 } else if (scalarType==ScalarType.pvShort) {
                     short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
                     BasePVShortArray pvArray = new BasePVShortArray(new BaseScalarArray(scalarType));
