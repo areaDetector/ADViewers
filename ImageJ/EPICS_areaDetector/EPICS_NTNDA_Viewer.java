@@ -38,7 +38,6 @@ import org.epics.pvaClient.PvaClientChannel;
 import org.epics.pvaClient.PvaClientChannelStateChangeRequester;
 import org.epics.pvaClient.PvaClientMonitor;
 import org.epics.pvaClient.PvaClientMonitorData;
-import org.epics.pvdata.factory.ConvertFactory;
 import org.epics.pvdata.pv.Convert;
 import org.epics.pvdata.pv.PVInt;
 import org.epics.pvdata.pv.PVLong;
@@ -49,6 +48,7 @@ import org.epics.pvdata.pv.PVStructureArray;
 import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.StructureArrayData;
+import org.epics.pvdata.factory.ConvertFactory;
 import org.epics.pvdata.factory.BaseScalarArray;
 import org.epics.pvdata.factory.BasePVByteArray;
 import org.epics.pvdata.factory.BasePVUByteArray;
@@ -64,8 +64,6 @@ import java.nio.ByteOrder;
 import org.blosc.JBlosc;
 import org.blosc.PrimitiveSizes;
 import com.sun.jna.NativeLong;
-
-//import decompressJPEGDll;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -92,19 +90,12 @@ public class EPICS_NTNDA_Viewer
     private boolean isDebugFile = false;
     private String propertyFile = "EPICS_NTNDA_Viewer.properties";
     
+    private static final int QUEUE_SIZE = 1;
     private static final int MS_WAIT = 100;
     private static PvaClient pva=PvaClient.get("pva");
     private static Convert convert = ConvertFactory.getConvert();
     private PvaClientChannel pvaClientChannel = null;
     private PvaClientMonitor pvaClientMonitor = null;
-    
-    private volatile boolean connectIsTrue = true;
-    private volatile boolean disconnect = false;
-    private volatile boolean isChannelConnected = false;
-    
-    private volatile boolean startIsTrue = false;
-    private volatile boolean stop = false;
-    private volatile boolean isStarted = false;
     
     private ImagePlus img = null;
     private ImageStack imageStack = null;
@@ -117,6 +108,9 @@ public class EPICS_NTNDA_Viewer
     private PrintStream debugPrintStream = null;
     private Properties properties = new Properties();
 
+    private volatile boolean isChannelConnected = false;
+    private volatile boolean startIsTrue = false;
+    private volatile boolean isStarted = false;
     private volatile boolean isPluginRunning = false;
     private volatile boolean isSaveToStack = false;
     private volatile boolean isNewStack = false;
@@ -124,26 +118,24 @@ public class EPICS_NTNDA_Viewer
     // These are used for the frames/second calculation
     private long prevTime = 0;
     private volatile int numImageUpdates = 0;
-    private JFrame frame = null;
 
     private JBlosc jBlosc = null;
-    
     private decompressJPEGDll jpegDll = null;
 
     private static final int INITIAL_BLOSC_SIZE = 10 * 1024 * 1024;
     private ByteBuffer decompressInBuffer = ByteBuffer.allocateDirect(INITIAL_BLOSC_SIZE);
     private ByteBuffer decompressOutBuffer = ByteBuffer.allocateDirect(INITIAL_BLOSC_SIZE);
     private byte[] compressedArray = new byte[INITIAL_BLOSC_SIZE];
-
  
+    private JFrame frame = null;
     private JTextField channelNameText = null;
     private JTextField nxText = null;
     private JTextField nyText = null;
     private JTextField nzText = null;
     private JTextField fpsText = null;
     private JTextField statusText = null;
-    private JButton connectButton = null;
     private JButton startButton = null;
+    private JButton stopButton = null;
     private JButton snapButton = null;
 
     private javax.swing.Timer timer = null;
@@ -163,10 +155,11 @@ public class EPICS_NTNDA_Viewer
         if(isChannelConnected) {
             channelNameText.setBackground(Color.green);
             logMessage("State changed to connected for " + channelName, true, true);
-            if(connectIsTrue && pvaClientMonitor==null) {
-                pvaClientMonitor=pvaClientChannel.createMonitor("record[queueSize=3]field()");
+            if(pvaClientMonitor==null) {
+                pvaClientMonitor=pvaClientChannel.createMonitor("record[queueSize="+QUEUE_SIZE+"]field()");
                 pvaClientMonitor.issueConnect();
             }
+            if (startIsTrue) startMonitor();
         } else if(pvaClientMonitor!=null) {
             channelNameText.setBackground(Color.red);
             logMessage("State changed to disconnected for " + channelName, true, true);
@@ -178,14 +171,16 @@ public class EPICS_NTNDA_Viewer
     {
         try
         {
+            if(pvaClientChannel!=null) {
+                throw new RuntimeException("Channel already connected");
+            }
             channelName = channelNameText.getText();
-            logMessage("Trying to connect to : " + channelName, true, false);
+            logMessage("Trying to connect to : " + channelName, true, true);
             pvaClientChannel = pva.createChannel(channelName,"pva");
             pvaClientChannel.setStateChangeRequester(this);
             isChannelConnected = false;
             channelNameText.setBackground(Color.red);
             pvaClientChannel.issueConnect();
-            logMessage("Connected to : " + channelName, true, true);
         }
         catch (Exception ex)
         {
@@ -198,17 +193,15 @@ public class EPICS_NTNDA_Viewer
         try
         {
             if(pvaClientChannel==null) {
-                throw new RuntimeException("channel already destroyed ");
+                throw new RuntimeException("Channel already disconnected");
             }
             isChannelConnected = false;
             if(isStarted) stopMonitor();
             pvaClientChannel.destroy();
             if(pvaClientMonitor!=null)  pvaClientMonitor.destroy();
-            logMessage("Disconnected from EPICS PV:" + channelName, true, true);
-            startIsTrue = false;
-            startButton.setText("Start");
             pvaClientChannel = null;
             pvaClientMonitor = null;
+            logMessage("Disconnected from EPICS PV:" + channelName, true, true);
         }
         catch (Exception ex)
         {
@@ -218,8 +211,8 @@ public class EPICS_NTNDA_Viewer
     
     private void startMonitor()
     {
-        pvaClientMonitor.start();
         isStarted = true;
+        pvaClientMonitor.start();
     }
     
     private void stopMonitor()
@@ -250,9 +243,7 @@ public class EPICS_NTNDA_Viewer
             } catch(Exception ex) {
                 logMessage("handleEvents caught exception " + ex,true,true);
             }
-            if (isDebugMessages) IJ.log("run:to call releaseEvent ");
             pvaClientMonitor.releaseEvent();
-            if (isDebugMessages) IJ.log("run: called releaseEvent ");
             gotEvent = pvaClientMonitor.poll();
         }
     }
@@ -273,17 +264,9 @@ public class EPICS_NTNDA_Viewer
                         System.getProperty("file.separator") + "IJEPICS_debug.txt");
                 debugPrintStream = new PrintStream(debugFile);
             }
-            if(connectIsTrue) connectPV();
+            connectPV();
             while (isPluginRunning)
             {
-                if(disconnect) {
-                    disconnectPV();
-                    disconnect = false;
-                }
-                if(stop) {
-                    stopMonitor();
-                    stop = false;
-                }
                 if (isStarted && pvaClientMonitor!=null) {
                     handleEvents();
                 } else {
@@ -720,12 +703,12 @@ public class EPICS_NTNDA_Viewer
         fpsText = new JTextField(6);
         fpsText.setEditable(false);
         fpsText.setHorizontalAlignment(JTextField.CENTER);
-        statusText = new JTextField(40);
+        statusText = new JTextField(57);
         statusText.setEditable(false);
 
         channelNameText = new JTextField(channelName, 15);
-        connectButton = new JButton("Disconnect");
         startButton = new JButton("Start");
+        stopButton = new JButton("Stop");
         snapButton = new JButton("Snap");
         JCheckBox captureCheckBox = new JCheckBox("");
 
@@ -762,9 +745,9 @@ public class EPICS_NTNDA_Viewer
         c.gridx = 0;
         panel.add(channelNameText, c);
         c.gridx = 1;
-        panel.add(connectButton, c);
-        c.gridx = 2;
         panel.add(startButton, c);
+        c.gridx = 2;
+        panel.add(stopButton, c);
         c.gridx = 3;
         panel.add(nxText, c);
         c.gridx = 4;
@@ -784,14 +767,13 @@ public class EPICS_NTNDA_Viewer
         c.anchor = GridBagConstraints.EAST;
         panel.add(new JLabel("Status: "), c);
         c.gridx = 1;
-        c.gridwidth = 7;
+        c.gridwidth = 8;
         c.anchor = GridBagConstraints.WEST;
         panel.add(statusText, c);
 
         //Display the window.
         frame.pack();
         frame.addWindowListener(new FrameExitListener());
-        connectButton.setText("Disconnect");
         frame.setVisible(true);
         
         int timerDelay = 2000;  // 2 seconds 
@@ -805,30 +787,20 @@ public class EPICS_NTNDA_Viewer
                 NumberFormat form = DecimalFormat.getInstance();
                 ((DecimalFormat)form).applyPattern("0.0");
                 fpsText.setText("" + form.format(fps));
-                if (isPluginRunning && startIsTrue && numImageUpdates > 0) 
+                if (isPluginRunning && isStarted && numImageUpdates > 0) 
                     logMessage(String.format("Received %d images in %.2f sec", numImageUpdates, elapsedTime), true, false);
                 prevTime = time;
                 numImageUpdates = 0;
             }
         });
         timer.start();
-        connectButton.addActionListener(new ActionListener()
+
+        channelNameText.addActionListener(new ActionListener()
         {
             public void actionPerformed(ActionEvent event)
             {
-                if(disconnect) {
-                    return;
-                }
-                if(connectIsTrue) {
-                    connectIsTrue = false;
-                    disconnect = true;
-                    channelNameText.setBackground(Color.red);
-                    connectButton.setText("Connect");
-                } else {
-                    connectIsTrue = true;
-                    connectPV();
-                    connectButton.setText("Disconnect");
-                }
+                disconnectPV();
+                connectPV();
             }
         });
 
@@ -836,23 +808,27 @@ public class EPICS_NTNDA_Viewer
         {
             public void actionPerformed(ActionEvent event)
             {
-                if(!isChannelConnected) return;
-                if(stop) return;
-                if(startIsTrue) {
-                    stop = true;
-                    startIsTrue = false;
-                    startButton.setText("Start");
-                    logMessage("Display stopped", true, false);
-                } else {
-                    startMonitor();
-                    startIsTrue = true;
-                    startButton.setText("Stop");
-                    logMessage("Display started", true, false);
-                }
+                startButton.setEnabled(false);
+                stopButton.setEnabled(true);
+                snapButton.setEnabled(true);
+                startIsTrue = true;
+                if (isChannelConnected) startMonitor();
+                logMessage("Display started", true, false);
             }
         });
 
-        
+        stopButton.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent event)
+            {
+                startButton.setEnabled(true);
+                stopButton.setEnabled(false);
+                snapButton.setEnabled(false);
+                startIsTrue = false;
+                if (isChannelConnected) stopMonitor();
+                logMessage("Display stopped", true, false);
+            }
+        });
 
         snapButton.addActionListener(new ActionListener()
         {
