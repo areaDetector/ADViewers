@@ -223,6 +223,26 @@ public class EPICS_NTNDA_Viewer
         }
     }
     
+    private void startDisplay()
+    {
+        startButton.setEnabled(false);
+        stopButton.setEnabled(true);
+        snapButton.setEnabled(true);
+        startIsTrue = true;
+        if (isChannelConnected) startMonitor();
+        logMessage("Display started", true, false);
+    }
+    
+    private void stopDisplay()
+    {
+        startButton.setEnabled(true);
+        stopButton.setEnabled(false);
+        snapButton.setEnabled(false);
+        startIsTrue = false;
+        if (isChannelConnected) stopMonitor();
+        logMessage("Display stopped", true, false);
+     }
+    
     private void handleEvents()
     {
         boolean gotEvent = pvaClientMonitor.poll();
@@ -268,6 +288,7 @@ public class EPICS_NTNDA_Viewer
                         System.getProperty("file.separator") + "IJEPICS_debug.txt");
                 debugPrintStream = new PrintStream(debugFile);
             }
+            stopDisplay();
             connectPV();
             while (isPluginRunning)
             {
@@ -816,12 +837,7 @@ public class EPICS_NTNDA_Viewer
         {
             public void actionPerformed(ActionEvent event)
             {
-                startButton.setEnabled(false);
-                stopButton.setEnabled(true);
-                snapButton.setEnabled(true);
-                startIsTrue = true;
-                if (isChannelConnected) startMonitor();
-                logMessage("Display started", true, false);
+                startDisplay();
             }
         });
 
@@ -829,12 +845,7 @@ public class EPICS_NTNDA_Viewer
         {
             public void actionPerformed(ActionEvent event)
             {
-                startButton.setEnabled(true);
-                stopButton.setEnabled(false);
-                snapButton.setEnabled(false);
-                startIsTrue = false;
-                if (isChannelConnected) stopMonitor();
-                logMessage("Display stopped", true, false);
+                stopDisplay();
             }
         });
 
