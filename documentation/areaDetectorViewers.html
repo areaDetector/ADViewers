@@ -101,7 +101,7 @@
       <pre>    cp -r Viewers/ImageJ/EPICS_areaDetector /Applications/ImageJ/plugins
       </pre>
     </li>
-    <li>The ImageJ plugin is supplied as Java source code, so you will need to compile
+    <li>The ImageJ plugins are supplied as Java source code, so you will need to compile
       the Java code. This can be done in the ImageJ Plugins/Compile and Run menu. Browse
       for the appropriate source file (EPICS_AD_Viewer.java, EPICS_NTNDA_Viewer.java,
       etc.) to compile and run it. The compilation step only needs to be done once, creating
@@ -242,7 +242,7 @@
     NTNDArrays. The source is the simDetector running on a Linux machine, generating
     1024x1024 UInt8 images at about 95 frames/s. This is about 95MB/s or 760 Mb/s. The
     NDPluginCodec is compressing using the Blosc ZSTD compressor with compression level=5
-    and Bit shuffle. Actually Bit shuffler does nothing in 8-bit mode, so this could
+    and Bit shuffle. Actually Bit shuffle does nothing in 8-bit mode, so this could
     also be None. There are 6 Blosc threads. The compression factor is 151, i.e. the
     output arrays are 151 times smaller than the uncompressed arrays. The Codec output
     goes to the NDPluginPva plugin which serves the NTNDArrays on the network. The ImageJ
@@ -258,7 +258,7 @@
       images</h3>
     <p>
       <img alt="ImageJ_EPICS_NTNDA_Viewer_Decompress.png" src="ImageJ_EPICS_NTNDA_Viewer_Decompress.png"
-        width="1000" /></p>
+        width="1200" /></p>
   </div>
   <h2 id="ImageJController">
     ImageJ Controller (EPICS_AD_Controller.java)</h2>
