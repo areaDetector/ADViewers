@@ -217,8 +217,10 @@ public class EPICS_NTNDA_Viewer
     
     private void stopMonitor()
     {
-        pvaClientMonitor.stop();
-        isStarted = false;
+        synchronized(this) {
+            pvaClientMonitor.stop();
+            isStarted = false;
+        }
     }
     
     private void handleEvents()
@@ -233,7 +235,7 @@ public class EPICS_NTNDA_Viewer
             return;
         }
         while(gotEvent) {
-            if (isDebugMessages) IJ.log("calling updateImage");
+            if (isDebugMessages) logMessage("calling updateImage", true, true);
             try {
                 boolean result = updateImage(pvaClientMonitor.getData());
                 if(!result) {
@@ -244,6 +246,8 @@ public class EPICS_NTNDA_Viewer
                 logMessage("handleEvents caught exception " + ex,true,true);
             }
             pvaClientMonitor.releaseEvent();
+            // Break out of the loop if the display is stopped
+            if (!startIsTrue) break;
             gotEvent = pvaClientMonitor.poll();
         }
     }
@@ -267,10 +271,14 @@ public class EPICS_NTNDA_Viewer
             connectPV();
             while (isPluginRunning)
             {
-                if (isStarted && pvaClientMonitor!=null) {
-                    handleEvents();
-                } else {
-                    Thread.sleep(MS_WAIT);
+                // A very short wait here lets stopMonitor run quickly when needed
+                Thread.sleep(1);
+                synchronized(this) {
+                    if (isStarted && pvaClientMonitor!=null) {
+                        handleEvents();
+                    } else {
+                        Thread.sleep(MS_WAIT);
+                    }
                 }
             } // isPluginRunning
 
@@ -291,9 +299,9 @@ public class EPICS_NTNDA_Viewer
         }
         catch (Exception e)
         {
-            IJ.log("run: Got exception: " + e.getMessage());
+            logMessage("run: Got exception: " + e.getMessage(), true, true);
             e.printStackTrace();
-            IJ.log("Close epics CA window, and reopen, try again");
+            logMessage("Close EPICS_NTNDA_Viewer window, and reopen, try again", true, true);
             IJ.showStatus(e.toString());
             try
             {
@@ -452,7 +460,7 @@ public class EPICS_NTNDA_Viewer
                 }
             }
             catch (Exception ex) { 
-                IJ.log("updateImage for exception: " + ex.getMessage());
+                logMessage("Exception closing window " + ex.getMessage(), true, true);
             }
             makeNewWindow = false;
         }
@@ -846,12 +854,12 @@ public class EPICS_NTNDA_Viewer
                 {
                     isSaveToStack = true;
                     isNewStack = true;
-                    IJ.log("record on");
+                    logMessage("Capture on", true, true);
                 }
                 else
                 {
                     isSaveToStack = false;
-                    IJ.log("record off");
+                    logMessage("Capture off", true, true);
                 }
 
             }
@@ -913,11 +921,11 @@ public class EPICS_NTNDA_Viewer
             FileOutputStream file = new FileOutputStream(path);
             properties.store(file, "EPICS_NTNDA_Viewer Properties");
             file.close();
-            IJ.log("Wrote properties file: " + path);
+            logMessage("Wrote properties file: " + path, true, true);
         }
         catch (Exception ex)
         {
-            IJ.log("writeProperties:exception: " + ex.getMessage());
+            logMessage("writeProperties:exception: " + ex.getMessage(), true, true);
         }
     }
  }
