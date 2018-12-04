@@ -132,7 +132,7 @@ public class NTNDCodec
             } else if (scalarType==ScalarType.pvShort) {
                 short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
                 BasePVShortArray pvArray = new BasePVShortArray(new BaseScalarArray(scalarType));
-                pvArray.put(0, numElements, temp, 0);
+                pvArray.shareData(temp);
                 pvUnionValue.set("shortValue", pvArray);
             } else if (scalarType==ScalarType.pvUShort) {
                 short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
