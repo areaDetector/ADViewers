@@ -121,43 +121,43 @@ public class NTNDCodec
                 byte[] temp = new byte[numElements];
                 decompressOutBuffer.get(temp);
                 BasePVByteArray pvArray = new BasePVByteArray(new BaseScalarArray(scalarType));
-                pvArray.put(0, numElements, temp, 0);
+                pvArray.shareData(temp);
                 pvUnionValue.set("byteValue", pvArray);
             } else if (scalarType==ScalarType.pvUByte) {            
                 byte[] temp = new byte[numElements];
                 decompressOutBuffer.get(temp);
                 BasePVUByteArray pvArray = new BasePVUByteArray(new BaseScalarArray(scalarType));
-                pvArray.put(0, numElements, temp, 0);
+                pvArray.shareData(temp);
                 pvUnionValue.set("ubyteValue", pvArray);
             } else if (scalarType==ScalarType.pvShort) {
                 short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
                 BasePVShortArray pvArray = new BasePVShortArray(new BaseScalarArray(scalarType));
-                pvArray.put(0, numElements, temp, 0);
+                pvArray.shareData(temp);
                 pvUnionValue.set("shortValue", pvArray);
             } else if (scalarType==ScalarType.pvUShort) {
                 short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
                 BasePVUShortArray pvArray = new BasePVUShortArray(new BaseScalarArray(scalarType));
-                pvArray.put(0, numElements, temp, 0);
+                pvArray.shareData(temp);
                 pvUnionValue.set("ushortValue", pvArray);
             } else if (scalarType==ScalarType.pvInt) {
                 int temp[] = myUtil.byteBufferToIntArray(decompressOutBuffer);
                 BasePVIntArray pvArray = new BasePVIntArray(new BaseScalarArray(scalarType));
-                pvArray.put(0, numElements, temp, 0);
+                pvArray.shareData(temp);
                 pvUnionValue.set("intValue", pvArray);
             } else if (scalarType==ScalarType.pvUInt) {
                 int temp[] = myUtil.byteBufferToIntArray(decompressOutBuffer);
                 BasePVUIntArray pvArray = new BasePVUIntArray(new BaseScalarArray(scalarType));
-                pvArray.put(0, numElements, temp, 0);
+                pvArray.shareData(temp);
                 pvUnionValue.set("uintValue", pvArray);
             } else if (scalarType==ScalarType.pvFloat) {
                 float temp[] = myUtil.byteBufferToFloatArray(decompressOutBuffer);
                 BasePVFloatArray pvArray = new BasePVFloatArray(new BaseScalarArray(scalarType));
-                pvArray.put(0, numElements, temp, 0);
+                pvArray.shareData(temp);
                 pvUnionValue.set("floatValue", pvArray);
             } else if (scalarType==ScalarType.pvDouble) {
                 double temp[] = myUtil.byteBufferToDoubleArray(decompressOutBuffer);
                 BasePVDoubleArray pvArray = new BasePVDoubleArray(new BaseScalarArray(scalarType));
-                pvArray.put(0, numElements, temp, 0);
+                pvArray.shareData(temp);
                 pvUnionValue.set("doubleValue", pvArray);
             }
 
