@@ -13,7 +13,7 @@ https://github.com/areaDetector/ADViewers/releases .
 Release Notes
 =============
 
-R1-3 (November XXX, 2018)
+R1-3 (December 3, 2018)
 ======================
 ### EPICS_NTNDA_Viewer
 * Added support for reading compressed NTNDArrays.  Blosc and JPEG compression are both supported.
