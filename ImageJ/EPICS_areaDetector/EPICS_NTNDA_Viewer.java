@@ -397,13 +397,14 @@ public class EPICS_NTNDA_Viewer
             if(ntndCodec==null) {
                 ntndCodec = new NTNDCodec();
             }
-            NTNDArray ntndArray = NTNDArray.wrap(pvs);
+            NTNDArray ntndArray = NTNDArray.wrapUnsafe(pvs);
             if(ntndArray==null) {
                 logMessage("value is not a valid NTNDArray",true,true);
                 return false;
             }
             ntndCodec.decompress(ntndArray);
         }
+        imagedata = pvUnionValue.get(PVScalarArray.class);
         ScalarType scalarType = imagedata.getScalarArray().getElementType();
         if (nz == 0) nz = 1;  // 2-D images without color
         if (ny == 0) ny = 1;  // 1-D images which are OK, useful with dynamic profiler

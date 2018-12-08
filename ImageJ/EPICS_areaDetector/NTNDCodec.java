@@ -88,13 +88,13 @@ public class NTNDCodec
             return false;
         }
         int compressedSize = (int)ntndArray.getCompressedDataSize().get();
-        int uncompressedSize = (int)ntndArray.getCompressedDataSize().get();
+        int uncompressedSize = (int)ntndArray.getUncompressedDataSize().get();
         PVUnion pvCodecParamUnion = pvCodec.getSubField(PVUnion.class, "parameters");
         PVInt pvCodecParams = pvCodecParamUnion.get(PVInt.class);
         int decompressedDataType = pvCodecParams.get();
         ScalarType scalarType  = ScalarType.values()[decompressedDataType];
         if (decompressInBuffer.capacity() < compressedSize) {
-            decompressInBuffer = ByteBuffer.allocateDirect((int)uncompressedSize);
+            decompressInBuffer = ByteBuffer.allocateDirect((int)compressedSize);
         }
         if (decompressOutBuffer.capacity() < uncompressedSize) {
             decompressOutBuffer = ByteBuffer.allocateDirect((int)uncompressedSize);
@@ -117,13 +117,14 @@ public class NTNDCodec
                 message = "jBlosc.decompress returned status="+status;
                 return false;
             }
+            numElements = uncompressedSize;
             if (scalarType==ScalarType.pvByte) {            
                 byte[] temp = new byte[numElements];
                 decompressOutBuffer.get(temp);
                 BasePVByteArray pvArray = new BasePVByteArray(new BaseScalarArray(scalarType));
                 pvArray.shareData(temp);
                 pvUnionValue.set("byteValue", pvArray);
-            } else if (scalarType==ScalarType.pvUByte) {            
+            } else if (scalarType==ScalarType.pvUByte) { 
                 byte[] temp = new byte[numElements];
                 decompressOutBuffer.get(temp);
                 BasePVUByteArray pvArray = new BasePVUByteArray(new BaseScalarArray(scalarType));
