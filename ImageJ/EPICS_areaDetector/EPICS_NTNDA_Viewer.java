@@ -121,6 +121,8 @@ public class EPICS_NTNDA_Viewer
 
     private JBlosc jBlosc = null;
     private decompressJPEGDll jpegDll = null;
+    private decompressLZ4Dll lz4Dll = null;
+    private decompressBSLZ4Dll bslz4Dll = null;
 
     private static final int INITIAL_BLOSC_SIZE = 10 * 1024 * 1024;
     private ByteBuffer decompressInBuffer = ByteBuffer.allocateDirect(INITIAL_BLOSC_SIZE);
@@ -561,66 +563,88 @@ public class EPICS_NTNDA_Viewer
                     logMessage("jBlosc.decompress returned status="+status, true, true);
                     return false;
                 }
-                if (scalarType==ScalarType.pvByte) {            
-                    byte[] temp = new byte[numElements];
-                    decompressOutBuffer.get(temp);
-                    BasePVByteArray pvArray = new BasePVByteArray(new BaseScalarArray(scalarType));
-                    pvArray.put(0, numElements, temp, 0);
-                    pvUnionValue.set("byteValue", pvArray);
-                } else if (scalarType==ScalarType.pvUByte) {            
-                    byte[] temp = new byte[numElements];
-                    decompressOutBuffer.get(temp);
-                    BasePVUByteArray pvArray = new BasePVUByteArray(new BaseScalarArray(scalarType));
-                    pvArray.put(0, numElements, temp, 0);
-                    pvUnionValue.set("ubyteValue", pvArray);
-                } else if (scalarType==ScalarType.pvShort) {
-                    short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
-                    BasePVShortArray pvArray = new BasePVShortArray(new BaseScalarArray(scalarType));
-                    pvArray.put(0, numElements, temp, 0);
-                    pvUnionValue.set("shortValue", pvArray);
-                } else if (scalarType==ScalarType.pvUShort) {
-                    short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
-                    BasePVUShortArray pvArray = new BasePVUShortArray(new BaseScalarArray(scalarType));
-                    pvArray.put(0, numElements, temp, 0);
-                    pvUnionValue.set("ushortValue", pvArray);
-                } else if (scalarType==ScalarType.pvInt) {
-                    int temp[] = myUtil.byteBufferToIntArray(decompressOutBuffer);
-                    BasePVIntArray pvArray = new BasePVIntArray(new BaseScalarArray(scalarType));
-                    pvArray.put(0, numElements, temp, 0);
-                    pvUnionValue.set("intValue", pvArray);
-                } else if (scalarType==ScalarType.pvUInt) {
-                    int temp[] = myUtil.byteBufferToIntArray(decompressOutBuffer);
-                    BasePVUIntArray pvArray = new BasePVUIntArray(new BaseScalarArray(scalarType));
-                    pvArray.put(0, numElements, temp, 0);
-                    pvUnionValue.set("uintValue", pvArray);
-                } else if (scalarType==ScalarType.pvFloat) {
-                    float temp[] = myUtil.byteBufferToFloatArray(decompressOutBuffer);
-                    BasePVFloatArray pvArray = new BasePVFloatArray(new BaseScalarArray(scalarType));
-                    pvArray.put(0, numElements, temp, 0);
-                    pvUnionValue.set("floatValue", pvArray);
-                } else if (scalarType==ScalarType.pvDouble) {
-                    double temp[] = myUtil.byteBufferToDoubleArray(decompressOutBuffer);
-                    BasePVDoubleArray pvArray = new BasePVDoubleArray(new BaseScalarArray(scalarType));
-                    pvArray.put(0, numElements, temp, 0);
-                    pvUnionValue.set("doubleValue", pvArray);
-                }
-
             } else if (codec.equals("jpeg")) {
                 if (jpegDll == null) {
                     jpegDll = new decompressJPEGDll();
                 }
                 if (scalarType==ScalarType.pvUByte) {            
                     jpegDll.decompressJPEG(decompressInBuffer, new NativeLong(compressedSize), decompressOutBuffer, new NativeLong(numElements));
-                    byte[] temp = new byte[numElements];
-                    decompressOutBuffer.get(temp);
-                    convert.fromByteArray(imagedata, 0, numElements, temp, 0);
                 } else {
-                    logMessage("JPEG Compression not supported for ScalerType="+scalarType, true, true);
+                    logMessage("JPEG compression not supported for ScalerType="+scalarType, true, true);
                     return false;
                 }
+            } else if (codec.equals("lz4")) {
+                if (lz4Dll == null) {
+                    lz4Dll = new decompressLZ4Dll();
+                }
+                lz4Dll.LZ4_decompress_fast(decompressInBuffer, decompressOutBuffer, new NativeLong(numElements));
+            } else if (codec.equals("bslz4")) {
+                if (bslz4Dll == null) {
+                    bslz4Dll = new decompressBSLZ4Dll();
+                }
+                int blockSize=0;
+                int elemSize;
+                if ((scalarType==ScalarType.pvByte) || (scalarType==ScalarType.pvUByte))
+                    elemSize = 1;
+                else if ((scalarType==ScalarType.pvShort) || (scalarType==ScalarType.pvUShort))
+                    elemSize = 2;
+                else if ((scalarType==ScalarType.pvInt) || (scalarType==ScalarType.pvUInt) || (scalarType==ScalarType.pvFloat))
+                    elemSize = 4;
+                else if (scalarType==ScalarType.pvDouble)
+                    elemSize = 8;
+                else {
+                    logMessage("BSLZ4 compression not supported for ScalerType="+scalarType, true, true);
+                    return false;
+                }
+                bslz4Dll.bshuf_decompress_lz4(decompressInBuffer, decompressOutBuffer, new NativeLong(numElements), 
+                                         new NativeLong(elemSize), new NativeLong(blockSize));
             } else {
                 logMessage("Unknown compression="+codec+", compressedSize=" + compressedSize + ", uncompressedSize=" + uncompressedSize, true, true);
                 return false;
+            }
+
+            if (scalarType==ScalarType.pvByte) {            
+                byte[] temp = new byte[numElements];
+                decompressOutBuffer.get(temp);
+                BasePVByteArray pvArray = new BasePVByteArray(new BaseScalarArray(scalarType));
+                pvArray.put(0, numElements, temp, 0);
+                pvUnionValue.set("byteValue", pvArray);
+            } else if (scalarType==ScalarType.pvUByte) {            
+                byte[] temp = new byte[numElements];
+                decompressOutBuffer.get(temp);
+                BasePVUByteArray pvArray = new BasePVUByteArray(new BaseScalarArray(scalarType));
+                pvArray.put(0, numElements, temp, 0);
+                pvUnionValue.set("ubyteValue", pvArray);
+            } else if (scalarType==ScalarType.pvShort) {
+                short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
+                BasePVShortArray pvArray = new BasePVShortArray(new BaseScalarArray(scalarType));
+                pvArray.put(0, numElements, temp, 0);
+                pvUnionValue.set("shortValue", pvArray);
+            } else if (scalarType==ScalarType.pvUShort) {
+                short temp[] = myUtil.byteBufferToShortArray(decompressOutBuffer);
+                BasePVUShortArray pvArray = new BasePVUShortArray(new BaseScalarArray(scalarType));
+                pvArray.put(0, numElements, temp, 0);
+                pvUnionValue.set("ushortValue", pvArray);
+            } else if (scalarType==ScalarType.pvInt) {
+                int temp[] = myUtil.byteBufferToIntArray(decompressOutBuffer);
+                BasePVIntArray pvArray = new BasePVIntArray(new BaseScalarArray(scalarType));
+                pvArray.put(0, numElements, temp, 0);
+                pvUnionValue.set("intValue", pvArray);
+            } else if (scalarType==ScalarType.pvUInt) {
+                int temp[] = myUtil.byteBufferToIntArray(decompressOutBuffer);
+                BasePVUIntArray pvArray = new BasePVUIntArray(new BaseScalarArray(scalarType));
+                pvArray.put(0, numElements, temp, 0);
+                pvUnionValue.set("uintValue", pvArray);
+            } else if (scalarType==ScalarType.pvFloat) {
+                float temp[] = myUtil.byteBufferToFloatArray(decompressOutBuffer);
+                BasePVFloatArray pvArray = new BasePVFloatArray(new BaseScalarArray(scalarType));
+                pvArray.put(0, numElements, temp, 0);
+                pvUnionValue.set("floatValue", pvArray);
+            } else if (scalarType==ScalarType.pvDouble) {
+                double temp[] = myUtil.byteBufferToDoubleArray(decompressOutBuffer);
+                BasePVDoubleArray pvArray = new BasePVDoubleArray(new BaseScalarArray(scalarType));
+                pvArray.put(0, numElements, temp, 0);
+                pvUnionValue.set("doubleValue", pvArray);
             }
         }
 
