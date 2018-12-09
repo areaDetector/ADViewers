@@ -512,8 +512,6 @@ public class EPICS_NTNDA_Viewer
             img.show();
             isNewStack = false;
         }
-        
-        
         imagedata = pvUnionValue.get(PVScalarArray.class);
         if(imagedata==null) {
             logMessage("value is not a scalar array",true,true);
