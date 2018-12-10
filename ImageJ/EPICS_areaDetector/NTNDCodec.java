@@ -82,11 +82,7 @@ public class NTNDCodec
             message = "value is not a scalar array";
             return false;
         }
-        int numElements = imagedata.getLength();
-        if (numElements == 0) {
-            message = "array size = 0";
-            return false;
-        }
+
         int compressedSize = (int)ntndArray.getCompressedDataSize().get();
         int uncompressedSize = (int)ntndArray.getUncompressedDataSize().get();
         PVUnion pvCodecParamUnion = pvCodec.getSubField(PVUnion.class, "parameters");
@@ -124,13 +120,13 @@ public class NTNDCodec
                         decompressInBuffer,
                         new NativeLong(compressedSize),
                         decompressOutBuffer,
-                        new NativeLong(numElements));
+                        new NativeLong(uncompressedSize));
             } else {
                 message = "JPEG Compression not supported for ScalerType="+scalarType;
                 return false;
             }
         } else if (codecName.equals("lz4")) {
-            decompressLZ4Dll.LZ4_decompress_fast(decompressInBuffer, decompressOutBuffer, new NativeLong(numElements));
+            decompressLZ4Dll.LZ4_decompress_fast(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize));
         } else if (codecName.equals("bslz4")) {
             int blockSize=0;
             int elemSize;
@@ -146,7 +142,7 @@ public class NTNDCodec
                 message = "BSLZ4 compression not supported for ScalerType="+scalarType;
                 return false;
             }
-            decompressBSLZ4Dll.bshuf_decompress_lz4(decompressInBuffer, decompressOutBuffer, new NativeLong(numElements), 
+            decompressBSLZ4Dll.bshuf_decompress_lz4(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize/elemSize), 
                                      new NativeLong(elemSize), new NativeLong(blockSize));
         } else {
             message = "Unknown compression=" +codecName
@@ -156,15 +152,14 @@ public class NTNDCodec
         }
 
 
-        numElements = uncompressedSize;
         if (scalarType==ScalarType.pvByte) {            
-            byte[] temp = new byte[numElements];
+            byte[] temp = new byte[uncompressedSize];
             decompressOutBuffer.get(temp);
             BasePVByteArray pvArray = new BasePVByteArray(new BaseScalarArray(scalarType));
             pvArray.shareData(temp);
             pvUnionValue.set("byteValue", pvArray);
         } else if (scalarType==ScalarType.pvUByte) { 
-            byte[] temp = new byte[numElements];
+            byte[] temp = new byte[uncompressedSize];
             decompressOutBuffer.get(temp);
             BasePVUByteArray pvArray = new BasePVUByteArray(new BaseScalarArray(scalarType));
             pvArray.shareData(temp);
