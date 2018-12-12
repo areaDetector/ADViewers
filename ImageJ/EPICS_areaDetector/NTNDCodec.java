@@ -104,7 +104,7 @@ public class NTNDCodec
         decompressOutBuffer.position(0);
 
         if (codecName.equals("blosc")) {
-            int status = decompressBloscDll.blosc_decompress(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize);
+            int status = decompressBloscDll.blosc_decompress(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize));
             if (status != uncompressedSize) {
                 message = "blosc_decompress returned status="+status;
                 return false;
@@ -122,7 +122,7 @@ public class NTNDCodec
         } else if (codecName.equals("bslz4")) {
             int blockSize=0;
             int elemSize;
-            switch scalarType {
+            switch (scalarType) {
                 case pvByte:
                 case pvUByte:
                     elemSize = 1;
@@ -153,61 +153,60 @@ public class NTNDCodec
         }
 
 
-        switch scalarType {
-            case pvByte:            
+        switch (scalarType) {
+            case pvByte: {            
                 byte[] temp = new byte[uncompressedSize];
                 decompressOutBuffer.get(temp);
                 BasePVByteArray pvArray = new BasePVByteArray(new BaseScalarArray(scalarType));
                 pvArray.shareData(temp);
                 pvUnionValue.set("byteValue", pvArray);
-                break;
-            case pvUByte: 
+                break; }
+            case pvUByte: { 
                 byte[] temp = new byte[uncompressedSize];
                 decompressOutBuffer.get(temp);
                 BasePVUByteArray pvArray = new BasePVUByteArray(new BaseScalarArray(scalarType));
                 pvArray.shareData(temp);
                 pvUnionValue.set("ubyteValue", pvArray);
-                break;
-            case pvShort:
+                break; }
+            case pvShort: {
                 short temp[] = ByteBufferUtil.byteBufferToShortArray(decompressOutBuffer);
                 BasePVShortArray pvArray = new BasePVShortArray(new BaseScalarArray(scalarType));
                 pvArray.shareData(temp);
                 pvUnionValue.set("shortValue", pvArray);
-                break;
-            case pvUShort:
+                break; }
+            case pvUShort: {
                 short temp[] = ByteBufferUtil.byteBufferToShortArray(decompressOutBuffer);
                 BasePVUShortArray pvArray = new BasePVUShortArray(new BaseScalarArray(scalarType));
                 pvArray.shareData(temp);
                 pvUnionValue.set("ushortValue", pvArray);
-                break;
-            case pvInt:
+                break; }
+            case pvInt: {
                 int temp[] = ByteBufferUtil.byteBufferToIntArray(decompressOutBuffer);
                 BasePVIntArray pvArray = new BasePVIntArray(new BaseScalarArray(scalarType));
                 pvArray.shareData(temp);
                 pvUnionValue.set("intValue", pvArray);
-                break;
-            case pvUInt:
+                break; }
+            case pvUInt: {
                 int temp[] = ByteBufferUtil.byteBufferToIntArray(decompressOutBuffer);
                 BasePVUIntArray pvArray = new BasePVUIntArray(new BaseScalarArray(scalarType));
                 pvArray.shareData(temp);
                 pvUnionValue.set("uintValue", pvArray);
-                break;
-            case pvFloat:
+                break; }
+            case pvFloat: {
                 float temp[] = ByteBufferUtil.byteBufferToFloatArray(decompressOutBuffer);
                 BasePVFloatArray pvArray = new BasePVFloatArray(new BaseScalarArray(scalarType));
                 pvArray.shareData(temp);
                 pvUnionValue.set("floatValue", pvArray);
-                break;
-            case pvDouble:
+                break; }
+            case pvDouble: {
                 double temp[] = ByteBufferUtil.byteBufferToDoubleArray(decompressOutBuffer);
                 BasePVDoubleArray pvArray = new BasePVDoubleArray(new BaseScalarArray(scalarType));
                 pvArray.shareData(temp);
                 pvUnionValue.set("doubleValue", pvArray);
-                break;
+                break; }
             default:
                 message = "Decompression not supported for ScalerType="+scalarType;
                 return false;
-            }
         }
 
         return true;
