@@ -23,6 +23,7 @@ R1-4 (December XXX, 2018)
   same way, with a thin wrapper Java class in ADViewers and the JNA package to call C shareable libraries from Java.
 * Renamed myUtil.java to ByteBufferUtil.java and removed its dependency on JBlosc.
 * Moved the decompression code to its own class, NTNDCodec.java.  This class may be useful in other projects, e.g. CSS.
+  Thanks to Marty Kraimer for this.
 
 R1-3 (December 3, 2018)
 ======================
