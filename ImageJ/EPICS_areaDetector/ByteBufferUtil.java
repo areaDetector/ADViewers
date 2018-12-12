@@ -6,11 +6,23 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.nio.LongBuffer;
-import org.blosc.PrimitiveSizes;
 
 // This is taken from the Util.java in the JBlosc package.
 // That package does not support the "short" data type, so I added those methods.
 // I also forced native byte order in array2ByteBuffer functions.
+
+class PrimitiveSizes {
+	public static final int OBJECT_SHELL_SIZE = 8;
+	public static final int OBJREF_SIZE = 4;
+	public static final int LONG_FIELD_SIZE = 8;
+	public static final int INT_FIELD_SIZE = 4;
+	public static final int SHORT_FIELD_SIZE = 2;
+	public static final int CHAR_FIELD_SIZE = 2;
+	public static final int BYTE_FIELD_SIZE = 1;
+	public static final int BOOLEAN_FIELD_SIZE = 1;
+	public static final int DOUBLE_FIELD_SIZE = 8;
+	public static final int FLOAT_FIELD_SIZE = 4;
+}
 
 public class ByteBufferUtil {
 	public static String getArchPlatform() {
