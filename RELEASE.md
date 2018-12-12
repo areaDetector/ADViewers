@@ -13,6 +13,17 @@ https://github.com/areaDetector/ADViewers/releases .
 Release Notes
 =============
 
+R1-4 (December XXX, 2018)
+======================
+### EPICS_NTNDA_Viewer
+* Added support for lz4 and bitshuffle/lz4 decompresion without Blosc.  This is useful for viewing compressed images
+  directly from the ADEiger driver on the Stream interface.  The arrays never need to be decompressed in the IOC
+  before they exported with NDPluginPva and viewed in ImageJ.
+* Removed the dependency on the JBlosc Java package.  Blosc, JPEG, LZ4, and Bitshuffle/LZ4 are now all handled the
+  same way, with a thin wrapper Java class in ADViewers and the JNA package to call C shareable libraries from Java.
+* Renamed myUtil.java to ByteBufferUtil.java and removed its dependency on JBlosc.
+* Moved the decompression code to its own class, NTNDCodec.java.  This class may be useful in other projects, e.g. CSS.
+
 R1-3 (December 3, 2018)
 ======================
 ### EPICS_NTNDA_Viewer
@@ -37,12 +48,12 @@ R1-3 (December 3, 2018)
     The jblosc file provides a Java wrapper around the blosc shareable library. These files need to be copied to
     ImageJ/plugins/EPICS_areaDetector along with the other files in the ADViewers/ImageJ/EPICS_areaDetector directory.
   * The ADViewers distribution also includes two new .java files,  decompressJPEGDll.java and myUtil.java. 
-    These files need to be compiled once in ImageJ using the `Plugins/Compile and Run ...` menu.  The files
-    are actually just compiled and not run, since they are just support files, not plugins.
     decompressJPEGDll.java is a wrapper around the C JPEG library. 
     myUtil.java is a modified version of Util.java that is included in the JBlosc package.  The version in that
     package lacked support for short (16-bit integer) arrays, and lacked the ability to specify the byte order
     for JNA buffers.
+  * In ImageJ doing "Compile and run ..." on EPICS_NTNDA_Viewer.java will also compile any other required .java files, 
+    these do not need to be manually compiled.
 * Changes to the user interface.  
   * Removed the Connect/Disconnect button.  Typing Enter in the Channel Name field will do a connect.
   * Typing a new Channel Name followed by Enter will disconnect the existing channel and connect the new one.
