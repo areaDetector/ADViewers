@@ -13,8 +13,8 @@ generic image display clients that obtain their data via EPICS Channel
 Access or pvAccess and work with any detector. There are currently three
 such generic clients provided with the areaDetector distribution. The
 first two are plugins for the popular ImageJ Java-based image processing
-program. EPICS_AD_Viewer.java uses EPICS Channel Access, while
-EPICS_NTNDA_Viewer.java uses EPICS V4 pvAccess. The third is an
+program. ``EPICS_AD_Viewer.java`` uses EPICS Channel Access, while
+``EPICS_NTNDA_Viewer.java`` uses EPICS V4 pvAccess. The third is an
 IDL-based viewer which can be run without an IDL license under the IDL
 Virtual Machine. Because ImageJ is free and more widely available and
 used than IDL, future enhancements are more likely to be done on the
@@ -24,9 +24,9 @@ repository <https://github.com/areaDetector/ADViewers>`__
 
 In addition to the ImageJ viewer plugins, there is an ImageJ plugin to
 graphically define the detector/camera readout region, ROIs, and
-overlays (EPICS_AD_Controller.java). Another ImageJ plugin provided with
+overlays (``EPICS_AD_Controller.java``). Another ImageJ plugin provided with
 areaDetector does realtime line profiles with Gaussian peak fitting
-(GaussianProfile.java).
+(``GaussianProfile.java``).
 
 ImageJ Viewers
 --------------
@@ -51,7 +51,7 @@ EPICS_NTNDA_Viewer.java
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 This plugin uses EPICS V4 pvAccess to display NTNDArrays that the
-:doc:`NDPluginPva` sends to EPICS. The
+:doc:`../ADCore/NDPluginPva` sends to EPICS. The
 EPICS_NTNDA_Viewer has a number of significant advantages compared to
 the EPICS_AD_Viewer:
 
@@ -70,9 +70,9 @@ the EPICS_AD_Viewer:
    would need to be 64-bit double, which adds a factor of 8 network
    overhead when viewing 8-bit images. pvAccess changes the data type of
    the NTNDArrays dynamically at run-time, removing this restriction.
--  Channel Access requires setting EPICS_CA_MAX_ARRAY_BYTES, which is a
+-  Channel Access requires setting ``EPICS_CA_MAX_ARRAY_BYTES``, which is a
    source of considerable confusion and frustration for users. pvAccess
-   does not use EPICS_CA_MAX_ARRAY_BYTES and there is no restriction on
+   does not use ``EPICS_CA_MAX_ARRAY_BYTES`` and there is no restriction on
    the size of the NTNDArrays.
 -  The performance using pvAccess is significantly better than using
    Channel Access. NDPluginPva is 5-10 times faster than
@@ -84,9 +84,9 @@ To use these ImageJ plugins do the following:
 -  Install ImageJ from `ImageJ download
    site <https://imagej.nih.gov/ij/download.html>`__. If installing on
    Windows I recommend installing the version bundled with Java 1.8.
--  | Copy the entire directory ADViewers/ImageJ/EPICS_areaDetector to
-     the plugins/ directory in the ImageJ installation location. On OS X
-     this can be done with the command:
+-  Copy the entire directory ADViewers/ImageJ/EPICS_areaDetector to
+   the plugins/ directory in the ImageJ installation location. On OS X
+   this can be done with the command:
 
    ::
 
@@ -96,7 +96,7 @@ To use these ImageJ plugins do the following:
 -  The ImageJ plugins are supplied as Java source code, so you will need
    to compile the Java code. This can be done in the ImageJ
    Plugins/Compile and Run menu. Browse for the appropriate source file
-   (EPICS_AD_Viewer.java, EPICS_NTNDA_Viewer.java, etc.) to compile and
+   (``EPICS_AD_Viewer.java``, ``EPICS_NTNDA_Viewer.java``, etc.) to compile and
    run it. The compilation step only needs to be done once, creating the
    required .class files.
 -  For the EPICS_NTNDA_Viewer to decompress arrays these additional
@@ -106,11 +106,11 @@ To use these ImageJ plugins do the following:
       not appear to be native Java code for blosc decompression, and the
       native Java code for jpeg decompression is signifcantly more
       complicated (and probably slower) than just using the C library.
-      The required libraries on Linux are decompressJPEG.so, libjpeg.so,
-      libblosc.so, and libzlib.so. On Windows the libraries are
-      decompressJPEG.dll, jpeg.dll, blosc.dll, and zlib.dll.
+      The required libraries on Linux are ``decompressJPEG.so``,``libjpeg.so``,
+      ``libblosc.so``, and ``libzlib.so``. On Windows the libraries are
+      ``decompressJPEG.dll``, ``jpeg.dll``, ``blosc.dll``, and ``zlib.dll``.
    -  These libraries can all be built as part of
-      areaDetector/ADSupport, and this is recommended. If the ImageJ
+      ``areaDetector/ADSupport``, and this is recommended. If the ImageJ
       viewers are being installed at a location which is not building
       ADSupport then pre-built versions of the ADSupport libraries are
       available at
@@ -118,33 +118,37 @@ To use these ImageJ plugins do the following:
       Both tar and zip files are available there.
    -  ImageJ needs to be able to find these shareable libraries to
       handle compressed arrays. One way to do this is to add
-      [YOUR_LOCATION]areaDetector/ADSupport/lib/linux-x86_64/ to the
-      LD_LIBRARY_PATH environment variable on Linux, and
-      [YOUR_LOCATION]areaDetector/ADSupport/lib/windows-x86 to the PATH
+      ``[YOUR_LOCATION]areaDetector/ADSupport/lib/linux-x86_64/`` to the
+      ``LD_LIBRARY_PATH`` environment variable on Linux, and
+      ``[YOUR_LOCATION]areaDetector/ADSupport/lib/windows-x86`` to the ``PATH``
       environment variable on Windows. This assumes that ADSupport was
-      built using WITH_BLOSC=YES, WITH_JPEG=YES, BLOSC_EXTERNAL=NO, and
-      JPEG_EXTERNAL=NO.
+      built using ``WITH_BLOSC=YES``, ``WITH_JPEG=YES``, ``BLOSC_EXTERNAL=NO``, and
+      ``JPEG_EXTERNAL=NO``.
    -  In principle another way to do this is to set the jna.library.path
       property to point to that directory when starting ImageJ, e.g.
-      ``java -Djna.library.path=/home/epics/support/areaDetector/ADSupport/lib/linux-x86_64             -jar ij.jar``
+
+      ::
+
+        java -Djna.library.path=/home/epics/support/areaDetector/ADSupport/lib/linux-x86_64 -jar ij.jar
+
       However, ImageJ is normally started via an executable file rather
-      than a script invoking ij.jar on both Linux and Windows, and
+      than a script invoking ``ij.jar`` on both Linux and Windows, and
       loading via the above command requires other settings as well to
       make ImageJ work properly.
    -  The ADViewers distribution includes two new jar files,
-      jna-5.1.0.jar and jblosc-1.0.1.dev.jar. The jna file provides
+      ``jna-5.1.0.jar`` and ``jblosc-1.0.1.dev.jar``. The jna file provides
       support for Java Native Access, which is the interface to calling
       the shareable libraries. The jblosc file provides a Java wrapper
       around the blosc shareable library. These files need to be copied
-      to ImageJ/plugins/EPICS_areaDetector along with the other files in
-      the ADViewers/ImageJ/EPICS_areaDetector directory.
+      to ``ImageJ/plugins/EPICS_areaDetector`` along with the other files in
+      the ``ADViewers/ImageJ/EPICS_areaDetector`` directory.
    -  The ADViewers distribution also includes two new .java files,
-      decompressJPEGDll.java and myUtil.java. These files need to be
+      ``decompressJPEGDll.java`` and ``myUtil.java``. These files need to be
       compiled once in ImageJ using the \`Plugins/Compile and Run ...\`
       menu. The files are actually just compiled and not run, since they
-      are just support files, not plugins. decompressJPEGDll.java is a
-      wrapper around the C JPEG library. myUtil.java is a modified
-      version of Util.java that is included in the JBlosc package. The
+      are just support files, not plugins. ``decompressJPEGDll.java`` is a
+      wrapper around the C JPEG library. ``myUtil.java`` is a modified
+      version of ``Util.java`` that is included in the JBlosc package. The
       version in that package lacked support for short (16-bit integer)
       arrays, and lacked the ability to specify the byte order for JNA
       buffers.
@@ -153,7 +157,7 @@ To use these ImageJ plugins do the following:
    Access and pvAccess. This means that unlike the IDL Viewer, no
    C-based shareable-libraries or DLLs are needed. Prior to areaDetector
    R1-9 the ImageJ plugin used the standard Java mechanism for setting
-   the EPICS Channel Access settings using a JCALibrary.properties file.
+   the EPICS Channel Access settings using a ``JCALibrary.properties`` file.
    This was often confusing because it uses a different mechanism than
    all C-based Channel Access clients, and because multiple
    JCALibrary.Properties files might be found in the Java search path,
@@ -161,19 +165,19 @@ To use these ImageJ plugins do the following:
    Starting with areaDetector R1-9 the ImageJ plugin uses the same EPICS
    environment variables as Channel Access clients that use the C
    Channel Access library. Note that for EPICS_AD_Viewer the environment
-   variable EPICS_CA_MAX_ARRAY_BYTES almost always needs to be set,
+   variable ``EPICS_CA_MAX_ARRAY_BYTES`` almost always needs to be set,
    because the default value of 16KB is rarely large enough for images.
-   EPICS_CA_MAX_ARRAY_BYTES must be at least as large as the largest
+   ``EPICS_CA_MAX_ARRAY_BYTES`` must be at least as large as the largest
    image size in bytes that you want to display. However, it is
-   important not to set EPICS_CA_MAX_ARRAY_BYTES to an unnecessarily
+   important not to set ``EPICS_CA_MAX_ARRAY_BYTES`` to an unnecessarily
    large value like 100 MB, because the EPICS CA library allocates
-   buffers of size EPICS_CA_MAX_ARRAY_BYTES whenever the required buffer
-   size is larger than 16KB. Remember also that EPICS_CA_MAX_ARRAY_BYTES
+   buffers of size ``EPICS_CA_MAX_ARRAY_BYTES`` whenever the required buffer
+   size is larger than 16KB. Remember also that ``EPICS_CA_MAX_ARRAY_BYTES``
    must be set for both the IOC process and for the ImageJ client
    process. When using the V4 EPICS_NTNDA_Viewer it is not necessary to
-   set EPICS_CA_MAX_ARRAY_BYTES on either the ImageJ client or the IOC
+   set ``EPICS_CA_MAX_ARRAY_BYTES`` on either the ImageJ client or the IOC
    processes.
--  Start ImageJ and go to the Plugins/EPICS_areaDetector/EPICS_AD_Viewer
+-  Start ImageJ and go to the ``Plugins/EPICS_areaDetector/EPICS_AD_Viewer``
    or EPICS_NTNDA_Viewer to run the plugin.
 -  For the EPICS_AD_Viewer type in PV prefix for the NDStdArrays plugin
    for the detector to be viewed (e.g. 13SIM1:image1:).
