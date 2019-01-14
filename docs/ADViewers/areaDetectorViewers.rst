@@ -28,8 +28,6 @@ overlays (EPICS_AD_Controller.java). Another ImageJ plugin provided with
 areaDetector does realtime line profiles with Gaussian peak fitting
 (GaussianProfile.java).
 
-.. _ImageJViewers:
-
 ImageJ Viewers
 --------------
 
@@ -211,82 +209,44 @@ repeatedly will step through several brightness/contrast settings.
 
 The following is the main ImageJ window.
 
-.. raw:: html
+.. figure:: ImageJ_Main_Screen.png
+    :align: center
 
-   <div style="text-align: center">
-
-.. rubric:: ImageJ main window.
-   :name: imagej-main-window.
-
-|ImageJ_Main_Screen.png|
-
-.. raw:: html
-
-   </div>
+    ImageJ main window.
 
 The following is the EPICS_AD_Viewer plugin control, located in the
 ImageJ "Plugins/EPICS_areaDetector/EPICS AD Viewer" menu.
 
-.. raw:: html
+.. figure:: ImageJ_EPICS_AD_Viewer.png
+    :align: center
 
-   <div style="text-align: center">
-
-.. rubric:: ImageJ EPICS_AD_Viewer plugin control window
-   :name: imagej-epics_ad_viewer-plugin-control-window
-
-|ImageJ_EPICS_AD_Viewer.png|
-
-.. raw:: html
-
-   </div>
+    ImageJ EPICS_AD_Viewer plugin control window
 
 The following is the EPICS_NTNDA_Viewer plugin control, located in the
 ImageJ "Plugins/EPICS_areaDetector/EPICS NTNDA Viewer" menu.
 
-.. raw:: html
+.. figure:: ImageJ_EPICS_NTNDA_Viewer.png
+    :align: center
 
-   <div style="text-align: center">
+    ImageJ EPICS_NTNDA_Viewer plugin control window
 
-.. rubric:: ImageJ EPICS_NTNDA_Viewer plugin control window
-   :name: imagej-epics_ntnda_viewer-plugin-control-window
-
-|ImageJ_EPICS_NTNDA_Viewer.png|
-
-.. raw:: html
-
-   </div>
 
 The following is the image display window, which will appear when the
 Start button is pressed in the EPICS_AD_Viewer or EPICS_NTNDA_Viewer
 control windows.
 
-.. raw:: html
+.. figure:: ImageJ_EPICS_AD_Viewer_display.jpg
+    :align: center
 
-   <div style="text-align: center">
+    ImageJ EPICS_AD_Viewer/EPICS_NTNDA_Viewer plugin display
+    window with line selection
 
-.. rubric:: ImageJ EPICS_AD_Viewer/EPICS_NTNDA_Viewer plugin display
-   window with line selection
-   :name: imagej-epics_ad_viewerepics_ntnda_viewer-plugin-display-window-with-line-selection
 
-|ImageJ_EPICS_AD_Viewer_display.jpg|
+.. figure:: ImageJ_EPICS_AD_Viewer_DynamicProfile.png
+    :align: center
 
-.. raw:: html
-
-   </div>
-
-.. raw:: html
-
-   <div style="text-align: center">
-
-.. rubric:: ImageJ EPICS_AD_Viewer dynamic line profile of the above
-   image
-   :name: imagej-epics_ad_viewer-dynamic-line-profile-of-the-above-image
-
-|ImageJ_EPICS_AD_Viewer_DynamicProfile.png|
-
-.. raw:: html
-
-   </div>
+    ImageJ EPICS_AD_Viewer dynamic line profile of the above
+    image
 
 The following is a screen shot when using the EPICS_NTNDA_Viewer to
 display compressed NTNDArrays. The source is the simDetector running on
@@ -305,21 +265,11 @@ were transmitting uncompressed arrays. The Windows machine has 8 cores,
 and ImageJ is using approximately 1 core to decompress the arrays and
 update the display at 95 frames/s.
 
-.. raw:: html
+.. figure:: ImageJ_EPICS_NTNDA_Viewer_Decompress.png
+    :align: center
 
-   <div style="text-align: center">
-
-.. rubric:: Screen ImageJ EPICS_NTNDA_Viewer on a Windows machine
-   displaying Blosc/ZLIB compressed images
-   :name: screen-imagej-epics_ntnda_viewer-on-a-windows-machine-displaying-blosczlib-compressed-images
-
-|ImageJ_EPICS_NTNDA_Viewer_Decompress.png|
-
-.. raw:: html
-
-   </div>
-
-.. _ImageJController:
+    Screen ImageJ EPICS_NTNDA_Viewer on a Windows machine
+    displaying Blosc/ZLIB compressed images
 
 ImageJ Controller (EPICS_AD_Controller.java)
 --------------------------------------------
@@ -363,18 +313,10 @@ common use case.
 The following is the EPICS_AD_Controller plugin control, located in the
 ImageJ "Plugins/EPICS_areaDetector/EPICS AD Controller" menu.
 
-.. raw:: html
+.. figure:: ImageJ_EPICS_AD_Controller.png
+    :align: center
 
-   <div style="text-align: center">
-
-.. rubric:: ImageJ EPICS_AD_Controller plugin control window
-   :name: imagej-epics_ad_controller-plugin-control-window
-
-|ImageJ_EPICS_AD_Controller.png|
-
-.. raw:: html
-
-   </div>
+    ImageJ EPICS_AD_Controller plugin control window
 
 The following are the controls on the EPICS_AD_Controller screen:
 
@@ -416,19 +358,11 @@ The following is the EPICS_AD_Viewer image display window with an
 ellipse overlay that was defined using an ImageJ rectangular ROI and
 EPICS_AD_Controller.
 
-.. raw:: html
+.. figure:: ImageJ_EPICS_AD_Controller_Overlay.png
+    :align: center
 
-   <div style="text-align: center">
-
-.. rubric:: ImageJ EPICS_AD_Viewer plugin display window with
-   rectangular Image ROI defining an elliptical overlay NDPluginOverlay
-   :name: imagej-epics_ad_viewer-plugin-display-window-with-rectangular-image-roi-defining-an-elliptical-overlay-ndpluginoverlay
-
-|ImageJ_EPICS_AD_Controller_Overlay.png|
-
-.. raw:: html
-
-   </div>
+    ImageJ EPICS_AD_Viewer plugin display window with
+    rectangular Image ROI defining an elliptical overlay NDPluginOverlay
 
 The EPICS_AD_Control plugin must be compiled in the same manner
 described for EPICS_AD_Viewer above.
@@ -448,21 +382,11 @@ then starting Plugins/EPICS_areaDetector/Gaussian Profiler.
 The following is the GaussianProfiler window plotting the profile of the
 peak shown above in the EPICS_AD_Controller image.
 
-.. raw:: html
+.. figure:: ImageJ_GaussianProfiler.png
+    :align: center
 
-   <div style="text-align: center">
-
-.. rubric:: ImageJ GaussianProfiler plotting a line through the peak
-   shown above in the EPICS_AD_Controller image
-   :name: imagej-gaussianprofiler-plotting-a-line-through-the-peak-shown-above-in-the-epics_ad_controller-image
-
-|ImageJ_GaussianProfiler.png|
-
-.. raw:: html
-
-   </div>
-
-.. _IDLViewer:
+    ImageJ GaussianProfiler plotting a line through the peak
+    shown above in the EPICS_AD_Controller image
 
 IDL Viewer
 ----------
@@ -543,35 +467,19 @@ actually being displayed by IDL is shown. There is a status window that
 shows whether the EPICS PVs are connected and the time the last was
 array received, updated once per second.
 
-.. raw:: html
+.. figure:: IDL_epics_ad_display.png
+    :align: center
 
-   <div style="text-align: center">
-
-.. rubric:: Main window for IDL epics_ad_display
-   :name: main-window-for-idl-epics_ad_display
-
-|IDL_epics_ad_display.png|
-
-.. raw:: html
-
-   </div>
+    Main window for IDL epics_ad_display
 
 ``epics_ad_display`` can use the simple IDL routine ``tv`` to display
 the images. This is the fastest mode, and results in a non-scalable
 unadorned window.
 
-.. raw:: html
+.. figure:: IDL_epics_ad_display_tv.jpg
+    :align: center
 
-   <div style="text-align: center">
-
-.. rubric:: IDL epics_ad_display using the IDL ``tv`` routine.
-   :name: idl-epics_ad_display-using-the-idl-tv-routine.
-
-|IDL_epics_ad_display_tv.jpg|
-
-.. raw:: html
-
-   </div>
+    IDL epics_ad_display using the IDL ``tv`` routine.
 
 ``epics_ad_display`` can also use the routine
 `image_display.pro <http://cars.uchicago.edu/software/IDL/imaging_routines.html#IMAGE_DISPLAY>`__
@@ -583,24 +491,14 @@ RGB1, RGB2, or RGB3 NDArrays). It can however, display Mono data in
 false color. The following is an example of ``image_display`` displaying
 an image from the simulation detector.
 
-.. raw:: html
+.. figure:: simDetector_image_display.png
+    :align: center
 
-   <div style="text-align: center">
-
-.. rubric:: epics_ad_display using the image_display routine
-   :name: epics_ad_display-using-the-image_display-routine
-
-|simDetector_image_display.png|
-
-.. raw:: html
-
-   </div>
+    epics_ad_display using the image_display routine
 
 The Viewers/IDL directory also contains an IDL function to read the
 areaDetector netCDF files. This is described in the `NDPluginFile
 netCDF <NDPluginFile.html#netCDF>`__ documentation.
-
-.. _Troubleshooting:
 
 Troubleshooting
 ---------------
@@ -638,18 +536,4 @@ collects them check the following:
    -  For EPICS_NTNDA_Viewer the NDPluginPva plugin (normally called
       Pva1:) has the EnableCallbacks PV set to Yes, and that the
       MinCallbackTime PV is not set too large.
-
-.. |ImageJ_Main_Screen.png| image:: ImageJ_Main_Screen.png
-.. |ImageJ_EPICS_AD_Viewer.png| image:: ImageJ_EPICS_AD_Viewer.png
-.. |ImageJ_EPICS_NTNDA_Viewer.png| image:: ImageJ_EPICS_NTNDA_Viewer.png
-.. |ImageJ_EPICS_AD_Viewer_display.jpg| image:: ImageJ_EPICS_AD_Viewer_display.jpg
-.. |ImageJ_EPICS_AD_Viewer_DynamicProfile.png| image:: ImageJ_EPICS_AD_Viewer_DynamicProfile.png
-.. |ImageJ_EPICS_NTNDA_Viewer_Decompress.png| image:: ImageJ_EPICS_NTNDA_Viewer_Decompress.png
-   :width: 1200px
-.. |ImageJ_EPICS_AD_Controller.png| image:: ImageJ_EPICS_AD_Controller.png
-.. |ImageJ_EPICS_AD_Controller_Overlay.png| image:: ImageJ_EPICS_AD_Controller_Overlay.png
-.. |ImageJ_GaussianProfiler.png| image:: ImageJ_GaussianProfiler.png
-.. |IDL_epics_ad_display.png| image:: IDL_epics_ad_display.png
-.. |IDL_epics_ad_display_tv.jpg| image:: IDL_epics_ad_display_tv.jpg
-.. |simDetector_image_display.png| image:: simDetector_image_display.png
 
