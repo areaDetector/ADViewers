@@ -1,0 +1,545 @@
+areaDetector Viewers
+====================
+:author: Mark Rivers, Tim Madden, Marty Kraimer
+:affiliation: University of Chicago, Advanced Photon Source
+
+.. contents:: Contents
+
+Overview
+--------
+
+One of the advantages of areaDetector is that it enables the use of
+generic image display clients that obtain their data via EPICS Channel
+Access or pvAccess and work with any detector. There are currently three
+such generic clients provided with the areaDetector distribution. The
+first two are plugins for the popular ImageJ Java-based image processing
+program. ``EPICS_AD_Viewer.java`` uses EPICS Channel Access, while
+``EPICS_NTNDA_Viewer.java`` uses EPICS V4 pvAccess. The third is an
+IDL-based viewer which can be run without an IDL license under the IDL
+Virtual Machine. Because ImageJ is free and more widely available and
+used than IDL, future enhancements are more likely to be done on the
+ImageJ plugins rather than the IDL viewer. These viewers are contained
+in the areaDetector distribution in the `ADViewers
+repository <https://github.com/areaDetector/ADViewers>`__
+
+In addition to the ImageJ viewer plugins, there is an ImageJ plugin to
+graphically define the detector/camera readout region, ROIs, and
+overlays (``EPICS_AD_Controller.java``). Another ImageJ plugin provided with
+areaDetector does realtime line profiles with Gaussian peak fitting
+(``GaussianProfile.java``).
+
+ImageJ Viewers
+--------------
+
+These are plugin for the popular `ImageJ <http://rsbweb.nih.gov/ij/>`__
+program that can be used to display 2-dimensional array data. Both of
+these plugins were originally written by Tim Madden from APS. Both
+support all NDArray data types and color modes, i.e. Mono, RGB1 (pixel
+interleave), RGB2 (row interleave) and RGB3 (plane interleave). The
+plugin directory also includes a plugin written elsewhere for reading
+and writing netCDF files, so ImageJ can be used to display images and
+image sequences (movies) saved with the NDFileNetCDF plugin.
+
+EPICS_AD_Viewer.java
+~~~~~~~~~~~~~~~~~~~~
+
+This plugin uses EPICS Channel Access to display images via waveform
+records that the :doc:`NDPluginStdArrays` sends
+to EPICS.
+
+EPICS_NTNDA_Viewer.java
+~~~~~~~~~~~~~~~~~~~~~~~
+
+This plugin uses EPICS V4 pvAccess to display NTNDArrays that the
+:doc:`../ADCore/NDPluginPva` sends to EPICS. The
+EPICS_NTNDA_Viewer has a number of significant advantages compared to
+the EPICS_AD_Viewer:
+
+-  The NTNDArray data is transmitted "atomically" over the network,
+   rather than using separate PVs for the image data and the metadata
+   (image dimensions, color mode, etc.)
+-  NTNDArrays and pvAccess support sending compressed arrays over the
+   network. Beginning with ADViewers R1-3 the EPICS_NTNDA_Viewer can
+   decompress the NTNDArrays and display them. This can significantly
+   reduce the required network bandwith when the IOC and the viewer are
+   running on different machines.
+-  When using Channel Access the data type of the waveform record is
+   fixed at iocInit, and cannot be changed at runtime. This means, for
+   example, that if the user might want to view both 8-bit images,
+   16-bit images, and 64-bit double FFT images then the waveform record
+   would need to be 64-bit double, which adds a factor of 8 network
+   overhead when viewing 8-bit images. pvAccess changes the data type of
+   the NTNDArrays dynamically at run-time, removing this restriction.
+-  Channel Access requires setting ``EPICS_CA_MAX_ARRAY_BYTES``, which is a
+   source of considerable confusion and frustration for users. pvAccess
+   does not use ``EPICS_CA_MAX_ARRAY_BYTES`` and there is no restriction on
+   the size of the NTNDArrays.
+-  The performance using pvAccess is significantly better than using
+   Channel Access. NDPluginPva is 5-10 times faster than
+   NDPluginStdArrays, and ImageJ can display 1.5-2 times more images/s
+   with pvAccess than with Channel Access.
+
+To use these ImageJ plugins do the following:
+
+-  Install ImageJ from `ImageJ download
+   site <https://imagej.nih.gov/ij/download.html>`__. If installing on
+   Windows I recommend installing the version bundled with Java 1.8.
+-  Copy the entire directory ADViewers/ImageJ/EPICS_areaDetector to
+   the plugins/ directory in the ImageJ installation location. On OS X
+   this can be done with the command:
+
+   ::
+
+          cp -r Viewers/ImageJ/EPICS_areaDetector /Applications/ImageJ/plugins
+            
+
+-  The ImageJ plugins are supplied as Java source code, so you will need
+   to compile the Java code. This can be done in the ImageJ
+   Plugins/Compile and Run menu. Browse for the appropriate source file
+   (``EPICS_AD_Viewer.java``, ``EPICS_NTNDA_Viewer.java``, etc.) to compile and
+   run it. The compilation step only needs to be done once, creating the
+   required .class files.
+-  For the EPICS_NTNDA_Viewer to decompress arrays these additional
+   steps are required:
+
+   -  The decompression is done using the C libraries because there does
+      not appear to be native Java code for blosc decompression, and the
+      native Java code for jpeg decompression is signifcantly more
+      complicated (and probably slower) than just using the C library.
+      The required libraries on Linux are ``decompressJPEG.so``,``libjpeg.so``,
+      ``libblosc.so``, and ``libzlib.so``. On Windows the libraries are
+      ``decompressJPEG.dll``, ``jpeg.dll``, ``blosc.dll``, and ``zlib.dll``.
+   -  These libraries can all be built as part of
+      ``areaDetector/ADSupport``, and this is recommended. If the ImageJ
+      viewers are being installed at a location which is not building
+      ADSupport then pre-built versions of the ADSupport libraries are
+      available at
+      `cars.uchicago.edu/software/pub/ADSupport <http://cars.uchicago.edu/software/pub/ADSupport>`__.
+      Both tar and zip files are available there.
+   -  ImageJ needs to be able to find these shareable libraries to
+      handle compressed arrays. One way to do this is to add
+      ``[YOUR_LOCATION]areaDetector/ADSupport/lib/linux-x86_64/`` to the
+      ``LD_LIBRARY_PATH`` environment variable on Linux, and
+      ``[YOUR_LOCATION]areaDetector/ADSupport/lib/windows-x86`` to the ``PATH``
+      environment variable on Windows. This assumes that ADSupport was
+      built using ``WITH_BLOSC=YES``, ``WITH_JPEG=YES``, ``BLOSC_EXTERNAL=NO``, and
+      ``JPEG_EXTERNAL=NO``.
+   -  In principle another way to do this is to set the jna.library.path
+      property to point to that directory when starting ImageJ, e.g.
+
+      ::
+
+        java -Djna.library.path=/home/epics/support/areaDetector/ADSupport/lib/linux-x86_64 -jar ij.jar
+
+      However, ImageJ is normally started via an executable file rather
+      than a script invoking ``ij.jar`` on both Linux and Windows, and
+      loading via the above command requires other settings as well to
+      make ImageJ work properly.
+   -  The ADViewers distribution includes two new jar files,
+      ``jna-5.1.0.jar`` and ``jblosc-1.0.1.dev.jar``. The jna file provides
+      support for Java Native Access, which is the interface to calling
+      the shareable libraries. The jblosc file provides a Java wrapper
+      around the blosc shareable library. These files need to be copied
+      to ``ImageJ/plugins/EPICS_areaDetector`` along with the other files in
+      the ``ADViewers/ImageJ/EPICS_areaDetector`` directory.
+   -  The ADViewers distribution also includes two new .java files,
+      ``decompressJPEGDll.java`` and ``myUtil.java``. These files need to be
+      compiled once in ImageJ using the \`Plugins/Compile and Run ...\`
+      menu. The files are actually just compiled and not run, since they
+      are just support files, not plugins. ``decompressJPEGDll.java`` is a
+      wrapper around the C JPEG library. ``myUtil.java`` is a modified
+      version of ``Util.java`` that is included in the JBlosc package. The
+      version in that package lacked support for short (16-bit integer)
+      arrays, and lacked the ability to specify the byte order for JNA
+      buffers.
+
+-  The ImageJ viewers use the pure-Java libraries for EPICS Channel
+   Access and pvAccess. This means that unlike the IDL Viewer, no
+   C-based shareable-libraries or DLLs are needed. Prior to areaDetector
+   R1-9 the ImageJ plugin used the standard Java mechanism for setting
+   the EPICS Channel Access settings using a ``JCALibrary.properties`` file.
+   This was often confusing because it uses a different mechanism than
+   all C-based Channel Access clients, and because multiple
+   JCALibrary.Properties files might be found in the Java search path,
+   making it hard to figure out where a setting was coming from.
+   Starting with areaDetector R1-9 the ImageJ plugin uses the same EPICS
+   environment variables as Channel Access clients that use the C
+   Channel Access library. Note that for EPICS_AD_Viewer the environment
+   variable ``EPICS_CA_MAX_ARRAY_BYTES`` almost always needs to be set,
+   because the default value of 16KB is rarely large enough for images.
+   ``EPICS_CA_MAX_ARRAY_BYTES`` must be at least as large as the largest
+   image size in bytes that you want to display. However, it is
+   important not to set ``EPICS_CA_MAX_ARRAY_BYTES`` to an unnecessarily
+   large value like 100 MB, because the EPICS CA library allocates
+   buffers of size ``EPICS_CA_MAX_ARRAY_BYTES`` whenever the required buffer
+   size is larger than 16KB. Remember also that ``EPICS_CA_MAX_ARRAY_BYTES``
+   must be set for both the IOC process and for the ImageJ client
+   process. When using the V4 EPICS_NTNDA_Viewer it is not necessary to
+   set ``EPICS_CA_MAX_ARRAY_BYTES`` on either the ImageJ client or the IOC
+   processes.
+-  Start ImageJ and go to the ``Plugins/EPICS_areaDetector/EPICS_AD_Viewer``
+   or EPICS_NTNDA_Viewer to run the plugin.
+-  For the EPICS_AD_Viewer type in PV prefix for the NDStdArrays plugin
+   for the detector to be viewed (e.g. 13SIM1:image1:).
+-  For the EPICS_NTNDA_Viewer type in the PV name for the NDPluginPva
+   plugin for the detector to be viewed (e.g. 13SIM1:Pva1:Image).
+-  The background color of the PV prefix or PV name will change to green
+   and you should see message saying that the PVs have connected. If you
+   don't the most likely problem is a firewall.
+-  Press the Start button to begin displaying images.
+
+The control windows for EPICS_AD_Viewer and EPICS_NTNDA_Viewer are shown
+below. The array dimensions and the number of frames per second actually
+being displayed by ImageJ is shown. There is a status window that shows
+whether the EPICS PVs are connected and the number of arrays received
+since the last update, which is every 2 seconds.
+
+Press the Snap button to make a copy of the current frame in a new
+window. ImageJ can then be used to process, annotate, etc. that image.
+
+To capture a sequence of images into an ImageJ "stack" select "Capture
+To Stack". The image sequence will be stored in the ImageJ buffer and a
+scroll bar will appear to allow you to scroll through the images. The
+stack can be saved to disk in a large number of formats, including AVI.
+
+Note that beginning with ADCore R2-6 the plugins automatically resets
+the image image brightness and contrast when creating a new window. This
+will often provide a reasonable values. To optimize the brightness and
+contrast use the Image/Adjust/Brightness/Control menu in ImageJ. The
+keyboard shortcut for this is Control+Shift+C, which is worth
+remembering. Opening the Brightness and Contrast window will first do an
+autoscaling, which is often quite good. Pressing the Auto button
+repeatedly will step through several brightness/contrast settings.
+
+The following is the main ImageJ window.
+
+.. figure:: ImageJ_Main_Screen.png
+    :align: center
+
+    ImageJ main window.
+
+The following is the EPICS_AD_Viewer plugin control, located in the
+ImageJ "Plugins/EPICS_areaDetector/EPICS AD Viewer" menu.
+
+.. figure:: ImageJ_EPICS_AD_Viewer.png
+    :align: center
+
+    ImageJ EPICS_AD_Viewer plugin control window
+
+The following is the EPICS_NTNDA_Viewer plugin control, located in the
+ImageJ "Plugins/EPICS_areaDetector/EPICS NTNDA Viewer" menu.
+
+.. figure:: ImageJ_EPICS_NTNDA_Viewer.png
+    :align: center
+
+    ImageJ EPICS_NTNDA_Viewer plugin control window
+
+
+The following is the image display window, which will appear when the
+Start button is pressed in the EPICS_AD_Viewer or EPICS_NTNDA_Viewer
+control windows.
+
+.. figure:: ImageJ_EPICS_AD_Viewer_display.jpg
+    :align: center
+
+    ImageJ EPICS_AD_Viewer/EPICS_NTNDA_Viewer plugin display
+    window with line selection
+
+
+.. figure:: ImageJ_EPICS_AD_Viewer_DynamicProfile.png
+    :align: center
+
+    ImageJ EPICS_AD_Viewer dynamic line profile of the above
+    image
+
+The following is a screen shot when using the EPICS_NTNDA_Viewer to
+display compressed NTNDArrays. The source is the simDetector running on
+a Linux machine, generating 1024x1024 UInt8 images at about 95 frames/s.
+This is about 95MB/s or 760 Mb/s. The NDPluginCodec is compressing using
+the Blosc ZSTD compressor with compression level=5 and Bit shuffle.
+Actually Bit shuffle does nothing in 8-bit mode, so this could also be
+None. There are 6 Blosc threads. The compression factor is 151, i.e. the
+output arrays are 151 times smaller than the uncompressed arrays. The
+Codec output goes to the NDPluginPva plugin which serves the NTNDArrays
+on the network. The ImageJ viewer is running on a Windows machine and is
+decompressing the arrays and displaying them at the full 95 frames/s
+rate. The Windows Task Manager Network Monitor shows that the actual
+network utilization is only 6.5 Mb/s, compared to over 760 Mb/s if we
+were transmitting uncompressed arrays. The Windows machine has 8 cores,
+and ImageJ is using approximately 1 core to decompress the arrays and
+update the display at 95 frames/s.
+
+.. figure:: ImageJ_EPICS_NTNDA_Viewer_Decompress.png
+    :align: center
+
+    Screen ImageJ EPICS_NTNDA_Viewer on a Windows machine
+    displaying Blosc/ZLIB compressed images
+
+ImageJ Controller (EPICS_AD_Controller.java)
+--------------------------------------------
+
+This is an ImageJ plugin which can be used to graphically control the
+following:
+
+-  The readout region of the detector or camera.
+-  The size and position of an ROI (NDPluginROI).
+-  The size and position of an overlay (NDPluginOverlay).
+
+Normally this plugin will be used together with the EPICS_AD_Viewer
+plugin described above. However, that is not required. For example, the
+ImageJ window used with EPICS_AD_Controller could be a window read from
+a TIFF file that the detector previously wrote.
+
+The detector and plugin chain can include any of the following elements
+and settings:
+
+-  Camera/detector (MinX, MinY, SizeX, SizeY, BinX, BinY, ReverseX,
+   ReverseY)
+-  Transform plugin (NDPluginTransform) (Type, i.e. the transform
+   operation None, Rot90, Mirror, etc.)
+-  ROI plugin (NDPluginROI) (MinX, MinY, SizeX, SizeY, BinX, BinY,
+   ReverseX, ReverseY))
+-  Overlay plugin (NDPluginOverlay)
+-  NDPluginStdArrays plugin (used by EPICS_AD_Viewer to get images)
+
+All of the above components are optional, they do not need to be
+present. However, the components that are present must be in the above
+order in the "viewing" plugin chain. In other words the Transform plugin
+must come before the ROI and Overlay plugins, and the ROI plugin must
+come before the Overlay plugin. For the Transform and ROI plugins there
+is a flag that allows selecting whether or not this plugin is included
+the plugin chain. Note that this flag does not control the plugin chain,
+rather it must be set to correctly reflect the actual setting of the
+plugin chain. It is possible to use EPICS_AD_Control to control the ROI
+without the ROI plugin being in the plugin chain. In fact this is a
+common use case.
+
+The following is the EPICS_AD_Controller plugin control, located in the
+ImageJ "Plugins/EPICS_areaDetector/EPICS AD Controller" menu.
+
+.. figure:: ImageJ_EPICS_AD_Controller.png
+    :align: center
+
+    ImageJ EPICS_AD_Controller plugin control window
+
+The following are the controls on the EPICS_AD_Controller screen:
+
+-  String input controls for the EPICS PV prefixes for the Camera,
+   Transform plugin, ROI plugin, and Overlay plugin.
+-  "Output PVs" combo box control that selects which component will be
+   defined when the Set button is pushed. Choices are "Camera", "ROI",
+   and "Overlay".
+-  "Set" control button. Pressing this button calculates the coordinates
+   of the component to be defined and writes the values to the desired
+   PVs.
+-  "Reset camera region" control button. Pressing this button resets the
+   MinX and MinY of the camera to 0 and sets SizeX and SizeY to the
+   maximum image size (MaxSizeX, MaxSizeY). Note that it does not modify
+   the camera BinX, BinY, ReverseX, or ReverseY.
+-  "Reset ROI" control button. Pressing this button resets the MinX and
+   MinY of the ROI to 0 and sets SizeX and SizeY to the maximum camera
+   image size (MaxSizeX, MaxSizeY). Note that it does not modify the ROI
+   BinX, BinY, ReverseX, or ReverseY.
+-  "Transform Plugin In Chain" checkbox. Check this box if the Transform
+   plugin is part of the viewing plugin chain.
+-  "ROI Plugin In Chain" checkbox. Check this box if the ROI plugin is
+   part of the viewing plugin chain. Note that EPICS_AD_Controller can
+   define the ROI even if it is not part of the viewing plugin chain,
+   and in fact this is a common use case.
+-  Status text box. Errors and informational messages are displayed
+   here.
+
+When using EPICS_AD_Controller to define the camera readout region then
+the following rule must be followed. If the ROI plugin is in the viewing
+chain then it must first be set to pass the entire image, i.e. MinX and
+MinY must be 0, and SizeX and SizeY must be at least as large as the
+image from the camera. This can be conveniently done by pressing the
+"Reset ROI" button before defining the ImageJ ROI to select the camera
+readout region. This is not required if the ROI is not in the viewing
+plugin chain.
+
+The following is the EPICS_AD_Viewer image display window with an
+ellipse overlay that was defined using an ImageJ rectangular ROI and
+EPICS_AD_Controller.
+
+.. figure:: ImageJ_EPICS_AD_Controller_Overlay.png
+    :align: center
+
+    ImageJ EPICS_AD_Viewer plugin display window with
+    rectangular Image ROI defining an elliptical overlay NDPluginOverlay
+
+The EPICS_AD_Control plugin must be compiled in the same manner
+described for EPICS_AD_Viewer above.
+
+.. _ImageJGaussianProfiler:
+
+ImageJ Gaussian Profiler (GaussianProfiler.java)
+------------------------------------------------
+
+This is an ImageJ plugin which can be used to dynamically plot a line
+profile, fit the profile to a Gaussian peak, and print the fit
+parameters (centroid, amplitude, full-width half-maximum (FWHM), and
+background. It should be compiled in the same manner as EPICS_AD_Viewer
+described above. It is used by drawing a line or rectangle in ImageJ and
+then starting Plugins/EPICS_areaDetector/Gaussian Profiler.
+
+The following is the GaussianProfiler window plotting the profile of the
+peak shown above in the EPICS_AD_Controller image.
+
+.. figure:: ImageJ_GaussianProfiler.png
+    :align: center
+
+    ImageJ GaussianProfiler plotting a line through the peak
+    shown above in the EPICS_AD_Controller image
+
+IDL Viewer
+----------
+
+There is an IDL procedure called
+`epics_ad_display <http://cars.uchicago.edu/software/idl/imaging_routines.html#epics_ad_display>`__
+that can be used to display 2-dimensional array data that the
+:doc:`NDPluginStdArrays` sends to EPICS. This IDL
+client is available as source code (which requires an IDL license), and
+also as a pre-built IDL .sav file that can be run for free under the IDL
+Virtual Machine. This IDL program can run on any machine that IDL runs
+on, and that has the ezcaIDL shareable library built for it. This
+includes Windows, Linux, Solaris, and Mac. ``epics_ad_display`` is
+included in the `CARS IDL imaging
+software. <http://cars.uchicago.edu/software/IDL/imaging.html>`__ It is
+also available in the Viewers/IDL directory in the areaDetector
+application.
+
+The Viewers/IDL directory contains both the IDL source code and a
+standalone IDL file, epics_ad_display.sav, for the epics_ad_display GUI
+to display images from areaDetector detectors. This file can be run for
+free on any Linux or Windows system under the IDL Virtual Machine, which
+can be downloaded free of charge from `ITT
+VIS <http://www.ittvis.com/idl>`__. That directory also contains the
+shareable libraries used to call EPICS Channel Access from IDL
+(ezcaIDL.dll for Windows and libezcaIDL.so for Linux). Before using the
+IDL source code or .sav file it is necessary to define the environment
+variable EZCA_IDL_SHARE to point to the complete path to ezcaIDL.dll or
+libezcaIDL.so. For example on Linux:
+
+::
+
+   setenv EZCA_IDL_SHARE /home/epics/support/areaDetector/1-5/Viewers/IDL/libezcaIDL.so
+     
+
+On Windows use
+
+::
+
+   My Computer/Properties/Advanced/Environment Variables/ 
+     
+
+to add a new environment variable EZCA_IDL_SHARE to point to the
+location of ezcaIDL.dll on your system. To run the standalone IDL
+epics_ad_display.sav file without an IDL license execute the following
+on Linux:
+
+::
+
+   idl -32 -vm=epics_ad_display.sav 
+     
+
+On Windows simply double-click on the icon for the epics_ad_display.sav
+file.
+
+When the GUI comes up type the base PV name for the NDStdArrays plugin
+for your detector in the "Base PV" widget. For example with the
+simulation detector supplied with the areaDetector application this is
+"13SIM1:image1:" (without the quotes). Once the detector begins
+acquiring images they should be displayed in the IDL window.
+
+To run the GUI from the IDL command line on a system with an IDL license
+type the epics_ad_display command followed by the base PV name of the
+NDStdArrays plugin. For example:
+
+::
+
+     IDL> epics_ad_display, '13SIM1:image1:'
+     
+
+The control window for ``epics_ad_display`` is shown below. It has a
+field to input the base name of the EPICS PVs with the image data. It
+also has fields to enable/display the IDL display update, to change the
+display mode, to autoscale the intensity, and to invert the image in the
+Y direction. If autoscale is set to No then manual scaling can be
+entered in the Min and Max fields. The number of frames per second
+actually being displayed by IDL is shown. There is a status window that
+shows whether the EPICS PVs are connected and the time the last was
+array received, updated once per second.
+
+.. figure:: IDL_epics_ad_display.png
+    :align: center
+
+    Main window for IDL epics_ad_display
+
+``epics_ad_display`` can use the simple IDL routine ``tv`` to display
+the images. This is the fastest mode, and results in a non-scalable
+unadorned window.
+
+.. figure:: IDL_epics_ad_display_tv.jpg
+    :align: center
+
+    IDL epics_ad_display using the IDL ``tv`` routine.
+
+``epics_ad_display`` can also use the routine
+`image_display.pro <http://cars.uchicago.edu/software/IDL/imaging_routines.html#IMAGE_DISPLAY>`__
+to display the images. This routine displays row and column profiles as
+the cursor is moved. It allows changing the color lookup tables, and
+zooming in (right mouse click) and out (left mouse click). Note that
+image_display is not currently capable of displaying color data i.e.,
+RGB1, RGB2, or RGB3 NDArrays). It can however, display Mono data in
+false color. The following is an example of ``image_display`` displaying
+an image from the simulation detector.
+
+.. figure:: simDetector_image_display.png
+    :align: center
+
+    epics_ad_display using the image_display routine
+
+.. todo:: Update link for file handlers
+
+The Viewers/IDL directory also contains an IDL function to read the
+areaDetector netCDF files. This is described in the `NDPluginFile
+netCDF <NDPluginFile.html#netCDF>`__ documentation.
+
+Troubleshooting
+---------------
+
+If the ImageJ or IDL viewer is not displaying new images as the detector
+collects them check the following:
+
+-  If other EPICS channel access clients (e.g. medm, caget) running on
+   the same machine as the viewer **cannot** connect to the IOC then
+   check the following:
+
+   -  There may be a firewall blocking EPICS channel access either on
+      the server (IOC) machine or the client (viewer) machine.
+   -  The environment variable EPICS_CA_ADDR_LIST may need to be set to
+      allow the client to find the IOC if the IOC is not on the same
+      subnet as the viewer or if other EPICS channel access settings do
+      not have their default values.
+
+-  If other EPICS channel access clients (e.g. medm, caget) running on
+   the same machine as the viewer **can** connect to the IOC then check
+   the following:
+
+   -  The detector is actually collecting images, and the ArrayCallbacks
+      PV is set to Enable.
+   -  For EPICS_AD_Viewer or IDL the NDPluginStdArrays plugin (normally
+      called image1:) has the EnableCallbacks PV set to Yes, and that
+      the MinCallbackTime PV is not set too large.
+   -  For EPICS_AD_Viewer or IDL the environment variable
+      EPICS_CA_MAX_ARRAY_BYTES is set to a value at least as large as
+      the size of the arrays to be sent to the viewer. This environment
+      variable must be set on the machine that the IOC is running on
+      before the IOC is started. It must also be set on the machine that
+      the ImageJ or IDL viewer is running on before ImageJ or IDL is
+      started.
+   -  For EPICS_NTNDA_Viewer the NDPluginPva plugin (normally called
+      Pva1:) has the EnableCallbacks PV set to Yes, and that the
+      MinCallbackTime PV is not set too large.
+
