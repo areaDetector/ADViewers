@@ -44,14 +44,14 @@ EPICS_AD_Viewer.java
 ~~~~~~~~~~~~~~~~~~~~
 
 This plugin uses EPICS Channel Access to display images via waveform
-records that the `NDStdArrays plugin <NDPluginStdArrays.html>`__ sends
+records that the :doc:`NDPluginStdArrays` sends
 to EPICS.
 
 EPICS_NTNDA_Viewer.java
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 This plugin uses EPICS V4 pvAccess to display NTNDArrays that the
-`NDPluginPva plugin <NDPluginPva.html>`__ sends to EPICS. The
+:doc:`NDPluginPva` sends to EPICS. The
 EPICS_NTNDA_Viewer has a number of significant advantages compared to
 the EPICS_AD_Viewer:
 
@@ -394,7 +394,7 @@ IDL Viewer
 There is an IDL procedure called
 `epics_ad_display <http://cars.uchicago.edu/software/idl/imaging_routines.html#epics_ad_display>`__
 that can be used to display 2-dimensional array data that the
-`NDStdArrays plugin <NDPluginStdArrays.html>`__ sends to EPICS. This IDL
+:doc:`NDPluginStdArrays` sends to EPICS. This IDL
 client is available as source code (which requires an IDL license), and
 also as a pre-built IDL .sav file that can be run for free under the IDL
 Virtual Machine. This IDL program can run on any machine that IDL runs
@@ -495,6 +495,8 @@ an image from the simulation detector.
     :align: center
 
     epics_ad_display using the image_display routine
+
+.. todo:: Update link for file handlers
 
 The Viewers/IDL directory also contains an IDL function to read the
 areaDetector netCDF files. This is described in the `NDPluginFile
