@@ -44,7 +44,7 @@ EPICS_AD_Viewer.java
 ~~~~~~~~~~~~~~~~~~~~
 
 This plugin uses EPICS Channel Access to display images via waveform
-records that the :doc:`NDPluginStdArrays` sends
+records that the :doc:`../ADCore/NDPluginStdArrays` sends
 to EPICS.
 
 EPICS_NTNDA_Viewer.java
