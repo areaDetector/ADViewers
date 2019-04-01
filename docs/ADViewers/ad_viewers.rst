@@ -114,7 +114,7 @@ To use these ImageJ plugins do the following:
       viewers are being installed at a location which is not building
       ADSupport then pre-built versions of the ADSupport libraries are
       available at
-      `cars.uchicago.edu/software/pub/ADSupport <http://cars.uchicago.edu/software/pub/ADSupport>`__.
+      `cars.uchicago.edu/software/pub/ADSupport <https://cars.uchicago.edu/software/pub/ADSupport>`__.
       Both tar and zip files are available there.
    -  ImageJ needs to be able to find these shareable libraries to
       handle compressed arrays. One way to do this is to add
@@ -396,7 +396,7 @@ IDL Viewer
 ----------
 
 There is an IDL procedure called
-`epics_ad_display <http://cars.uchicago.edu/software/idl/imaging_routines.html#epics_ad_display>`__
+`epics_ad_display <https://cars.uchicago.edu/software/idl/imaging_routines.html#epics_ad_display>`__
 that can be used to display 2-dimensional array data that the
 :doc:`../ADCore/NDPluginStdArrays` sends to EPICS. This IDL
 client is available as source code (which requires an IDL license), and
@@ -405,7 +405,7 @@ Virtual Machine. This IDL program can run on any machine that IDL runs
 on, and that has the ezcaIDL shareable library built for it. This
 includes Windows, Linux, Solaris, and Mac. ``epics_ad_display`` is
 included in the `CARS IDL imaging
-software. <http://cars.uchicago.edu/software/IDL/imaging.html>`__ It is
+software. <https://cars.uchicago.edu/software/IDL/imaging.html>`__ It is
 also available in the Viewers/IDL directory in the areaDetector
 application.
 
@@ -486,7 +486,7 @@ unadorned window.
     IDL epics_ad_display using the IDL ``tv`` routine.
 
 ``epics_ad_display`` can also use the routine
-`image_display.pro <http://cars.uchicago.edu/software/IDL/imaging_routines.html#IMAGE_DISPLAY>`__
+`image_display.pro <https://cars.uchicago.edu/software/IDL/imaging_routines.html#IMAGE_DISPLAY>`__
 to display the images. This routine displays row and column profiles as
 the cursor is moved. It allows changing the color lookup tables, and
 zooming in (right mouse click) and out (left mouse click). Note that
