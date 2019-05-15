@@ -120,7 +120,7 @@ To use these ImageJ plugins do the following:
       handle compressed arrays. One way to do this is to add
       ``[YOUR_LOCATION]areaDetector/ADSupport/lib/linux-x86_64/`` to the
       ``LD_LIBRARY_PATH`` environment variable on Linux, and
-      ``[YOUR_LOCATION]areaDetector/ADSupport/lib/windows-x86`` to the ``PATH``
+      ``[YOUR_LOCATION]areaDetector/ADSupport/bin/windows-x64`` to the ``PATH``
       environment variable on Windows. This assumes that ADSupport was
       built using ``WITH_BLOSC=YES``, ``WITH_JPEG=YES``, ``BLOSC_EXTERNAL=NO``, and
       ``JPEG_EXTERNAL=NO``.
