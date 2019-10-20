@@ -13,7 +13,7 @@ https://github.com/areaDetector/ADViewers/releases .
 Release Notes
 =============
 
-R1-4 (December XXX, 2018)
+R1-4 (October 20, 2019)
 ======================
 ### EPICS_NTNDA_Viewer
 * Added support for lz4 and bitshuffle/lz4 decompresion without Blosc.  This is useful for viewing compressed images
