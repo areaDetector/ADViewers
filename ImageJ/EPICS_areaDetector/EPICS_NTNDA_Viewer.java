@@ -88,6 +88,9 @@ public class EPICS_NTNDA_Viewer
     private int imageSizeY = 0;
     private int imageSizeZ = 0;
     private int colorMode = 0;
+    private byte[] colorLUT = new byte[256];
+    private double prevDispMin = 0.;
+    private double prevDispMax = 255.;
     private ScalarType dataType = ScalarType.pvBoolean;
     private FileOutputStream debugFile = null;
     private PrintStream debugPrintStream = null;
@@ -545,6 +548,24 @@ public class EPICS_NTNDA_Viewer
             byte inpixels[]=new byte[numElements];
 
             convert.toByteArray(imagedata, 0, numElements, inpixels, 0);
+            double dispMin = img.getDisplayRangeMin();
+            double dispMax = img.getDisplayRangeMax();
+            if ((dispMin != 0) || (dispMax != 255)) {
+                int i;
+                if ((dispMin != prevDispMin) || (dispMax != prevDispMax)) {
+                    // Recompute LUT
+                    prevDispMin = dispMin;
+                    prevDispMax = dispMax;
+                    double slope = (dispMax - dispMin)/256.;
+                    for (i=0; i<256; i++) {
+                        colorLUT[i] = (byte)(-128 + dispMin + i*slope + 0.5);
+                    }
+                }
+                for (i=0; i<numElements; i++) {
+                    inpixels[i] = colorLUT[inpixels[i]+128];
+                }
+            }
+
             switch (colorMode)
             {
             case 2:
