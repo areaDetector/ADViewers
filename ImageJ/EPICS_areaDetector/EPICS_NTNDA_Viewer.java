@@ -54,6 +54,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.ImageWindow;
+import ij.gui.ImageCanvas;
 import ij.plugin.ContrastEnhancer;
 import ij.plugin.PlugIn;
 import ij.process.ByteProcessor;
@@ -615,12 +616,17 @@ public class EPICS_NTNDA_Viewer
         img.setSlice(img.getNSlices());
         img.show();
         img.updateAndDraw();
+        ImageCanvas ic = img.getCanvas();
+        Point loc = ic!=null ? ic.getCursorLoc() : null;
+        if (loc!=null)
+            img.mouseMoved(loc.x,loc.y);
         img.updateStatusbarValue();
         numImageUpdates++;
         // Automatically set brightness and contrast if we made a new window
         if (madeNewWindow) new ContrastEnhancer().stretchHistogram(img, 0.5);
         return true;
     }
+
     /**
      * Create the GUI and show it.  For thread safety,
      * this method should be invoked from the
