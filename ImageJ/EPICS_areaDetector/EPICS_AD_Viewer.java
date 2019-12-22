@@ -542,6 +542,10 @@ public class EPICS_AD_Viewer implements PlugIn
             img.setSlice(img.getNSlices());
             img.show();
             img.updateAndDraw();
+            ImageCanvas ic = img.getCanvas();
+            Point loc = ic!=null ? ic.getCursorLoc() : null;
+            if (loc!=null)
+                img.mouseMoved(loc.x,loc.y);
             img.updateStatusbarValue();
             numImageUpdates++;
             // Automatically set brightness and contrast if we made a new window
