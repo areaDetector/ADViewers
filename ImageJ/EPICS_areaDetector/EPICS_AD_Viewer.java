@@ -31,6 +31,9 @@ public class EPICS_AD_Viewer implements PlugIn
     int colorMode;
     DBRType dataType;
     int ADDataType;
+    byte[] colorLUT = new byte[256];
+    double prevDispMin = 0.;
+    double prevDispMax = 255.;
 
     FileOutputStream debugFile;
     PrintStream debugPrintStream;
@@ -474,6 +477,23 @@ public class EPICS_AD_Viewer implements PlugIn
             {
                 int[] pixels = (int[])img.getProcessor().getPixels();
                 byte inpixels[] = epicsGetByteArray(ch_image, getsize);
+                double dispMin = img.getDisplayRangeMin();
+                double dispMax = img.getDisplayRangeMax();
+                if ((dispMin != 0) || (dispMax != 255)) {
+                    int i;
+                    if ((dispMin != prevDispMin) || (dispMax != prevDispMax)) {
+                        // Recompute LUT
+                        prevDispMin = dispMin;
+                        prevDispMax = dispMax;
+                        double slope = (dispMax - dispMin)/256.;
+                        for (i=0; i<256; i++) {
+                            colorLUT[i] = (byte)(-128 + dispMin + i*slope + 0.5);
+                        }
+                    }
+                    for (i=0; i<getsize; i++) {
+                        inpixels[i] = colorLUT[inpixels[i]+128];
+                    }
+                }
                 switch (colorMode)
                 {
                     case 2:
