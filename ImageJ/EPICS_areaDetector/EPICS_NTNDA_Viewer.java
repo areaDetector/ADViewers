@@ -557,13 +557,18 @@ public class EPICS_NTNDA_Viewer
                     // Recompute LUT
                     prevDispMin = dispMin;
                     prevDispMax = dispMax;
-                    double slope = (dispMax - dispMin)/256.;
+                    double slope = 255/(dispMax - dispMin);
                     for (i=0; i<256; i++) {
-                        colorLUT[i] = (byte)(-128 + dispMin + i*slope + 0.5);
+                        if (i<dispMin) 
+                            colorLUT[i] = 0;
+                        else if (i>dispMax)
+                            colorLUT[i] = (byte)255;
+                        else 
+                            colorLUT[i] = (byte)((i-dispMin)*slope + 0.5);
                     }
                 }
                 for (i=0; i<numElements; i++) {
-                    inpixels[i] = colorLUT[inpixels[i]+128];
+                    inpixels[i] = colorLUT[inpixels[i] & 0xff];
                 }
             }
 
