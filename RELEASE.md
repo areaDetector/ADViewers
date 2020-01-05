@@ -13,14 +13,13 @@ https://github.com/areaDetector/ADViewers/releases .
 Release Notes
 =============
 
-R1-5 (December XXX, 2019)
+R1-5 (January 5, 2020)
 =========================
 ### EPICS_NTNDA_Viewer, EPICS_AD_Viewer
 * Fix to allow stretching the contrast with RGB images using the ImageJ Image/Adjust/Brightness/Contrast control.
   Previously if one did this it would apply to the currently displayed image,
   but would reset to 0 to 255 when the next image was received.
-  The fix was implemented using a lookup table when using RGB mode and the display range is is not
-  set to 0 to 255.
+  The fix was implemented using a lookup table when using RGB mode and the display range is is not set to 0 to 255.
 * Fix to update the mouse X and Y positions in the ImageJ status window when each frame is displayed.
   Previously it was not tracking the mouse position correctly when images were being displayed quickly.
 
