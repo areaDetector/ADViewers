@@ -93,8 +93,8 @@ if (n_elements(program) eq 0) then begin
         if (!version.os eq 'Win32') then base = 'ezcaIDL.dll' else base = 'libezcaIDL.so'
         temp = base + '_' + !version.os + '_' + !version.arch
         IDL_object = file_which(temp)
+        ;print, 'call_Ezca, shareable library = ', temp
     endif
-    ;print, 'call_Ezca, shareable library = ', temp
     ;print, 'call_Ezca, full path = ', IDL_object
     ; Clear the ingroup flag if it doesn't exist yet
     if (n_elements(ingroup) eq 0) then ingroup=0
