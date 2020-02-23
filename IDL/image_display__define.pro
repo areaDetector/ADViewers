@@ -255,8 +255,8 @@ end
 pro image_display::set_image_data, image
     isize = size(image)
     if (isize[0] ne 2) then image = reform(image)
-    self.image_data.x_size = n_elements(image(*,0))
-    self.image_data.y_size = n_elements(image(0,*))
+    self.image_data.x_size = n_elements(image[*,0])
+    self.image_data.y_size = n_elements(image[0,*])
     ptr_free, self.image_data.raw_data
     self.image_data.raw_data = ptr_new(image)
 
@@ -357,8 +357,8 @@ pro image_display::scale_image, image, min=min, max=max, zoom=zoom, $
     endif
 
     if (size[0] ne 2) then image = reform(image)
-    self.image_data.x_size = n_elements(image(*,0))
-    self.image_data.y_size = n_elements(image(0,*))
+    self.image_data.x_size = n_elements(image[*,0])
+    self.image_data.y_size = n_elements(image[0,*])
     ptr_free, self.image_data.raw_data
     self.image_data.raw_data = ptr_new(image)
 
