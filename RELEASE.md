@@ -26,9 +26,11 @@ This viewer has the following features:
 * Works with both the p4p and pvapy Python bindings for pvAccess.
   - p4p works on Windows, Linux, and Mac.
   - pvapy works only on Linux and Mac.
-### Updated IDL support routines to the latest versions. 
+### IDL support routines
+* Updated IDL support routines to the latest versions. 
 * These are minor changes.
-### Broke up the documentation into smaller subdocuments to make it easier to read.
+### Documentation improvements
+* Broke up the documentation into smaller subdocuments to make it easier to read.
 
 
 R1-5 (January 5, 2020)
