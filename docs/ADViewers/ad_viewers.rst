@@ -392,6 +392,22 @@ peak shown above in the EPICS_AD_Controller image.
     ImageJ GaussianProfiler plotting a line through the peak
     shown above in the EPICS_AD_Controller image
 
+Python Viewer
+-------------
+
+There is a Python viewer in the ADViewers/Python directory. This viewer has the following features:
+
+- Supports compressed NDArrays using any of the codecs in NDPluginCodec.
+- Supports all NDArray data types and color modes.
+- Allows zooming by defining the subregion with a mouse.
+- Allows changing the window size.
+- Supports pvAccess only, does not support Channel Access.
+- Works with both the p4p and pvapy Python bindings for pvAccess.
+  - p4p works on Windows, Linux, and Mac.
+  - pvapy works only on Linux and Mac.
+
+More information can be found in the :doc:`PY_NTNDA_Viewer README.md <PY_NTNDA_Viewer>`.
+
 IDL Viewer
 ----------
 
