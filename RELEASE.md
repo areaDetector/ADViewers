@@ -13,6 +13,24 @@ https://github.com/areaDetector/ADViewers/releases .
 Release Notes
 =============
 
+R1-6 (March 3, 2020)
+=========================
+### New Python viewer, PT_NTNDA_Viewer. It was written by Marty Kraimer. 
+This viewer has the following features:
+* Supports compressed NDArrays using any of the codecs in NDPluginCodec.
+* Supports all NDArray data types and color modes.
+* Allows zooming by defining the subregion with a mouse.
+* Allows changing the window size.
+* Allows changing the lower and upper display intensities with sliders.
+* Supports pvAccess only, does not support Channel Access.
+* Works with both the p4p and pvapy Python bindings for pvAccess.
+  - p4p works on Windows, Linux, and Mac.
+  - pvapy works only on Linux and Mac.
+### Updated IDL support routines to the latest versions. 
+* These are minor changes.
+### Broke up the documentation into smaller subdocuments to make it easier to read.
+
+
 R1-5 (January 5, 2020)
 =========================
 ### EPICS_NTNDA_Viewer, EPICS_AD_Viewer
