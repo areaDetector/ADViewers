@@ -6,5 +6,5 @@ The home of image viewers for
 software.  It includes viewers for ImageJ, Python and IDL.
 
 Additional information:
-* [Documentation](https://cars.uchicago.edu/software/epics/areaDetectorViewers.html).
+* [Documentation](https://areadetector.github.io/master/ADViewers/ad_viewers.html).
 * [Release notes](RELEASE.md).
