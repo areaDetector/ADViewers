@@ -29,7 +29,7 @@ This viewer has the following features:
 ### IDL support routines
 * Updated IDL support routines to the latest versions. These are minor changes.
 ### Documentation improvements
-* Broke up the documentation into smaller subdocuments to make it easier to read.
+* Broke up the documentation into smaller documents to make it easier to read.
 
 
 R1-5 (January 5, 2020)
