@@ -136,6 +136,7 @@ There is a Python viewer in the ADViewers/Python directory. This viewer has the 
 - Supports all NDArray data types and color modes.
 - Allows zooming by defining the subregion with a mouse.
 - Allows changing the window size.
+- Allows changing the lower and upper display intensities with sliders.
 - Supports pvAccess only, does not support Channel Access.
 - Works with both the p4p and pvapy Python bindings for pvAccess.
   - p4p works on Windows, Linux, and Mac.
