@@ -127,7 +127,12 @@ public class EPICS_NTNDA_Viewer
      */
     public EPICS_NTNDA_Viewer()
     {
+        String temp=null;
         readProperties();
+        temp = System.getenv("EPICS_NTNDA_VIEWER_CHANNELNAME");
+        if (temp != null) {
+            channelName = temp;
+        }
         createAndShowGUI();
     }
     /* (non-Javadoc)
