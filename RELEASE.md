@@ -13,6 +13,11 @@ https://github.com/areaDetector/ADViewers/releases .
 Release Notes
 =============
 
+R1-6-1 (March 4, 2020)
+=========================
+### ImageJ EPICS_NTNDA_Viewer
+* The pvAccess channel name can be specifed with the environment variable EPICS_NTNDA_VIEWER_CHANNELNAME.
+
 R1-6 (March 3, 2020)
 =========================
 ### New Python viewer, PT_NTNDA_Viewer. It was written by Marty Kraimer. 

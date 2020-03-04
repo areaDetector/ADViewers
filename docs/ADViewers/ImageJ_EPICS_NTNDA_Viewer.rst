@@ -115,11 +115,15 @@ To use this ImageJ plugin do the following:
    don't the most likely problem is a firewall.
 -  Press the Start button to begin displaying images.
 
-The control window for EPICS_NTNDA_Viewer is shown
-below. The array dimensions and the number of frames per second actually
+The control window for EPICS_NTNDA_Viewer is shown below. 
+The channel name can be entered manually, or can be set before running ImageJ
+with the environment variable EPICS_NTNDA_VIEWER_CHANNELNAME.
+If the environment variable is not set then the channel name will be automatically
+restored from a settings file the next time the plugin is run.
+The array dimensions and the number of frames per second actually
 being displayed by ImageJ is shown. There is a status window that shows
 whether the EPICS PVs are connected and the number of arrays received
-since the last update, which is every 2 seconds.
+since the last status update, which is every 2 seconds.
 
 Press the Snap button to make a copy of the current frame in a new
 window. ImageJ can then be used to process, annotate, etc. that image.
