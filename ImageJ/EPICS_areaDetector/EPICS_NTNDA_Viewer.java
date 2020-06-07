@@ -42,6 +42,7 @@ import org.epics.pvaClient.PvaClientMonitorData;
 import org.epics.pvdata.factory.ConvertFactory;
 import org.epics.pvdata.pv.Convert;
 import org.epics.pvdata.pv.PVInt;
+import org.epics.pvdata.pv.PVScalar;
 import org.epics.pvdata.pv.PVScalarArray;
 import org.epics.pvdata.pv.PVString;
 import org.epics.pvdata.pv.PVStructure;
@@ -380,12 +381,12 @@ public class EPICS_NTNDA_Viewer
                 if(!name.equals("ColorMode")) continue;
                 PVUnion pvUnion = pvAttr.getSubField(PVUnion.class,"value");
                 if(pvUnion==null) continue;
-                PVInt pvcm = pvUnion.get(PVInt.class);
+                PVScalar pvcm = pvUnion.get(PVScalar.class);
                 if(pvcm==null) {
-                    logMessage("color mode is not an int",true,true);
+                    logMessage("color mode is not a PVScalar",true,true);
                     continue;
                 }
-                cm = pvcm.get();
+                cm = ConvertFactory.getConvert().toInt(pvcm);
                 break;
             }
         }
