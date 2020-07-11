@@ -197,3 +197,39 @@ collects them check the following:
       before the IOC is started. It must also be set on the machine that
       the Channel Access viewer is running on before ImageJ or IDL is
       started.
+
+Comparison of features and performance
+--------------------------------------
+
+The following table compares the features and performance of the available viewers.
+
+.. cssclass:: table-bordered table-striped table-hover
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Viewer
+     - NDArray data types
+     - NDArray codecs
+     - Color modes (Mono, RGB1, RGB2, RGB3)
+     - Zoom
+     - Resize window
+     - Move window
+     - Windows OS
+     - Frames/s 1024x1024 Mono
+     - Frames/s 1024x1024 RGB1
+     - Frames/s 2048x2048 Mono
+     - Frames/s 2048x2048 RGB1
+   * - ImageJ
+     - All
+     - All
+     - All
+     - Yes
+     - Yes
+     - Yes
+     - Yes
+     - 100
+     - 100
+     - 100
+     - 100
+
