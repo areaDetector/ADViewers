@@ -198,38 +198,299 @@ collects them check the following:
       the Channel Access viewer is running on before ImageJ or IDL is
       started.
 
-Comparison of features and performance
---------------------------------------
+Feature comparison
+------------------
 
-The following table compares the features and performance of the available viewers.
+The following table compares the features of the available viewers.
 
 .. cssclass:: table-bordered table-striped table-hover
 .. list-table::
    :header-rows: 1
+   :stub-columns: 1
    :widths: auto
 
-   * - Viewer
-     - NDArray data types
-     - NDArray codecs
-     - Color modes (Mono, RGB1, RGB2, RGB3)
-     - Zoom
-     - Resize window
-     - Move window
-     - Windows OS
-     - Frames/s 1024x1024 Mono
-     - Frames/s 1024x1024 RGB1
-     - Frames/s 2048x2048 Mono
-     - Frames/s 2048x2048 RGB1
-   * - ImageJ
+   * -
+     - ImageJ
+     - ADViewers / PY_NTNDA_Viewer
+     - testPython / PY_NTNDA_Viewer
+     - C2 Data Viewer
+   * - NDArray data types
      - All
      - All
      - All
+     - Int8, UInt8, Int6, UInt16
+   * - NDArray codecs
+     - All
+     - All
+     - All
+     - None
+   * - Color modes (Mono, RGB1, RGB2, RGB3)
+     - All
+     - All
+     - All
+     - Mono
+   * - Zoom image
+     - Yes
+     - Yes
+     - Yes (bugs)
+     - No
+   * - Resize window
+     - Yes
+     - Yes
+     - No
+     - Yes
+   * - Scale intensity with text widgets
+     - Yes
+     - Yes
+     - Yes
+     - No
+   * - Scale intensity with sliders
+     - Yes
+     - No
+     - No
+     - Yes
+   * - Auto-scale intensity
      - Yes
      - Yes
      - Yes
      - Yes
-     - 100
-     - 100
-     - 100
-     - 100
+   * - Move window
+     - Yes
+     - Yes
+     - No
+     - Yes
+   * - Windows OS
+     - Yes
+     - Yes
+     - Yes
+     - No
 
+Performance comparison
+----------------------
+
+The following table compares the performance of the available viewers.
+
+The tests were done under the following conditions:
+
+- ADSimDetector running on the same machine as the viewer
+- ADSimDetector generating 1024x1024 frames at 200 frames/s.  No compression enabled.
+- Viewers were all configured to display the image full-size (e.g. 1024x1024 pixels).
+  For ADViewers/P4P_NTNDA_Viewer and C2 Data Viewer this size was approximate, done by
+  resizing the window until the image area was close to 1024x1024 pixels.
+- testPython/P4P_NTNDA_Viewer was configured with Manual Scaling because this is how all of
+  the other viewers are always configured, and it is needed in most cases to have a nice image display.
+
+.. cssclass:: table-bordered table-striped table-hover
+.. flat-table::
+   :header-rows: 1
+   :stub-columns: 1
+   :widths: 40 20 20 20
+
+   * - Program, mode
+     - OS
+     - Display
+     - Frames/s
+   * -
+   * -
+     - **1024x1024, UInt8, Mono**
+   * - ImageJ
+     - Linux
+     - Local
+     - 200
+   * - ImageJ
+     - Linux
+     - Remote X11
+     - 200
+   * - ImageJ
+     - Windows
+     - Local
+     - 194
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Linux
+     - Local
+     - 40
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Linux
+     - Remote X11
+     - 17
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Windows
+     - Local
+     - 23
+   * - testPython/P4P_NTNDA_Viewer
+     - Linux
+     - Local
+     - 92
+   * - testPython/P4P_NTNDA_Viewer
+     - Linux
+     - Remote X11
+     - 22
+   * - testPython/P4P_NTNDA_Viewer
+     - Windows
+     - Local
+     - 20
+   * - C2 Data Viewer
+     - Linux
+     - Local
+     - 105
+   * - C2 Data Viewer
+     - Linux
+     - Remote X11
+     - 102
+   * - C2 Data Viewer
+     - Windows
+     - Local
+     - N.A.
+   * -
+   * -
+     - **1024x1024, UInt8, RGB1**
+   * - ImageJ
+     - Linux
+     - Local
+     - 190
+   * - ImageJ
+     - Linux
+     - Remote X11
+     - 193
+   * - ImageJ
+     - Windows
+     - Local
+     - 68
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Linux
+     - Local
+     - 23
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Linux
+     - Remote X11
+     - 17
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Windows
+     - Local
+     - 13
+   * - testPython/P4P_NTNDA_Viewer
+     - Linux
+     - Local
+     - 37
+   * - testPython/P4P_NTNDA_Viewer
+     - Linux
+     - Remote X11
+     - 22
+   * - testPython/P4P_NTNDA_Viewer
+     - Windows
+     - Local
+     - 7
+   * - C2 Data Viewer
+     - Linux
+     - Local
+     - N.A
+   * - C2 Data Viewer
+     - Linux
+     - Remote X11
+     - N.A.
+   * - C2 Data Viewer
+     - Windows
+     - Local
+     - N.A
+   * -
+   * -
+     - **1024x1024, UInt16, Mono**
+   * - ImageJ
+     - Linux
+     - Local
+     - 150
+   * - ImageJ
+     - Linux
+     - Remote X11
+     - 160
+   * - ImageJ
+     - Windows
+     - Local
+     - 68   
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Linux
+     - Local
+     - 28
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Linux
+     - Remote X11
+     - 17
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Windows
+     - Local
+     - 20   
+   * - testPython/P4P_NTNDA_Viewer
+     - Linux
+     - Local
+     - Fails, solid gray image
+   * - testPython/P4P_NTNDA_Viewer
+     - Linux
+     - Remote X11
+     - Fails, solid gray image
+   * - testPython/P4P_NTNDA_Viewer
+     - Windows
+     - Local
+     - Incorrect image, peak shape is wrong   
+   * - C2 Data Viewer
+     - Linux
+     - Local
+     - 95
+   * - C2 Data Viewer
+     - Linux
+     - Remote X11
+     - 88
+   * - C2 Data Viewer
+     - Windows
+     - Local
+     - N.A.
+   * -
+   * -
+     - **1024x1024, Float32, Mono**
+   * - ImageJ
+     - Linux
+     - Local
+     - 130
+   * - ImageJ
+     - Linux
+     - Remote X11
+     - 150
+   * - ImageJ
+     - Windows
+     - Local
+     - 50 
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Linux
+     - Local
+     - 23
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Linux
+     - Remote X11
+     - 17
+   * - ADViewers/P4P_NTNDA_Viewer
+     - Windows
+     - Local
+     - 12        
+   * - testPython/P4P_NTNDA_Viewer
+     - Linux
+     - Local
+     - Fails, solid gray image
+   * - testPython/P4P_NTNDA_Viewer
+     - Linux
+     - Remote X11
+     - Fails, solid gray image
+   * - testPython/P4P_NTNDA_Viewer
+     - Windows
+     - Local
+     - Incorrect image, peak shape is wrong   
+   * - C2 Data Viewer
+     - Linux
+     - Local
+     - N.A
+   * - C2 Data Viewer
+     - Linux
+     - Remote X11
+     - N.A.
+   * - C2 Data Viewer
+     - Windows
+     - Local
+     - N.A.       
