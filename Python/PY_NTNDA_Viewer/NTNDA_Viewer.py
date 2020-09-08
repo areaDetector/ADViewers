@@ -120,7 +120,7 @@ class ImageControl(QWidget):
         self.imageDict = imageDictCreate()
         self.pixelLevels = (0, 255)
         self.npixelLevels = 255
-        self.minimum = 0;
+        self.minimum = 0
         self.low = 0
         self.high = self.npixelLevels
         self.maximum = self.npixelLevels
@@ -143,11 +143,11 @@ class ImageControl(QWidget):
         maximumLabel.setFixedWidth(80)
         zoomLabel = QLabel("||    zoom        (xlow,ylow,numx.numy)")
         box = QHBoxLayout()
-        box.setContentsMargins(0, 0, 0, 0);
+        box.setContentsMargins(0, 0, 0, 0)
         box.addWidget(minimumLabel)
-        box.addWidget(lowLabel);
-        box.addWidget(titleLabel);
-        box.addWidget(highLabel);
+        box.addWidget(lowLabel)
+        box.addWidget(titleLabel)
+        box.addWidget(highLabel)
         box.addWidget(maximumLabel)
         box.addWidget(zoomLabel)
         wid = QWidget()
@@ -181,7 +181,7 @@ class ImageControl(QWidget):
         self.zoomText.setFixedWidth(180)
         self.zoomText.editingFinished.connect(self.zoomTextEvent)
         box = QHBoxLayout()
-        box.setContentsMargins(0, 0, 0, 0);
+        box.setContentsMargins(0, 0, 0, 0)
         box.addWidget(self.minimumText)
         box.addWidget(self.lowText)
         box.addWidget(spaceLabel)
@@ -195,7 +195,7 @@ class ImageControl(QWidget):
         self.secondRow = wid
         # third row
         self.lowSlider = QSlider(Qt.Horizontal)
-        self.lowSlider.setContentsMargins(0, 0, 0, 0);
+        self.lowSlider.setContentsMargins(0, 0, 0, 0)
         self.lowSlider.setMinimum(0)
         self.lowSlider.setMaximum(self.npixelLevels)
         self.lowSlider.setValue(0)
@@ -203,7 +203,7 @@ class ImageControl(QWidget):
         self.lowSlider.setTickInterval(10)
         self.lowSlider.setFixedWidth(256)
         self.highSlider = QSlider(Qt.Horizontal)
-        self.highSlider.setContentsMargins(0, 0, 0, 0);
+        self.highSlider.setContentsMargins(0, 0, 0, 0)
         self.highSlider.setMinimum(0)
         self.highSlider.setMaximum(self.npixelLevels)
         self.highSlider.setValue(self.npixelLevels)
@@ -212,8 +212,8 @@ class ImageControl(QWidget):
         self.highSlider.setFixedWidth(256)
         box = QHBoxLayout()
         box.addStretch(0)
-        box.setSpacing(0);
-        box.setContentsMargins(0, 0, 0, 0);
+        box.setSpacing(0)
+        box.setContentsMargins(0, 0, 0, 0)
         box.setGeometry(QRect(0, 0, 500, 20))
         box.addWidget(self.lowSlider)
         box.addWidget(self.highSlider)
@@ -222,7 +222,7 @@ class ImageControl(QWidget):
         self.thirdRow = wid
         # create window
         layout = QGridLayout()
-        layout.setSpacing(0);
+        layout.setSpacing(0)
         layout.addWidget(self.firstRow, 0, 0, alignment=Qt.AlignLeft)
         layout.addWidget(self.secondRow, 1, 0, alignment=Qt.AlignLeft)
         layout.addWidget(self.thirdRow, 2, 0, alignment=Qt.AlignLeft)
@@ -287,37 +287,42 @@ class ImageControl(QWidget):
         try:
             text = self.zoomText.text()
             ind = text.find("(")
-            if ind < 0: raise Exception("does not start with (")
+            if ind < 0:
+                raise Exception("does not start with (")
             text = text[(ind + 1):]
             ind = text.find(")")
-            if ind < 0: raise Exception("does not end with )")
+            if ind < 0:
+                raise Exception("does not end with )")
             text = text[:-1]
             split = text.split(",")
-            if len(split) != 4: raise Exception("not four values")
+            if len(split) != 4:
+                raise Exception("not four values")
             xlow = split[0]
-            if not xlow.isdigit(): raise Exception(
-                "xlow is not a positive integer")
+            if not xlow.isdigit():
+                raise Exception("xlow is not a positive integer")
             xlow = int(xlow)
             ylow = split[1]
-            if not ylow.isdigit(): raise Exception(
-                "ylow is not a positive integer")
+            if not ylow.isdigit():
+                raise Exception("ylow is not a positive integer")
             ylow = int(ylow)
             numx = split[2]
-            if not numx.isdigit(): raise Exception(
-                "numx is not a positive integer")
+            if not numx.isdigit():
+                raise Exception("numx is not a positive integer")
             numx = int(numx)
-            if numx < 1: raise Exception("numx must be at least 1")
+            if numx < 1:
+                raise Exception("numx must be at least 1")
             numy = split[3]
-            if not numy.isdigit(): raise Exception(
-                "numy is not a positive integer")
+            if not numy.isdigit():
+                raise Exception("numy is not a positive integer")
             numy = int(numy)
-            if numy < 1: raise Exception("numy must be at least 1")
+            if numy < 1:
+                raise Exception("numy must be at least 1")
             sizex = xlow + numx
-            if sizex > self.imageDict["nx"]: raise Exception(
-                "xlow + numx gt nx")
+            if sizex > self.imageDict["nx"]:
+                raise Exception("xlow + numx gt nx")
             sizey = ylow + numy
-            if sizey > self.imageDict["ny"]: raise Exception(
-                "ylow + numy gt ny")
+            if sizey > self.imageDict["ny"]:
+                raise Exception("ylow + numy gt ny")
         except Exception as error:
             self.statusText.setText(str(error))
             self.statusText.setStyleSheet("background-color:red")
@@ -393,7 +398,8 @@ class ImageControl(QWidget):
         pixelRatio = float(self.lowSlider.value()) / float(self.npixelLevels)
         valueRange = float(self.maximum) - float(self.minimum)
         value = pixelRatio * valueRange + self.minimum
-        if value > self.maximum: value = self.maximum
+        if value > self.maximum:
+            value = self.maximum
         if value > self.high:
             self.high = value
             self.highText.setText(str(round(self.high)))
@@ -454,7 +460,6 @@ class ImageControl(QWidget):
                 self.pixelLevels = (0.0, 1.0)
             else:
                 raise Exception("unknown dtype" + dtype)
-                return
             self.minimum = self.pixelLevels[0]
             self.minimumText.setText(str(self.minimum))
             self.low = self.minimum
@@ -526,7 +531,7 @@ class NTNDA_Viewer(QWidget):
         self.channelNameText.setText(self.provider.getChannelName())
         self.channelNameText.editingFinished.connect(self.channelNameEvent)
         box = QHBoxLayout()
-        box.setContentsMargins(0, 0, 0, 0);
+        box.setContentsMargins(0, 0, 0, 0)
         box.addWidget(self.startButton)
         box.addWidget(self.stopButton)
         imageRateLabel = QLabel("imageRate:")
@@ -563,7 +568,7 @@ class NTNDA_Viewer(QWidget):
         self.statusText.setText("nothing done so far")
         self.statusText.setFixedWidth(200)
         box = QHBoxLayout()
-        box.setContentsMargins(0, 0, 0, 0);
+        box.setContentsMargins(0, 0, 0, 0)
         nxLabel = QLabel("nx:")
         nxLabel.setFixedWidth(20)
         self.nxText.setText("0")
@@ -600,14 +605,14 @@ class NTNDA_Viewer(QWidget):
         # third row
         self.imageControl = ImageControl(self.statusText)
         box = QHBoxLayout()
-        box.setContentsMargins(0, 0, 0, 0);
+        box.setContentsMargins(0, 0, 0, 0)
         box.addWidget(self.imageControl)
         wid = QWidget()
         wid.setLayout(box)
         self.thirdRow = wid
         # initialize
         layout = QGridLayout()
-        layout.setVerticalSpacing(0);
+        layout.setVerticalSpacing(0)
         layout.addWidget(self.firstRow, 0, 0)
         layout.addWidget(self.secondRow, 1, 0)
         layout.addWidget(self.thirdRow, 2, 0)
@@ -816,9 +821,6 @@ class NTNDA_Viewer(QWidget):
         return data
 
     def dataToImage(self, data, dimArray):
-        ny = 0
-        nx = 0
-        nz = 1
         dtype = data.dtype
         ndim = len(dimArray)
         if ndim != 2 and ndim != 3:
@@ -826,6 +828,7 @@ class NTNDA_Viewer(QWidget):
         if ndim == 2:
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]
+            nz = 0
             image = np.reshape(data, (ny, nx))
             image = np.transpose(image)
         elif ndim == 3:

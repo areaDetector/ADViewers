@@ -56,7 +56,7 @@ class PVAPYProvider(QObject, NTNDA_Channel_Provider):
         pass
 
     def pvapycallback(self, arg):
-        self.struct = arg;
+        self.struct = arg
         self.callbacksignal.emit()
         self.callbackDoneEvent.wait()
         self.callbackDoneEvent.clear()

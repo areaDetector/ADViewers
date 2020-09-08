@@ -28,6 +28,7 @@ class P4PProvider(QObject, NTNDA_Channel_Provider):
         self.firstCallback = True
         self.isClosed = True
         self.subscription = None
+        self.struct = None
 
     def start(self):
         self.ctxt = Context("pva")
@@ -77,7 +78,7 @@ class P4PProvider(QObject, NTNDA_Channel_Provider):
                 "value": struct["value"],
                 "dimension": struct["dimension"],
                 "codec": struct["codec"],
-                "compressedSize":struct["compressedSize"],
+                "compressedSize": struct["compressedSize"],
                 "uncompressedSize": struct["uncompressedSize"],
             }
             self.callback(arg)
