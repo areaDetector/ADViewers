@@ -47,7 +47,7 @@ class PVAPYProvider(QObject, NTNDA_Channel_Provider):
     def start(self):
         self.channel = self.getChannel.get(self.getChannelName())
         self.channel.monitor(self.pvapycallback,
-                             'field(value,dimension,codec,compressedSize,uncompressedSize)')
+                             "field(value,dimension,codec,compressedSize,uncompressedSize)")
 
     def stop(self):
         self.channel.stopMonitor()
@@ -68,30 +68,30 @@ class PVAPYProvider(QObject, NTNDA_Channel_Provider):
         struct = self.struct
         arg = dict()
         try:
-            val = struct['value'][0]
+            val = struct["value"][0]
             if len(val) != 1:
-                raise Exception('value length not 1')
+                raise Exception("value length not 1")
             element = None
             for x in val:
                 element = x
             if element is None:
-                raise Exception('value is not numpy  array')
+                raise Exception("value is not numpy  array")
             value = val[element]
-            arg['value'] = value
-            arg['dimension'] = struct['dimension']
-            codec = struct['codec']
-            codecName = codec['name']
+            arg["value"] = value
+            arg["dimension"] = struct["dimension"]
+            codec = struct["codec"]
+            codecName = codec["name"]
             if len(codecName) < 1:
-                arg['codec'] = struct['codec']
+                arg["codec"] = struct["codec"]
             else:
-                parameters = codec['parameters']
-                typevalue = parameters[0]['value']
+                parameters = codec["parameters"]
+                typevalue = parameters[0]["value"]
                 cod = dict()
-                cod['name'] = codecName
-                cod['parameters'] = typevalue
-                arg['codec'] = cod
-            arg['compressedSize'] = struct['compressedSize']
-            arg['uncompressedSize'] = struct['uncompressedSize']
+                cod["name"] = codecName
+                cod["parameters"] = typevalue
+                arg["codec"] = cod
+            arg["compressedSize"] = struct["compressedSize"]
+            arg["uncompressedSize"] = struct["uncompressedSize"]
             self.callback(arg)
             self.callbackDoneEvent.set()
             return
@@ -102,7 +102,7 @@ class PVAPYProvider(QObject, NTNDA_Channel_Provider):
             return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     PVAPYProvider = PVAPYProvider()
     channelName = ""

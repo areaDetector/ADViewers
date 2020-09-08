@@ -42,12 +42,12 @@ class NTNDA_Channel_Provider(object):
     def start(self):
         """Called to start monitoring."""
         raise Exception(
-            'derived class must implement NTNDA_Channel_Provider.start')
+            "derived class must implement NTNDA_Channel_Provider.start")
 
     def stop(self):
         """Called to stop monitoring."""
         raise Exception(
-            'derived class must implement NTNDA_Channel_Provider.stop')
+            "derived class must implement NTNDA_Channel_Provider.stop")
 
     def done(self):
         """Called when NTNDA_Viewer is done."""
@@ -56,7 +56,7 @@ class NTNDA_Channel_Provider(object):
     def callback(self, arg):
         """Must call NTNDA_Viewer.callback(arg)."""
         raise Exception(
-            'derived class must implement NTNDA_Channel_Provider.callback')
+            "derived class must implement NTNDA_Channel_Provider.callback")
 
 
 def imageDictCreate():
@@ -141,7 +141,7 @@ class ImageControl(QWidget):
         highLabel.setFixedWidth(100)
         maximumLabel = QLabel("maximum")
         maximumLabel.setFixedWidth(80)
-        zoomLabel = QLabel('||    zoom        (xlow,ylow,numx.numy)')
+        zoomLabel = QLabel("||    zoom        (xlow,ylow,numx.numy)")
         box = QHBoxLayout()
         box.setContentsMargins(0, 0, 0, 0);
         box.addWidget(minimumLabel)
@@ -155,25 +155,24 @@ class ImageControl(QWidget):
         self.firstRow = wid
         # second row
         self.minimumText = QLineEdit()
-        self.minimumText.setText('')
+        self.minimumText.setText("")
         self.minimumText.setEnabled(True)
         self.minimumText.setFixedWidth(100)
         self.minimumText.editingFinished.connect(self.minimumEvent)
-        self.lowText = QLabel('')
+        self.lowText = QLabel("")
         self.lowText.setFixedWidth(100)
-        spaceLabel = QLabel('')
+        spaceLabel = QLabel("")
         spaceLabel.setFixedWidth(100)
-        self.highText = QLabel('')
+        self.highText = QLabel("")
         self.highText.setFixedWidth(100)
         self.maximumText = QLineEdit()
         self.maximumText.setFixedWidth(80)
         self.maximumText.editingFinished.connect(self.maximumEvent)
         self.maximumText.setEnabled(True)
-        self.maximumText.setText('')
-        dividerLabel = QLabel('||')
+        self.maximumText.setText("")
+        dividerLabel = QLabel("||")
         dividerLabel.setFixedWidth(20)
-        self.resetButton = QPushButton('reset')
-        self.resetButton.setFixedWidth(40)
+        self.resetButton = QPushButton("reset")
         self.resetButton.setEnabled(True)
         self.resetButton.clicked.connect(self.resetEvent)
         self.zoomText = QLineEdit()
@@ -236,7 +235,7 @@ class ImageControl(QWidget):
         self.ylow = 0
         self.numx = self.imageDict["nx"]
         self.numy = self.imageDict["ny"]
-        zoom = '(0,0,' + str(self.numx) + ',' + str(self.numy) + ')'
+        zoom = "(0,0," + str(self.numx) + "," + str(self.numy) + ")"
         self.zoomText.setText(zoom)
         self.isZoomImage = False
         self.imageDisplay.display(self.imageDict["image"], self.pixelLevels)
@@ -251,7 +250,7 @@ class ImageControl(QWidget):
         ymax = releasePosition.y()
         if xmin == xmax and ymin >= ymax: return
         if xmin >= xmax or ymin >= ymax:
-            self.statusText.setText('illegal mouse move')
+            self.statusText.setText("illegal mouse move")
             return
         if self.isZoomImage:
             xstart = self.xlow
@@ -278,46 +277,46 @@ class ImageControl(QWidget):
         ylow = int(ymin * ratioy) + self.ylow
         numx = int((xmax - xmin) * ratiox)
         numy = int((ymax - ymin) * ratioy)
-        zoom = '(' + str(xlow) + ',' + str(ylow) + ',' + str(numx) + ',' + str(
-            numy) + ')'
+        zoom = "(" + str(xlow) + "," + str(ylow) + "," + str(numx) + "," + str(
+            numy) + ")"
         self.zoomText.setText(zoom)
         self.zoomTextEvent()
 
     def zoomTextEvent(self):
         try:
             text = self.zoomText.text()
-            ind = text.find('(')
-            if ind < 0: raise Exception('does not start with (')
+            ind = text.find("(")
+            if ind < 0: raise Exception("does not start with (")
             text = text[(ind + 1):]
-            ind = text.find(')')
-            if ind < 0: raise Exception('does not end with )')
+            ind = text.find(")")
+            if ind < 0: raise Exception("does not end with )")
             text = text[:-1]
-            split = text.split(',')
-            if len(split) != 4: raise Exception('not four values')
+            split = text.split(",")
+            if len(split) != 4: raise Exception("not four values")
             xlow = split[0]
             if not xlow.isdigit(): raise Exception(
-                'xlow is not a positive integer')
+                "xlow is not a positive integer")
             xlow = int(xlow)
             ylow = split[1]
             if not ylow.isdigit(): raise Exception(
-                'ylow is not a positive integer')
+                "ylow is not a positive integer")
             ylow = int(ylow)
             numx = split[2]
             if not numx.isdigit(): raise Exception(
-                'numx is not a positive integer')
+                "numx is not a positive integer")
             numx = int(numx)
-            if numx < 1: raise Exception('numx must be at least 1')
+            if numx < 1: raise Exception("numx must be at least 1")
             numy = split[3]
             if not numy.isdigit(): raise Exception(
-                'numy is not a positive integer')
+                "numy is not a positive integer")
             numy = int(numy)
-            if numy < 1: raise Exception('numy must be at least 1')
+            if numy < 1: raise Exception("numy must be at least 1")
             sizex = xlow + numx
             if sizex > self.imageDict["nx"]: raise Exception(
-                'xlow + numx gt nx')
+                "xlow + numx gt nx")
             sizey = ylow + numy
             if sizey > self.imageDict["ny"]: raise Exception(
-                'ylow + numy gt ny')
+                "ylow + numy gt ny")
         except Exception as error:
             self.statusText.setText(str(error))
             self.statusText.setStyleSheet("background-color:red")
@@ -347,7 +346,7 @@ class ImageControl(QWidget):
                         image[indx][indy][indz] = \
                         fromimage[indx + self.xlow][indy + self.ylow][indz]
         else:
-            raise Exception('ndim not 2 or 3')
+            raise Exception("ndim not 2 or 3")
         self.imageDisplay.display(image, self.pixelLevels)
         self.imageDisplay.show()
 
@@ -454,7 +453,7 @@ class ImageControl(QWidget):
             elif dtype == str("float64"):
                 self.pixelLevels = (float(0.0), float(1.0))
             else:
-                raise Exception('unknown dtype' + dtype)
+                raise Exception("unknown dtype" + dtype)
                 return
             self.minimum = self.pixelLevels[0]
             self.minimumText.setText(str(self.minimum))
@@ -466,8 +465,8 @@ class ImageControl(QWidget):
             self.highText.setText(str(self.high))
             self.lowSlider.setValue(0)
             self.highSlider.setValue(self.npixelLevels)
-            zoom = '(0,0,' + str(self.imageDict["nx"]) + ',' + str(
-                self.imageDict["ny"]) + ')'
+            zoom = "(0,0," + str(self.imageDict["nx"]) + "," + str(
+                self.imageDict["ny"]) + ")"
             self.zoomText.setText(zoom)
             self.isZoomImage = False
 
@@ -491,7 +490,7 @@ class FindLibrary(object):
         result = ctypes.util.find_library(name)
         if not result:
             return None
-        if os.name == 'nt':
+        if os.name == "nt":
             lib = ctypes.windll.LoadLibrary(result)
         else:
             lib = ctypes.cdll.LoadLibrary(result)
@@ -509,17 +508,17 @@ class NTNDA_Viewer(QWidget):
         self.setWindowTitle(providerName + "_NTNDA_Viewer")
         self.imageDict = imageDictCreate()
         # first row
-        self.startButton = QPushButton('start')
+        self.startButton = QPushButton("start")
         self.startButton.setEnabled(True)
         self.startButton.clicked.connect(self.startEvent)
-        self.startButton.setFixedWidth(40)
+        self.startButton.resize(self.startButton.sizeHint())
         self.isStarted = False
-        self.stopButton = QPushButton('stop')
+        self.stopButton = QPushButton("stop")
         self.stopButton.setEnabled(False)
         self.stopButton.clicked.connect(self.stopEvent)
-        self.stopButton.setFixedWidth(40)
+        self.stopButton.resize(self.stopButton.sizeHint())
         if len(self.provider.getChannelName()) < 1:
-            name = os.getenv('EPICS_NTNDA_VIEWER_CHANNELNAME')
+            name = os.getenv("EPICS_NTNDA_VIEWER_CHANNELNAME")
             if name:
                 self.provider.setChannelName(name)
         self.nImages = 0
@@ -552,7 +551,7 @@ class NTNDA_Viewer(QWidget):
         self.dtype = None
         self.dtypeText = QLabel()
         self.dtypeText.setFixedWidth(50)
-        self.codecName = ''
+        self.codecName = ""
         self.codecNameText = QLabel()
         self.codecNameText.setFixedWidth(40)
 
@@ -560,28 +559,28 @@ class NTNDA_Viewer(QWidget):
         self.compressRatioText.setFixedWidth(40)
         self.compressRatio = round(1.0)
         self.compressRatioText.setText(str(self.compressRatio))
-        self.clearButton = QPushButton('clear')
+        self.clearButton = QPushButton("clear")
         self.clearButton.setEnabled(True)
         self.clearButton.clicked.connect(self.clearEvent)
-        self.clearButton.setFixedWidth(40)
+        self.clearButton.resize(self.clearButton.sizeHint())
         self.statusText = QLineEdit()
-        self.statusText.setText('nothing done so far')
+        self.statusText.setText("nothing done so far")
         self.statusText.setFixedWidth(200)
         box = QHBoxLayout()
         box.setContentsMargins(0, 0, 0, 0);
         nxLabel = QLabel("nx:")
         nxLabel.setFixedWidth(20)
-        self.nxText.setText('0')
+        self.nxText.setText("0")
         box.addWidget(nxLabel)
         box.addWidget(self.nxText)
         nyLabel = QLabel("ny:")
         nyLabel.setFixedWidth(20)
-        self.nyText.setText('0')
+        self.nyText.setText("0")
         box.addWidget(nyLabel)
         box.addWidget(self.nyText)
         nzLabel = QLabel("nz:")
         nzLabel.setFixedWidth(20)
-        self.nzText.setText('0')
+        self.nzText.setText("0")
         box.addWidget(nzLabel)
         box.addWidget(self.nzText)
         dtypeLabel = QLabel("dtype:")
@@ -643,7 +642,7 @@ class NTNDA_Viewer(QWidget):
         self.stop()
 
     def clearEvent(self):
-        self.statusText.setText('')
+        self.statusText.setText("")
         self.statusText.setStyleSheet("background-color:white")
 
     def channelNameEvent(self):
@@ -680,33 +679,33 @@ class NTNDA_Viewer(QWidget):
             if value is not None:
                 if value == "disconnected":
                     self.channelNameLabel.setStyleSheet("background-color:red")
-                    self.statusText.setText('disconnected')
+                    self.statusText.setText("disconnected")
                     return
                 elif value == "connected":
                     self.channelNameLabel.setStyleSheet(
                         "background-color:green")
-                    self.statusText.setText('connected')
+                    self.statusText.setText("connected")
                     return
                 else:
                     self.statusText.setText("unknown callback error")
                     return
         try:
-            data = arg['value']
-            dimArray = arg['dimension']
-            compressed = arg['compressedSize']
-            uncompressed = arg['uncompressedSize']
-            codec = arg['codec']
-            codecName = codec['name']
+            data = arg["value"]
+            dimArray = arg["dimension"]
+            compressed = arg["compressedSize"]
+            uncompressed = arg["uncompressedSize"]
+            codec = arg["codec"]
+            codecName = codec["name"]
             codecNameLength = len(codecName)
         except Exception as error:
             self.statusText.setText(str(error))
             return
         ndim = len(dimArray)
         if ndim != 2 and ndim != 3:
-            self.statusText.setText('ndim not 2 or 3')
+            self.statusText.setText("ndim not 2 or 3")
             return
         if codecNameLength == 0:
-            codecName = 'none'
+            codecName = "none"
             if codecName != self.codecName:
                 self.codecName = codecName
                 self.codecNameText.setText(self.codecName)
@@ -733,11 +732,11 @@ class NTNDA_Viewer(QWidget):
             self.nImages = 0
 
     def decompress(self, data, codec, compressed, uncompressed):
-        codecName = codec['name']
+        codecName = codec["name"]
         if codecName != self.codecName:
             self.codecName = codecName
             self.codecNameText.setText(self.codecName)
-        typevalue = codec['parameters']
+        typevalue = codec["parameters"]
         if typevalue == 1:
             dtype = "int8"; elementsize = int(1)
         elif typevalue == 5:
@@ -759,37 +758,37 @@ class NTNDA_Viewer(QWidget):
         elif typevalue == 10:
             dtype = "float64"; elementsize = int(8)
         else:
-            raise Exception('decompress mapIntToType failed')
-        if codecName == 'blosc':
+            raise Exception("decompress mapIntToType failed")
+        if codecName == "blosc":
             lib = self.findLibrary.find(codecName)
-        elif codecName == 'jpeg':
-            lib = self.findLibrary.find('decompressJPEG')
-        elif codecName == 'lz4' or codecName == 'bslz4':
-            lib = self.findLibrary.find('bitshuffle')
+        elif codecName == "jpeg":
+            lib = self.findLibrary.find("decompressJPEG")
+        elif codecName == "lz4" or codecName == "bslz4":
+            lib = self.findLibrary.find("bitshuffle")
         else:
             lib = None
         if lib is None:
             raise Exception(
-            'shared library ' + codecName + ' not found')
+            "shared library " + codecName + " not found")
         self.imageDict["dtype"] = dtype
         self.dtypeText.setText(str(self.imageDict["dtype"]))
         inarray = bytearray(data)
         in_char_array = ctypes.c_ubyte * compressed
         out_char_array = ctypes.c_ubyte * uncompressed
         outarray = bytearray(uncompressed)
-        if codecName == 'blosc':
+        if codecName == "blosc":
             lib.blosc_decompress(
                 in_char_array.from_buffer(inarray),
                 out_char_array.from_buffer(outarray), uncompressed)
             data = np.array(outarray)
             data = np.frombuffer(data, dtype=dtype)
-        elif codecName == 'lz4':
+        elif codecName == "lz4":
             lib.LZ4_decompress_fast(
                 in_char_array.from_buffer(inarray),
                 out_char_array.from_buffer(outarray), uncompressed)
             data = np.array(outarray)
             data = np.frombuffer(data, dtype=dtype)
-        elif codecName == 'bslz4':
+        elif codecName == "bslz4":
             lib.bshuf_decompress_lz4(
                 in_char_array.from_buffer(inarray),
                 out_char_array.from_buffer(outarray),
@@ -797,7 +796,7 @@ class NTNDA_Viewer(QWidget):
                 elementsize, int(0))
             data = np.array(outarray)
             data = np.frombuffer(data, dtype=dtype)
-        elif codecName == 'jpeg':
+        elif codecName == "jpeg":
             lib.decompressJPEG(
                 in_char_array.from_buffer(inarray), compressed,
                 out_char_array.from_buffer(outarray), uncompressed)
@@ -818,7 +817,7 @@ class NTNDA_Viewer(QWidget):
         dtype = data.dtype
         ndim = len(dimArray)
         if ndim != 2 and ndim != 3:
-            raise Exception('ndim not 2 or 3')
+            raise Exception("ndim not 2 or 3")
         if ndim == 2:
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]
@@ -847,14 +846,14 @@ class NTNDA_Viewer(QWidget):
                 image = np.swapaxes(image, 0, 1)
                 image = np.transpose(image, (1, 0, 2))
             else:
-                raise Exception('no axis has dim = 3')
+                raise Exception("no axis has dim = 3")
         else:
-            raise Exception('ndim not 2 or 3')
+            raise Exception("ndim not 2 or 3")
         if dtype != self.imageDict["dtype"]:
             self.imageDict["dtype"] = dtype
             self.dtypeText.setText(str(self.imageDict["dtype"]))
         if ny < self.minsize or nx < self.minsize:
-            raise Exception('ny <', self.minsize, ' or nx<', self.minsize)
+            raise Exception("ny <", self.minsize, " or nx<", self.minsize)
         if nx != self.imageDict["nx"]:
             self.imageDict["nx"] = nx
             self.nxText.setText(str(self.imageDict["nx"]))

@@ -30,13 +30,13 @@ class P4PProvider(QObject, NTNDA_Channel_Provider):
         self.subscription = None
 
     def start(self):
-        self.ctxt = Context('pva')
+        self.ctxt = Context("pva")
         self.firstCallback = True
         self.isClosed = False
         self.subscription = self.ctxt.monitor(
             self.getChannelName(),
             self.p4pcallback,
-            request = 'field(value,dimension,codec,compressedSize,uncompressedSize)',
+            request = "field(value,dimension,codec,compressedSize,uncompressedSize)",
             notify_disconnect=True)
 
     def stop(self):
@@ -62,24 +62,24 @@ class P4PProvider(QObject, NTNDA_Channel_Provider):
         arg = {}
         try:
             argtype = str(type(struct))
-            if argtype.find('Disconnected') >= 0:
+            if argtype.find("Disconnected") >= 0:
                 arg["status"] = "disconnected"
                 self.callback(arg)
                 self.firstCallback = True
                 self.callbackDoneEvent.set()
                 return
             if self.firstCallback:
-                arg = dict()
-                arg["status"] = "connected"
+                arg = {"status": "connected"}
                 self.callback(arg)
                 self.firstCallback = False
                 self.callback(arg)
-            arg = dict()
-            arg['value'] = struct['value']
-            arg['dimension'] = struct['dimension']
-            arg['codec'] = struct['codec']
-            arg['compressedSize'] = struct['compressedSize']
-            arg['uncompressedSize'] = struct['uncompressedSize']
+            arg = {
+                "value": struct["value"],
+                "dimension": struct["dimension"],
+                "codec": struct["codec"],
+                "compressedSize":struct["compressedSize"],
+                "uncompressedSize": struct["uncompressedSize"],
+            }
             self.callback(arg)
             self.callbackDoneEvent.set()
             return
@@ -90,7 +90,7 @@ class P4PProvider(QObject, NTNDA_Channel_Provider):
             return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     p4pProvider = P4PProvider()
     channelName = ""
