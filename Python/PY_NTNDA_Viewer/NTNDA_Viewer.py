@@ -710,7 +710,7 @@ class NTNDA_Viewer(QWidget):
             if codecName != self.codecName:
                 self.codecName = codecName
                 self.codecNameText.setText(self.codecName)
-            ratio = round(1.0)
+            ratio = 1
             if ratio != self.compressRatio:
                 self.compressRatio = ratio
                 self.compressRatioText.setText(str(self.compressRatio))
@@ -727,7 +727,7 @@ class NTNDA_Viewer(QWidget):
         self.nImages = self.nImages + 1
         self.timenow = time.time()
         timediff = self.timenow - self.lasttime
-        if (timediff > 1):
+        if timediff > 1:
             self.imageRateText.setText(str(round(self.nImages / timediff)))
             self.lasttime = self.timenow
             self.nImages = 0
