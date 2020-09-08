@@ -24,7 +24,7 @@ import os
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
-class NTNDA_Channel_Provider(object):
+class NTNDA_Channel_Provider:
     """
     Base class for monitoring an NTNDArray channel from an areaDetector IOC.
     The methods are called by NTNDA_Viewer.
@@ -484,7 +484,7 @@ class ImageControl(QWidget):
         self.imageDisplay.show()
 
 
-class FindLibrary(object):
+class FindLibrary:
     def __init__(self, parent=None):
         self.save = {}
 

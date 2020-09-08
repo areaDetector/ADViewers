@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QObject, pyqtSignal
 
 
-class GetChannel(object):
+class GetChannel:
     """
     This exists because whenever a new channel was started a crash occurred.
     """
