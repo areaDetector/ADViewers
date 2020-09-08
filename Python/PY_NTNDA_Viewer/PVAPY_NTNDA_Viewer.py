@@ -19,11 +19,11 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 class GetChannel(object):
     """
-       This exists because whenever a new channel was started a crash occurred
+    This exists because whenever a new channel was started a crash occurred.
     """
 
     def __init__(self, parent=None):
-        self.save = dict()
+        self.save = {}
 
     def get(self, channelName):
         channel = self.save.get(channelName)
@@ -66,7 +66,7 @@ class PVAPYProvider(QObject, NTNDA_Channel_Provider):
 
     def mycallback(self):
         struct = self.struct
-        arg = dict()
+        arg = {}
         try:
             val = struct["value"][0]
             if len(val) != 1:
@@ -75,7 +75,7 @@ class PVAPYProvider(QObject, NTNDA_Channel_Provider):
             for x in val:
                 element = x
             if element is None:
-                raise Exception("value is not numpy  array")
+                raise Exception("value is not numpy array")
             value = val[element]
             arg["value"] = value
             arg["dimension"] = struct["dimension"]
@@ -86,20 +86,19 @@ class PVAPYProvider(QObject, NTNDA_Channel_Provider):
             else:
                 parameters = codec["parameters"]
                 typevalue = parameters[0]["value"]
-                cod = dict()
-                cod["name"] = codecName
-                cod["parameters"] = typevalue
-                arg["codec"] = cod
+                cod = {
+                    "name": codecName,
+                    "parameters": typevalue,
+                    "codec": codec,
+                }
             arg["compressedSize"] = struct["compressedSize"]
             arg["uncompressedSize"] = struct["uncompressedSize"]
             self.callback(arg)
             self.callbackDoneEvent.set()
-            return
         except Exception as error:
             arg["exception"] = repr(error)
             self.callback(arg)
             self.callbackDoneEvent.set()
-            return
 
 
 if __name__ == "__main__":

@@ -9,19 +9,19 @@ author Marty Kraimer
     original development started 2019.12
 """
 
-import sys, time, signal
-
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+import time
+import signal
 import numpy as np
 from pyqtgraph.widgets.RawImageWidget import RawImageWidget
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QSlider
 from PyQt5.QtWidgets import QPushButton, QHBoxLayout, QGridLayout
 from PyQt5.QtWidgets import QRubberBand
 from PyQt5.QtCore import *
-
 import ctypes
 import ctypes.util
 import os
+
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
 class NTNDA_Channel_Provider(object):
@@ -118,7 +118,7 @@ class ImageControl(QWidget):
         self.imageDisplay = Image_Display()
         self.imageDisplay.clientReleaseEvent(self.clientReleaseEvent)
         self.imageDict = imageDictCreate()
-        self.pixelLevels = (int(0), int(255))
+        self.pixelLevels = (0, 255)
         self.npixelLevels = 255
         self.minimum = 0;
         self.low = 0
@@ -175,6 +175,7 @@ class ImageControl(QWidget):
         self.resetButton = QPushButton("reset")
         self.resetButton.setEnabled(True)
         self.resetButton.clicked.connect(self.resetEvent)
+        self.resetButton.resize(self.resetButton.sizeHint())
         self.zoomText = QLineEdit()
         self.zoomText.setEnabled(True)
         self.zoomText.setFixedWidth(180)
@@ -432,26 +433,25 @@ class ImageControl(QWidget):
             self.imageDict["dtype"] = imageDict["dtype"]
             dtype = self.imageDict["dtype"]
             if dtype == str("int8"):
-                self.pixelLevels = (int(-128), int(127))
+                self.pixelLevels = (-128, 127)
             elif dtype == str("uint8"):
-                self.pixelLevels = (int(0), int(255))
+                self.pixelLevels = (0, 255)
             elif dtype == str("int16"):
-                self.pixelLevels = (int(-32768), int(32767))
+                self.pixelLevels = (-32768, 32767)
             elif dtype == str("uint16"):
-                self.pixelLevels = (int(0), int(65536))
+                self.pixelLevels = (0, 65536)
             elif dtype == str("int32"):
-                self.pixelLevels = (int(-2147483648), int(2147483647))
+                self.pixelLevels = (-2147483648, 2147483647)
             elif dtype == str("uint32"):
-                self.pixelLevels = (int(0), int(4294967296))
+                self.pixelLevels = (0, 4294967296)
             elif dtype == str("int64"):
-                self.pixelLevels = (
-                int(-9223372036854775808), int(9223372036854775807))
+                self.pixelLevels = (-9223372036854775808, 9223372036854775807)
             elif dtype == str("uint64"):
-                self.pixelLevels = (int(0), int(18446744073709551615))
+                self.pixelLevels = (0, 18446744073709551615)
             elif dtype == str("float32"):
-                self.pixelLevels = (float(0.0), float(1.0))
+                self.pixelLevels = (0.0, 1.0)
             elif dtype == str("float64"):
-                self.pixelLevels = (float(0.0), float(1.0))
+                self.pixelLevels = (0.0, 1.0)
             else:
                 raise Exception("unknown dtype" + dtype)
                 return
@@ -517,10 +517,6 @@ class NTNDA_Viewer(QWidget):
         self.stopButton.setEnabled(False)
         self.stopButton.clicked.connect(self.stopEvent)
         self.stopButton.resize(self.stopButton.sizeHint())
-        if len(self.provider.getChannelName()) < 1:
-            name = os.getenv("EPICS_NTNDA_VIEWER_CHANNELNAME")
-            if name:
-                self.provider.setChannelName(name)
         self.nImages = 0
         self.imageRateText = QLabel()
         self.imageRateText.setFixedWidth(40)
@@ -738,25 +734,35 @@ class NTNDA_Viewer(QWidget):
             self.codecNameText.setText(self.codecName)
         typevalue = codec["parameters"]
         if typevalue == 1:
-            dtype = "int8"; elementsize = int(1)
+            dtype = "int8"
+            elementsize = 1
         elif typevalue == 5:
-            dtype = "uint8"; elementsize = int(1)
+            dtype = "uint8"
+            elementsize = 1
         elif typevalue == 2:
-            dtype = "int16"; elementsize = int(2)
+            dtype = "int16"
+            elementsize = 2
         elif typevalue == 6:
-            dtype = "uint16"; elementsize = int(2)
+            dtype = "uint16"
+            elementsize = 2
         elif typevalue == 3:
-            dtype = "int32"; elementsize = int(4)
+            dtype = "int32"
+            elementsize = 4
         elif typevalue == 7:
-            dtype = "uint32"; elementsize = int(4)
+            dtype = "uint32"
+            elementsize = 4
         elif typevalue == 4:
-            dtype = "int64"; elementsize = int(8)
+            dtype = "int64"
+            elementsize = 8
         elif typevalue == 8:
-            dtype = "uint64"; elementsize = int(8)
+            dtype = "uint64"
+            elementsize = 8
         elif typevalue == 9:
-            dtype = "float32"; elementsize = int(4)
+            dtype = "float32"
+            elementsize = 4
         elif typevalue == 10:
-            dtype = "float64"; elementsize = int(8)
+            dtype = "float64"
+            elementsize = 8
         else:
             raise Exception("decompress mapIntToType failed")
         if codecName == "blosc":
@@ -768,8 +774,7 @@ class NTNDA_Viewer(QWidget):
         else:
             lib = None
         if lib is None:
-            raise Exception(
-            "shared library " + codecName + " not found")
+            raise Exception("shared library " + codecName + " not found")
         self.imageDict["dtype"] = dtype
         self.dtypeText.setText(str(self.imageDict["dtype"]))
         inarray = bytearray(data)
@@ -793,7 +798,7 @@ class NTNDA_Viewer(QWidget):
                 in_char_array.from_buffer(inarray),
                 out_char_array.from_buffer(outarray),
                 int(uncompressed / elementsize),
-                elementsize, int(0))
+                elementsize, 0)
             data = np.array(outarray)
             data = np.frombuffer(data, dtype=dtype)
         elif codecName == "jpeg":

@@ -82,12 +82,10 @@ class P4PProvider(QObject, NTNDA_Channel_Provider):
             }
             self.callback(arg)
             self.callbackDoneEvent.set()
-            return
         except Exception as error:
             arg["exception"] = repr(error)
             self.callback(arg)
             self.callbackDoneEvent.set()
-            return
 
 
 if __name__ == "__main__":
