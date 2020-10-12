@@ -1,0 +1,3 @@
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/epics7/areaDetector/ADSupport/lib/linux-x86_64
+export EPICS_NTNDA_VIEWER_CHANNELNAME="13SIM1:Pva1:Image"
+python P4P_NTNDA_Viewer.py
