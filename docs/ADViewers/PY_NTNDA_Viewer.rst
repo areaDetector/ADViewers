@@ -1,97 +1,122 @@
-# PY_NTNDA_Viewer 2020.03.02
+===============
+PY_NTNDA_Viewer
+===============
 
-PY_NTNDA_Viewer is Python code that is similar to the Java EPICS_NTNDA_Viewer that comes with areaDector.
+:author: Marty Kraimer
 
-It is available in **areaDetector/ADViewers/PY_NTNDA_Viewer**
+.. contents:: Contents
 
-It is a viewer for images obtained from an areaDetector channel that provides an NTNDArray.
+Overview
+--------
+PY_NTNDA_Viewer is Python code that is similar to the Java EPICS_NTNDA_Viewer that comes with areaDetector.
+
+It is available in `ADViewers <https://github.com/areaDetector/ADViewers>`__
+
+It is a viewer for images obtained from an areaDetector pvAccess channel that provides an NTNDArray.
 
 There are currently 2 versions:
 
 1) P4P_NTNDA_Viewer.py 
-This uses **p4p**.
+   This uses `p4p <https://github.com/mdavidsaver/p4p>`__. It supports Windows, Mac OSX, and Linux.
+
 2) PVAPY_NTNDA_Viewer.py
-This uses **pvapy**.
-**pvapy** is not available on windows and does not provide connect/disconnect notification.
+   This uses `pvaPy <https://github.com/epics-base/pvaPy>`__. pvaPy is not available on Windows 
+   and does not provide connect/disconnect notification.
 
 Below there are instructions for
 
 1) Starting the example
 2) Installation of required Python modules.
 
-## User Interface
+User Interface
+--------------
 
-When either version of the viewer is started the following appears:
+When either version of the viewer is started the following control window appears:
 
-![control window](control.png)
-
-When **start** is pressed the following appears
-
-![image window](image.png)
-
-### First row of control window
-
-1) **start**
-Clicking this button starts communication with the server.
-2) **stop**
-Clicking this button stops communication with the server.
-3) **imageRate**
-This shows the number of images/second that are being displayed.
-Note that this is normally less than the number of images the server is producing.
-4) **channelName**
-This is the name of the channel that provides the NTNDArray.
-When in stopped mode a new channel name can be specified.
-
-### Second row of control window
-
-1) **nx,ny,nz**
-This is the size of the image provided by the server:
-x is width, y is height, (x0,y0) is upper left corner.
-2) **dtype**
-Data type for each pixel.
-The following data types are supported: signed and unsigned interers of length (8,16,32,64) bits,
-IEEE Float32, and IEEE Float64.
-3) **codec**
-This shows compression type and ratio.
-See below for details.
-4) **status**
-This shows current status.
-Clicking **clear** erases the current status.
-
-### Third row of control window
-
-1) **pixel intensity control**
-This shows the pixel settings and provides low and high sliders for manipulating the image intensity.
-Note that the minimum and maximum values depend of the **dtype**.
-Normally the user will not want to change minimum or maximum for 8 or 16 bit integers.
-For the other data types, especially float types, the user can change these if the user knows what to expect from the server.
-2) **zoom image control**
-This allows the user to select a sub-image to display.
-The user can use the mouse to select the sub-image by clicking, draging, and releasing the mouse.
-The direction must be in the (low,right) direction.
-The zoom window can also be directly entered by the user.
-The initial values of (xlow,ylow,numx,numy) are (0,0,nx,ny).
-Clicking reset restores the initial settings.
+.. image:: PY_NTNDA_Viewer_Control.png 
 
 
-## Starting the example
+When **start** is pressed the following image window appears
 
-### Starting simDetector
+.. image:: PY_NTNDA_Viewer_Image.png 
+
+
+First row of control window
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **start**
+  Clicking this button starts communication with the server.
+
+- **stop**
+  Clicking this button stops communication with the server.
+
+- **imageRate** 
+  This shows the number of images/second that are being displayed.
+  Note that this is normally less than the number of images the server is producing.
+
+- **channelName**
+  This is the name of the channel that provides the NTNDArray.
+  When in stopped mode a new channel name can be specified.
+
+Second row of control window
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **nx,ny,nz**
+  This is the size of the image provided by the server:
+  x is width, y is height, (x0,y0) is upper left corner.
+
+- **dtype**
+  Data type for each pixel.
+  The following data types are supported: signed and unsigned interers of length (8,16,32,64) bits,
+  IEEE Float32, and IEEE Float64.
+
+- **codec**
+  This shows compression type and ratio.
+  See below for details.
+
+- **status**
+  This shows current status.
+  Clicking **clear** erases the current status.
+
+Third row of control window
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **pixel intensity control**
+  This shows the pixel settings and provides low and high sliders for manipulating the image intensity.
+  Note that the minimum and maximum values depend of the **dtype**.
+  Normally the user will not want to change minimum or maximum for 8 or 16 bit integers.
+  For the other data types, especially float types, the user can change these if the user knows what to expect from the server.
+
+- **zoom image control**
+  This allows the user to select a sub-image to display.
+  The user can use the mouse to select the sub-image by clicking, draging, and releasing the mouse.
+  The direction must be in the (low,right) direction.
+  The zoom window can also be directly entered by the user.
+  The initial values of (xlow,ylow,numx,numy) are (0,0,nx,ny).
+  Clicking **reset** restores the initial settings.
+
+
+Starting the example
+--------------------
+
+Starting simDetector
+~~~~~~~~~~~~~~~~~~~~
 
 Start an IOC running the simDetector.
-For example I start it as follows
+For example I start it as follows::
 
     mrk> pwd
     /home/epics7/areaDetector/ADSimDetector/iocs/simDetectorIOC/iocBoot/iocSimDetector
     mrk> ./start_epics
 
-### Start a display manager
+Start a display manager
+~~~~~~~~~~~~~~~~~~~~~~~
 
 At least the following choices are available: **medm**, **edm**, **pydm**, and **css**.
 For any choice the display file, with name **simDetector**, to load is located in
 **areaDetector/ADSimDetector/simDetectorApp/op**
 
-For example to use **medm** I have the files **setEnv** and **startSimDetector**, which are:
+For example to use **medm** I have the files **setEnv** and **startSimDetector**, which are::
 
     export PATH=$PATH:/home/epics7/extensions/bin/${EPICS_HOST_ARCH}
     export EPICS_DISPLAY_PATH=/home/epics7/areaDetector/ADCore/ADApp/op/adl
@@ -99,18 +124,19 @@ For example to use **medm** I have the files **setEnv** and **startSimDetector**
     export EPICS_DISPLAY_PATH=${EPICS_DISPLAY_PATH}:/home/epics7/areaDetector/ADSimDetector/simDetectorApp/op/adl
     export EPICS_CA_MAX_ARRAY_BYTES=40000000
 
-and
+and::
 
     source ./setEnv
     medm  -x -macro "P=13SIM1:,R=cam1:" simDetector.adl 
 
-then I just enter
+then I just enter::
 
     ./startSimDetector
 
 
 
-### start P4P_NTNDA_Viewer or PVAPY_NTNDA_Viewer
+start P4P_NTNDA_Viewer or PVAPY_NTNDA_Viewer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The channelName can be specified in three ways:
 
@@ -120,16 +146,16 @@ The channelName can be specified in three ways:
 
 In order to use the codec support from **areaDetector** you must have
 a path to **areaDetector/ADSupport/lib...** defined.
-The details differ between windows and linux or macos.
+The details differ between Windows and Winux or MacOSX.
 
-An example is **exampleStartP4P**, which uses **p4p** for communication with the simDetector.
+An example is **exampleStartP4P**, which uses **p4p** for communication with the simDetector::
 
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/epics7/areaDetector/ADSupport/lib/linux-x86_64
     export EPICS_NTNDA_VIEWER_CHANNELNAME="13SIM1:Pva1:Image"
     python P4P_NTNDA_Viewer.py
 
 
-I start it via
+I start it via::
 
     mrk> pwd
     /home/epics7/modules/PY_NTNDA_Viewer
@@ -140,44 +166,47 @@ If it shows no errors click connect and start.
 
 Then:
 
-1) run whatever opi tool you use to control the simDetector.
-2) select plugins All and enable the PVA1 plugin.
-3) click connect.
-4) click start.
+1) Run whatever opi tool you use to control the simDetector.
+2) Select plugins All and enable the PVA1 plugin.
+3) Click connect.
+4) Click start.
 
 You should see images being displayed.
 
 **exampleStartPVAPY** starts **PVAPY_NTNDA_Viewer.py**, which uses **pvapy** for communication with the simDetector.
 
-## Required python modules
+Required python modules
+-----------------------
 
 You must have python and pip installed.
 
 The other python modules can be installed via **pip install ...**
 
-For example issue the command
+For example issue the command::
 
     sudo pip install numpy
 
-The following shows all installed python modules
+The following shows all installed python modules::
 
     pip list
 
 The following is a list of modules required by PY_NTNDA_Viewer
 
-1) numpy
-2) PyQt5
-3) PyQt5-sip
-4) QtPy
-5) p4p and/or pvapy
-6) pyqtgraph
+- numpy
+- PyQt5
+- PyQt5-sip
+- QtPy
+- p4p and/or pvapy
+- pyqtgraph
 
 
-## Other things to try
+Other things to try
+-------------------
 
-### pixel data types
+Pixel data types
+~~~~~~~~~~~~~~~~
 
-In the display manager **simDetector** window try the various **Data type**s.
+In the display manager **simDetector** window try the various **Data types**.
 The default is **Uint8**.
 
 Now select **Int8**.
@@ -190,12 +219,14 @@ This works. **UInt16** also works.
 But it is not easy to test.
 
 
-### color mode
+Color mode
+~~~~~~~~~~
 
 Set **Color mode** to **Mono** or **RGB1** or **RGB2** or **RGB3** 
 These all work.
 
-### codec
+Codec
+~~~~~
 
 Select plugins All.
 On the new window set the Port for PVA1 to **CODEC1**.
@@ -210,46 +241,48 @@ except that on the PY_NTNDA_Viewer window you will see that the compressed size 
 than the uncompressed size.
 
 
-### Performance
+Performance
+~~~~~~~~~~~
 
 For a 1024x1024 image:
 
-1) NDPVa generates 196 frames/sec
-2) EPICS_NTDA_Viewer handles 140 frames/second
-3) NTDA_Viewer only does about 20 frames/second.
+- NDPVa generates 196 frames/sec
+- EPICS_NTDA_Viewer handles 140 frames/second
+- NTDA_Viewer only does about 20 frames/second.
 
 For a 512x512 image:
 
-1) NDPVa generates 196 frames/sec
-2) EPICS_NTDA_Viewer handles 193 frames/second
-3) NTDA_Viewer does about 135 frames/second.
+- NDPVa generates 196 frames/sec
+- EPICS_NTDA_Viewer handles 193 frames/second
+- NTDA_Viewer does about 135 frames/second.
 
 
 I did some searching on-line and saw:
 
 
-    The ImageView class can also be instantiated directly and embedded in Qt applications.
-    Instances of ImageItem can be used inside a ViewBox or GraphicsView.
-    For higher performance, use RawImageWidget.
-    Any of these classes are acceptable for displaying video by calling setImage() to display a new frame.
-    To increase performance, the image processing system uses scipy.weave to produce compiled libraries.
-    If your computer has a compiler available, weave will automatically attempt to build the libraries it needs on demand.
-    If this fails, then the slower pure-python methods will be used instead.
+- The ImageView class can also be instantiated directly and embedded in Qt applications.
+- Instances of ImageItem can be used inside a ViewBox or GraphicsView.
+- For higher performance, use RawImageWidget.
+- Any of these classes are acceptable for displaying video by calling setImage() to display a new frame.
+- To increase performance, the image processing system uses scipy.weave to produce compiled libraries.
+- If your computer has a compiler available, weave will automatically attempt to build the libraries it needs on demand.
+- If this fails, then the slower pure-python methods will be used instead.
 
 
 But for python3, **weave** is no longer supported 
 
 It is possible that ImageJ is not really displaying 140/193 frames/s because the actual drawing operation may be deferred and throttled just like Qt. But the code thinks it is doing the faster rate because is not waiting for the display to update.
 
-## Theory of Operation
+Theory of Operation
+-------------------
 
 PY_NTNDA_Viewer provides support for an NTNDArray supported by **areaDetector/ADCore/ADApp/ntndArrayConverterSrc**.
 
 PY_NTNDA_Viewer has the following python modules:
 
-1) P4P_NTNDA_Viewer.py : a channel provider that uses p4p to connect to an NTNDArray
-2) PVAPY_NTNDA_Viewer.py : a channel provider that uses pvapy to connect to an NTNDArray
-3) NTNDA_Viewer.py : The code that displays images provides by a channel provider.
+- P4P_NTNDA_Viewer.py : a channel provider that uses p4p to connect to an NTNDArray
+- PVAPY_NTNDA_Viewer.py : a channel provider that uses pvapy to connect to an NTNDArray
+- NTNDA_Viewer.py : The code that displays images provides by a channel provider.
 
 **NTNDA_Viewer.py** defines the following python classes:
 
@@ -257,11 +290,13 @@ PY_NTNDA_Viewer has the following python modules:
 * Image_Display : a class that displays an image
 * ImageControl: a class that calls Image_Display and provides sliders and zoom.
 * NTNDA_Viewer : A class that receives images from a channel provider.
-It supports decompression and conversion of 1d numpy arrays to either 2d or 3d numpy arrays.
-It then calls ImageControl with the 2d or 3d numpy array.
+  It supports decompression and conversion of 1d numpy arrays to either 2d or 3d numpy arrays.
+  It then calls ImageControl with the 2d or 3d numpy array.
 
+NTNDArray structure
+~~~~~~~~~~~~~~~~~~~
 
-### An NTDAArray has the following structure:
+An NTDAArray has the following structure::
 
     epics:nt/NTNDArray:1.0
         union value                   // provider must present this a a 1d numpy array of one of the following types
@@ -287,10 +322,11 @@ It then calls ImageControl with the 2d or 3d numpy array.
                 // other fields not used by PY_NTNDA_Viewer
         // other fields not used by PY_NTNDA_Viewer
 
-### value
+value
+~~~~~
 
 The channel provider, e.g. **PVAPYProvider** or **P4PProvider**, must provide this as a 1d numpy array.
-The mapping between the numpy dtype and the value type is:
+The mapping between the numpy dtype and the value type is::
 
     value type     dtype
     ----------     -----
@@ -305,9 +341,10 @@ The mapping between the numpy dtype and the value type is:
     float          float32
     double         float64
 
-### codec
+codec
+~~~~~
 
-**codec** is always of the form
+**codec** is always of the form::
 
     codec_t codec
         string name jpeg   // must be one  of "", jpeg, blosc, lz4, or bslz4
@@ -331,7 +368,7 @@ If the name is one of the supported types, the decompression code uses the follo
 Note that for jpeg only dtype byte and ubyte are supported.
 For the other codec types all dtypes are supported.
 
-The mapping from the integer value to the numpy dtype is:
+The mapping from the integer value to the numpy dtype is::
 
         if typevalue== 1 : dtype = "int8"
         elif typevalue== 5 : dtype = "uint"
@@ -347,7 +384,8 @@ The mapping from the integer value to the numpy dtype is:
 
 The final result is the compressed data in **value** converted to an uncompressed 1d numpy array with the correct dtype.
 
-### dimension
+dimension
+~~~~~~~~~
 
 This is used by **NTNDA_Viewer.dataToImage** to transform the 1d numpy array to either a 2d or 3d numpy array.
 If the number of dimensions is 2 than the data is for a monocromatic image.
@@ -355,7 +393,8 @@ If the dimension is 3 then one of the dimensions must have size 3 and must be RG
 Note also that areaDetector and numpy use different conventions for **x** and **y**.
 Thus **NTNDA_Viewer.dataToImage** transposes x and y.
 
-## Issues
+Issues
+------
 
 The original **NTNDA_Viewer** was done in:
 
@@ -363,16 +402,19 @@ The original **NTNDA_Viewer** was done in:
 
 Many github issues were created. The following have not been resolved:
 
-### Cannot install pvapy on Windows 
+Cannot install pvapy on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Currently pvapy is not supported on windows.
 Also it does not provided a callback reporting connection status.
 
-### Add Additional Performance Statistics
+Add Additional Performance Statistics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 NTND arrays carry id field that could be used to get more information about viewer performance, such as number of missed frames per second, total number of frames lost, etc.
 
-### RGB1 image display uses too much CPU
+RGB1 image display uses too much CPU
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This had lots of discussion.
 Mainly related to different versions of python modules.
