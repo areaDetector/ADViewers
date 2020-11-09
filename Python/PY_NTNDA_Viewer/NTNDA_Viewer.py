@@ -11,7 +11,7 @@ latest date 2020.11.09
     original development started 2019.12
 """
 
-import sys, time
+import time
 import os
 import numpy as np
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit
@@ -20,16 +20,9 @@ from PyQt5.QtWidgets import QRadioButton
 from PyQt5.QtCore import *
 from PyQt5.QtGui import qRgb
 
-sys.path.append("/numpyImage/")
 from numpyImage import NumpyImage, FollowMouse
-
-sys.path.append("/codecAD/")
 from codecAD import CodecAD
-
-sys.path.append("/channelToImageAD/")
 from channelToImageAD import ChannelToImageAD
-
-sys.path.append("/colorTable/")
 from colorTable import ColorTable
 
 
