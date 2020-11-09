@@ -1,7 +1,7 @@
 # PY_NTNDA_Viewer
 
 Author: Marty Kraimer
-Date: 2020.10.28
+Date: 2020.11.09
 
 ## Overview
 
@@ -305,16 +305,11 @@ To view the documentation do the following:
     mrk> pwd
     /home/epics7/testPython/PY_NTNDA_Viewer
     mrk> ipython
-    In [1]: import sys
-    In [2]: sys.path.append('../numpyImage/')
-    In [3]: from numpyImage import NumpyImage, FollowMouse
-    In [4]: sys.path.append('../codecAD/')
-    In [5]: from codecAD import CodecAD
-    In [6]: sys.path.append('../channelToImageAD/')
-    In [7]: from channelToImageAD import ChannelToImageAD
-    In [8]: sys.path.append('../colorTable/')
-    In [9]: from colorTable import ColorTable
-    In [12]: help(NumpyImage)
+    In [1]: from numpyImage import NumpyImage, FollowMouse
+    In [2]: from codecAD import CodecAD
+    In [3]: from channelToImageAD import ChannelToImageAD
+    In [4]: from colorTable import ColorTable
+    In [5]: help(NumpyImage)
     ...
 
 
