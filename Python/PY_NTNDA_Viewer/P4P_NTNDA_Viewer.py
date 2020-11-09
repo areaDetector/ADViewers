@@ -100,5 +100,5 @@ if __name__ == "__main__":
     if nargs >= 2:
         channelName = sys.argv[1]
         p4pProvider.setChannelName(channelName)
-    viewer = NTNDA_Viewer(p4pProvider, "P4P")
+    viewer = NTNDA_Viewer(p4pProvider, "P4P", app)
     sys.exit(app.exec_())

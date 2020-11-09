@@ -7,7 +7,7 @@ Copyright - See the COPYRIGHT that is included with this distribution.
 authors
     Marty Kraimer
     Mark Rivers
-latest date 2020.10.09
+latest date 2020.11.09
     original development started 2019.12
 """
 
@@ -20,26 +20,27 @@ from PyQt5.QtWidgets import QRadioButton
 from PyQt5.QtCore import *
 from PyQt5.QtGui import qRgb
 
-sys.path.append("./numpyImage/")
+sys.path.append("/numpyImage/")
 from numpyImage import NumpyImage, FollowMouse
 
-sys.path.append("./codecAD/")
+sys.path.append("/codecAD/")
 from codecAD import CodecAD
 
-sys.path.append("./channelToImageAD/")
+sys.path.append("/channelToImageAD/")
 from channelToImageAD import ChannelToImageAD
 
-sys.path.append("./colorTable/")
+sys.path.append("/colorTable/")
 from colorTable import ColorTable
 
 
 class NTNDA_Viewer(QWidget):
-    def __init__(self, ntnda_Channel_Provider, providerName, parent=None):
+    def __init__(self, ntnda_Channel_Provider, providerName, qapplication, parent=None):
         super(QWidget, self).__init__(parent)
         self.imageSize = 800
         self.isClosed = False
         self.isStarted = False
         self.provider = ntnda_Channel_Provider
+        self.qapplication = qapplication
         self.provider.NTNDA_Viewer = self
         self.setWindowTitle(providerName + "_NTNDA_Viewer")
         self.codecAD = CodecAD()
@@ -47,6 +48,7 @@ class NTNDA_Viewer(QWidget):
         self.colorTable = ColorTable()
         self.colorTable.setColorChangeCallback(self.colorChangeEvent)
         self.colorTable.setExceptionCallback(self.colorExceptionEvent)
+
         self.channelDict = None
         self.numpyImage = None
         self.manualLimits = False
@@ -69,6 +71,11 @@ class NTNDA_Viewer(QWidget):
         self.showColorTableButton.setEnabled(True)
         self.showColorTableButton.clicked.connect(self.showColorTableEvent)
         box.addWidget(self.showColorTableButton)
+
+        self.plot3dButton = QPushButton("plot3d")
+        self.plot3dButton.setEnabled(True)
+        self.plot3dButton.clicked.connect(self.plot3dEvent)
+        box.addWidget(self.plot3dButton)
 
         self.channelNameLabel = QLabel("channelName:")
         box.addWidget(self.channelNameLabel)
@@ -225,6 +232,18 @@ class NTNDA_Viewer(QWidget):
     def colorChangeEvent(self):
         self.display()
 
+    def plot3dEvent(self):
+        if self.numpyImage is None:
+            self.statusText.setText("no image")
+            return
+        if self.channelDict is None:
+            self.statusText.setText("no channel")
+            return
+        if self.channelDict["channel"] is None:
+            self.statusText.setText("no channel")
+            return
+        self.numpyImage.plot3d(self.channelDict["channel"])
+
     def showColorTableEvent(self):
         self.colorTable.show()
 
@@ -286,7 +305,7 @@ class NTNDA_Viewer(QWidget):
             self.statusText.setText("value is not an integer")
             self.imageSizeText.setText(str(self.imageSize))
             return
-        isStarted = self.isStarted    
+        isStarted = self.isStarted
         if value < 128:
             value = 128
         if isStarted:
@@ -297,7 +316,7 @@ class NTNDA_Viewer(QWidget):
             self.numpyImage = None
         self.imageSizeText.setText(str(value))
         self.imageSize = value
-        if isStarted: 
+        if isStarted:
             self.start()
 
     def numpyMouseMoveEvent(self, zoomDict, mouseDict):
@@ -323,12 +342,14 @@ class NTNDA_Viewer(QWidget):
             self.statusText.setText(str(error))
 
     def closeEvent(self, event):
+        if self.isStarted: self.stop()
         self.isClosed = True
         if self.numpyImage is not None:
             self.numpyImage.setOkToClose()
             self.numpyImage.close()
         self.colorTable.setOkToClose()
         self.colorTable.close()
+        self.qapplication.closeAllWindows()
 
     def startEvent(self):
         self.start()
