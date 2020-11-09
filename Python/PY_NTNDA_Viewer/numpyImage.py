@@ -7,6 +7,14 @@ from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QPainter, QImage
 from PyQt5.QtCore import *
 
+from mpl_toolkits.mplot3d import Axes3D
+
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+
+from PyQt5.QtGui import QColor, qRgb
+
 import numpy as np
 import math
 import time
@@ -217,7 +225,6 @@ class NumpyImage(QWidget):
             "ny": 0,
             "nz": 0,
         }
-
         self.__mouseDict = {"mouseX": 0, "mouseY": 0}
         self.__zoomList = list()
         self.__resetZoom = True
@@ -344,6 +351,56 @@ class NumpyImage(QWidget):
         self.__zoomList.pop()
         if num == 1:
             self.resetZoom()
+
+    def plot3d(self, image):
+        """ generate a 3d image"""
+        xoffset = self.__zoomDict["xoffset"]
+        nx = int(self.__zoomDict["nx"] + xoffset)
+        xoffset = int(xoffset)
+        yoffset = self.__zoomDict["yoffset"]
+        ny = int(self.__zoomDict["ny"] + yoffset)
+        yoffset = int(yoffset)
+        ndim = len(image.shape)
+        if ndim<2 or ndim>3 :
+            if self.__clientExceptionCallback != None:
+                message = "ndim = " + str(ndim) + " ; Must be 2 or 3"
+                self.__clientExceptionCallback(message)
+            return
+        xx, yy = np.mgrid[xoffset:nx, yoffset:ny]
+        if ndim == 2:
+            image = image[yoffset:ny, xoffset:nx]
+            image = np.transpose(image)
+            fig = plt.figure()
+            ax = fig.gca(projection="3d")
+            ax.set_xlabel("x")
+            ax.set_ylabel("y")
+            ax.set_zlabel("value")
+            ax.plot_surface(xx, yy, image, cmap=cm.Greys)
+        elif ndim == 3:
+            sizex = int(nx - xoffset)
+            sizey = int(ny - yoffset)
+            image = image[yoffset:ny, xoffset:nx, ::]
+            imagered = image.flatten()
+            imagered = imagered[::3]
+            imagered = np.reshape(imagered, (sizey, sizex))
+            imagered = np.transpose(imagered)
+            imagegreen = image.flatten()
+            imagegreen = imagegreen[1::3]
+            imagegreen = np.reshape(imagegreen, (sizey, sizex))
+            imagegreen = np.transpose(imagegreen)
+            imageblue = image.flatten()
+            imageblue = imageblue[2::3]
+            imageblue = np.reshape(imageblue, (sizey, sizex))
+            imageblue = np.transpose(imageblue)
+            fig, ax = plt.subplots(ncols=3,tight_layout=True, subplot_kw={"projection": "3d"})
+            for i in range(3):
+                ax[i].set_xlabel("x")
+                ax[i].set_ylabel("y")
+                ax[i].set_zlabel("value")
+            ax[0].plot_surface(xx, yy, imagered, cmap=cm.Reds)
+            ax[1].plot_surface(xx, yy, imagegreen, cmap=cm.Greens)
+            ax[2].plot_surface(xx, yy, imageblue, cmap=cm.Blues)
+        plt.show(block=False)
 
     def display(self, pixarray, bytesPerLine=None, Format=0, colorTable=None):
         """

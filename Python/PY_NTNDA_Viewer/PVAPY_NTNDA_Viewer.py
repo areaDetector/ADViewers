@@ -136,5 +136,5 @@ if __name__ == "__main__":
     if nargs >= 2:
         channelName = sys.argv[1]
         PVAPYProvider.setChannelName(channelName)
-    viewer = NTNDA_Viewer(PVAPYProvider, "PVAPY")
+    viewer = NTNDA_Viewer(PVAPYProvider, "PVAPY", app)
     sys.exit(app.exec_())

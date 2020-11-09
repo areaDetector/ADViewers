@@ -1,7 +1,7 @@
 # PY_NTNDA_Viewer
 
 Author: Marty Kraimer
-Date: 2020.10.12
+Date: 2020.11.09
 
 ## Overview
 
@@ -31,6 +31,7 @@ For example issue the command:
 The following is a list of modules required by PY_NTNDA_Viewer
 
     numpy
+    matplotlib
     PyQt5
     PyQt5-sip
     QtPy
@@ -58,6 +59,7 @@ When start is pressed the following appears:
 - **start** Clicking this button starts communication with the server
 - **stop** Clicking this button stops communication with the server
 - **showColorTable** Clicking this brings up the ColorTable window. See below for details
+- **plpt3d** Clicking on this brings up 3d image window. See bwlow for details.
 - **channelName** This is the name of the channel that provides the NTNDArray. When in stopped mode a new channel name can be specified.
 
 
@@ -258,6 +260,34 @@ For example if julia is selected and the image is zoomed, I see:
 Then issue mouse clicks in the image and look at the new widow that appears.
 Moving the mouse in the new window shows the pixel location and value.
 
+## plot3d
+
+If you have zoomed to the following:
+
+![](image1.png)
+
+And then click plot3d the following appears:
+
+![](plot3d.png)
+
+Other views appear by using the mouse to grab the bottom corner of the axes and moving the mouse.
+For example
+
+![](plot3d1.png)
+
+Now change medm color mode to RGB1 and then zoom to :
+
+![](image3.png)
+
+And then click plot3d the following appears:
+
+![](plot3d2.png)
+
+Other views appear by using the mouse to grab the bottom corner of the axes and moving the mouse.
+For example
+
+![](plot3d3.png)
+
 ## Some Code Details
 
 **NtNDA_Viewer.py** creates the control window.
@@ -275,16 +305,11 @@ To view the documentation do the following:
     mrk> pwd
     /home/epics7/testPython/PY_NTNDA_Viewer
     mrk> ipython
-    In [1]: import sys
-    In [2]: sys.path.append('./numpyImage/')
-    In [3]: from numpyImage import NumpyImage, FollowMouse
-    In [4]: sys.path.append('./codecAD/')
-    In [5]: from codecAD import CodecAD
-    In [6]: sys.path.append('./channelToImageAD/')
-    In [7]: from channelToImageAD import ChannelToImageAD
-    In [8]: sys.path.append('./colorTable/')
-    In [9]: from colorTable import ColorTable
-    In [12]: help(NumpyImage)
+    In [1]: from numpyImage import NumpyImage, FollowMouse
+    In [2]: from codecAD import CodecAD
+    In [3]: from channelToImageAD import ChannelToImageAD
+    In [4]: from colorTable import ColorTable
+    In [5]: help(NumpyImage)
     ...
 
 
