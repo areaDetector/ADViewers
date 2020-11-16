@@ -63,17 +63,17 @@ When start is pressed the following appears:
 
 
 First row of control window
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **start** Clicking this button starts communication with the server
-- **stop** Clicking this button stops communication with the server
-- **showColorTable** Clicking this brings up the ColorTable window. See below for details
-- **plot3d** Clicking on this brings up a 3d image window. See below for details.
+- **start** Clicking this button starts communication with the server.
+- **stop** Clicking this button stops communication with the server.
+- **showColorTable** Clicking this brings up the ColorTable window. See below for details.
+- **plot3d** Clicking on this brings up a 3d image window. See below for examples.
 - **channelName** This is the name of the channel that provides the NTNDArray. When in stopped mode a new channel name can be specified.
 
 
 Second row of control window
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - **imageRate** This shows the number of images/second that are being displayed. Note that this is normally less than the number of images the server is producing.
 - **imageSize** This specifies the maximum of width and height for the image display.
@@ -82,7 +82,7 @@ Second row of control window
 - **clear** Clear the following status window.
 
 Third row of control window
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - **autoScale** image pixel values are scaled.
 - **manualScale** image pixel values are scaled via manualMin and manualMax
@@ -94,7 +94,7 @@ Third row of control window
 - **zoomBack** revent to previous zoom.
 
 Forth row of control window
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This provides information about current image.
 
@@ -116,9 +116,9 @@ As mentioned above PY_NTNDA_Viewer is a viewer for images obtained from an areaD
 
 It accesss the following fields:
 
-- **value** The image data. All integer and float data types are supported.
+- **value** The image data.  The data is a 2d or 3d array of pixels. The pixel data type can be: 1) a signed or unsigned integer or 2) a single or double float.
 - **codec** If the data is compressed, the compression type.
-- **dimension** The x,y,z dimensions. The data is either a 2d or 3d(color) image. If (2d,3d) nz = (1,3)
+- **dimension** The x,y,z dimensions.
 
 When started, PY_NTNDA_Viewer creates a channel monitor.
 
@@ -174,7 +174,7 @@ start P4P_NTNDA_Viewer or PVAPY_NTNDA_Viewer
 
 The channelName can be specified in three ways:
 
-1. Via environment variable EPICS*NTNDA*VIEWER_CHANNELNAME.
+1. Via environment variable EPICS_NTNDA_VIEWER_CHANNELNAME.
 
 2. As a command line argument.
 
@@ -261,7 +261,7 @@ The controls of interest are:
 
 2. **Compressor** Select the codec support you want.
 
-3. **Bloscc Compressor** If Compressor is **Blosc** this selects type.
+3. **Blosc Compressor** If Compressor is **Blosc** this selects type.
 
 Simulation Setup
 ~~~~~~~~~~~~~~~~
