@@ -46,8 +46,8 @@ The following is a list of modules required by PY_NTNDA_Viewer
 
 Mac users will need to install pvapy via conda::
 
-    conda install \-c epics pvapy
-    pip install \-r requirements.txt
+    conda install -c epics pvapy
+    pip install -r requirements.txt
 
 
 User Interface
@@ -75,9 +75,9 @@ First row of control window
 Second row of control window
 ----------------------------
 
-- **imageRate** This shows the number of images/second that are being displayed. Note that this is normally less than the number of images the server is producing.imageRate.
-- **imageSize** This specifies the maximum of width and height of the image display.
-- **compressRatio** If image is compressed this shows the compression ratio.
+- **imageRate** This shows the number of images/second that are being displayed. Note that this is normally less than the number of images the server is producing.
+- **imageSize** This specifies the maximum of width and height for the image display.
+- **compressRatio** If image is compressed, this shows the compression ratio.
 - **codec** The compression type. **none** means no compression.
 - **clear** Clear the following status window.
 
@@ -118,7 +118,7 @@ It accesss the following fields:
 
 - **value** The image data. All integer and float data types are supported.
 - **codec** If the data is compressed, the compression type.
-- **dimension** The size of x,y,z dimensions. The data is either a 2d or 3d(color) image. If (2d,3d) nz = (1,3)
+- **dimension** The x,y,z dimensions. The data is either a 2d or 3d(color) image. If (2d,3d) nz = (1,3)
 
 When started, PY_NTNDA_Viewer creates a channel monitor.
 
@@ -145,7 +145,7 @@ Start an IOC running the simDetector. For example I start it as follows::
 
     mrk> pwd
     /home/epics7/areaDetector/ADSimDetector/iocs/simDetectorIOC/iocBoot/iocSimDetector
-    mrk> ./start\_epics
+    mrk> ./start_epics
 
 Start a display manager
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -154,16 +154,16 @@ At least the following choices are available: medm, edm, pydm, and css. For any 
 
 For example to use medm I have the files setEnv and startSimDetector, which are::
 
-    export PATH=$PATH:/home/epics7/extensions/bin/${EPICS\_HOST\_ARCH}
-    export EPICS\_DISPLAY\_PATH=/home/epics7/areaDetector/ADCore/ADApp/op/adl
-    export EPICS\_DISPLAY\_PATH=${EPICS\_DISPLAY\_PATH}:/home/epics7/areaDetector/pvaDriver/pvaDriverApp/op/adl
-    export EPICS\_DISPLAY\_PATH=${EPICS\_DISPLAY\_PATH}:/home/epics7/areaDetector/ADSimDetector/simDetectorApp/op/adl
-    export EPICS\_CA\_MAX\_ARRAY\_BYTES=40000000
+    export PATH=$PATH:/home/epics7/extensions/bin/${EPICS_HOST_ARCH}
+    export EPICS_DISPLAY_PATH=/home/epics7/areaDetector/ADCore/ADApp/op/adl
+    export EPICS_DISPLAY_PATH=${EPICS_DISPLAY_PATH}:/home/epics7/areaDetector/pvaDriver/pvaDriverApp/op/adl
+    export EPICS_DISPLAY_PATH=${EPICS_DISPLAY_PATH}:/home/epics7/areaDetector/ADSimDetector/simDetectorApp/op/adl
+    export EPICS_CA_MAX_ARRAY_BYTES=40000000
 
 and::
 
     source ./setEnv
-    medm  \-x \-macro "P=13SIM1:,R=cam1:" simDetector.adl
+    medm  -x -macro "P=13SIM1:,R=cam1:" simDetector.adl
 
 then I just enter::
 
@@ -188,14 +188,14 @@ The details differ between Windows and Linux or MacOSX.
 
 An example is **exampleStartP4P**, which uses **p4p** for communication with the simDetector::
 
-    export LD\_LIBRARY\_PATH=$LD\_LIBRARY\_PATH:/home/epics7/areaDetector/ADSupport/lib/linux\-x86\_64
-    export EPICS\_NTNDA\_VIEWER\_CHANNELNAME="13SIM1:Pva1:Image"
-    python P4P\_NTNDA\_Viewer.py
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/epics7/areaDetector/ADSupport/lib/linux-x86_64
+    export EPICS_NTNDA_VIEWER_CHANNELNAME="13SIM1:Pva1:Image"
+    python P4P_NTNDA_Viewer.py
 
 I start it via::
 
     mrk> pwd
-    /home/epics7/modules/PY\_NTNDA\_Viewer
+    /home/epics7/modules/PY_NTNDA_Viewer
     mrk> ./exampleStartP4P
 	
 You will see errors if You have not installed all the python packages required. If it shows no errors click connect and start.
@@ -353,7 +353,7 @@ Each provides Python documentation.
 To view the documentation do the following::
 
     mrk> pwd
-    /home/epics7/testPython/PY\_NTNDA\_Viewer
+    /home/epics7/testPython/PY_NTNDA_Viewer
     mrk> ipython
     In [1]: from numpyImage import NumpyImage, FollowMouse
     In [2]: from codecAD import CodecAD
