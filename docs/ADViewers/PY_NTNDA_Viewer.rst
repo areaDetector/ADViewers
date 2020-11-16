@@ -285,11 +285,6 @@ The following are the ways to change the part of the image that is displayed.
 
 4. **resetZoom** Reverts to full image.
 
-Mouse Move in Image window
---------------------------
-
-
-This show the location and pixel value where the mouse is located.
 
 Color Table
 -----------
