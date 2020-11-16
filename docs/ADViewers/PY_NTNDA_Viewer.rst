@@ -31,9 +31,9 @@ You must have python3 and pip installed.
 
 The other python modules can be installed via pip install …
 
-For example issue the command:
+For example issue the command::
 
-	sudo pip install numpy
+    sudo pip install numpy
 
 The following is a list of modules required by PY_NTNDA_Viewer
 
@@ -44,10 +44,10 @@ The following is a list of modules required by PY_NTNDA_Viewer
 - QtPy
 - p4p and/or pvapy
 
-Mac users will need to install pvapy via conda:
+Mac users will need to install pvapy via conda::
 
-	conda install \-c epics pvapy
-	pip install \-r requirements.txt
+    conda install \-c epics pvapy
+    pip install \-r requirements.txt
 
 
 User Interface
@@ -141,33 +141,33 @@ Starting the example
 Starting simDetector
 ~~~~~~~~~~~~~~~~~~~~
 
-Start an IOC running the simDetector. For example I start it as follows:
+Start an IOC running the simDetector. For example I start it as follows::
 
-	mrk> pwd
-	/home/epics7/areaDetector/ADSimDetector/iocs/simDetectorIOC/iocBoot/iocSimDetector
-	mrk> ./start\_epics
+    mrk> pwd
+    /home/epics7/areaDetector/ADSimDetector/iocs/simDetectorIOC/iocBoot/iocSimDetector
+    mrk> ./start\_epics
 
 Start a display manager
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 At least the following choices are available: medm, edm, pydm, and css. For any choice the display file, with name simDetector, to load is located in areaDetector/ADSimDetector/simDetectorApp/op
 
-For example to use medm I have the files setEnv and startSimDetector, which are:
+For example to use medm I have the files setEnv and startSimDetector, which are::
 
-	export PATH=$PATH:/home/epics7/extensions/bin/${EPICS\_HOST\_ARCH}
-	export EPICS\_DISPLAY\_PATH=/home/epics7/areaDetector/ADCore/ADApp/op/adl
-	export EPICS\_DISPLAY\_PATH=${EPICS\_DISPLAY\_PATH}:/home/epics7/areaDetector/pvaDriver/pvaDriverApp/op/adl
-	export EPICS\_DISPLAY\_PATH=${EPICS\_DISPLAY\_PATH}:/home/epics7/areaDetector/ADSimDetector/simDetectorApp/op/adl
-	export EPICS\_CA\_MAX\_ARRAY\_BYTES=40000000
+    export PATH=$PATH:/home/epics7/extensions/bin/${EPICS\_HOST\_ARCH}
+    export EPICS\_DISPLAY\_PATH=/home/epics7/areaDetector/ADCore/ADApp/op/adl
+    export EPICS\_DISPLAY\_PATH=${EPICS\_DISPLAY\_PATH}:/home/epics7/areaDetector/pvaDriver/pvaDriverApp/op/adl
+    export EPICS\_DISPLAY\_PATH=${EPICS\_DISPLAY\_PATH}:/home/epics7/areaDetector/ADSimDetector/simDetectorApp/op/adl
+    export EPICS\_CA\_MAX\_ARRAY\_BYTES=40000000
 
-and:
+and::
 
-	source ./setEnv
-	medm  \-x \-macro "P=13SIM1:,R=cam1:" simDetector.adl
+    source ./setEnv
+    medm  \-x \-macro "P=13SIM1:,R=cam1:" simDetector.adl
 
-then I just enter:
+then I just enter::
 
-	./startSimDetector
+    ./startSimDetector
 
 start P4P_NTNDA_Viewer or PVAPY_NTNDA_Viewer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -186,17 +186,17 @@ In order to use the codec support from **areaDetector** you must have a path to
 
 The details differ between Windows and Linux or MacOSX.
 
-An example is **exampleStartP4P**, which uses **p4p** for communication with the simDetector:
+An example is **exampleStartP4P**, which uses **p4p** for communication with the simDetector::
 
-	export LD\_LIBRARY\_PATH=$LD\_LIBRARY\_PATH:/home/epics7/areaDetector/ADSupport/lib/linux\-x86\_64
-	export EPICS\_NTNDA\_VIEWER\_CHANNELNAME="13SIM1:Pva1:Image"
-	python P4P\_NTNDA\_Viewer.py
+    export LD\_LIBRARY\_PATH=$LD\_LIBRARY\_PATH:/home/epics7/areaDetector/ADSupport/lib/linux\-x86\_64
+    export EPICS\_NTNDA\_VIEWER\_CHANNELNAME="13SIM1:Pva1:Image"
+    python P4P\_NTNDA\_Viewer.py
 
-I start it via:
+I start it via::
 
-	mrk> pwd
-	/home/epics7/modules/PY\_NTNDA\_Viewer
-	mrk> ./exampleStartP4P
+    mrk> pwd
+    /home/epics7/modules/PY\_NTNDA\_Viewer
+    mrk> ./exampleStartP4P
 	
 You will see errors if You have not installed all the python packages required. If it shows no errors click connect and start.
 
@@ -350,18 +350,15 @@ It uses the following python classes:
 
 Each provides Python documentation.
 
-To view the documentation do the following:
+To view the documentation do the following::
 
-	mrk> pwd
-	/home/epics7/testPython/PY\_NTNDA\_Viewer
-	mrk> ipython
-	In [1]: from numpyImage import NumpyImage, FollowMouse
-	In [2]: from codecAD import CodecAD
-	In [3]: from channelToImageAD import ChannelToImageAD
-	In [4]: from colorTable import ColorTable
-	In [5]: help(NumpyImage)
-
-	...
-
-
+    mrk> pwd
+    /home/epics7/testPython/PY\_NTNDA\_Viewer
+    mrk> ipython
+    In [1]: from numpyImage import NumpyImage, FollowMouse
+    In [2]: from codecAD import CodecAD
+    In [3]: from channelToImageAD import ChannelToImageAD
+    In [4]: from colorTable import ColorTable
+    In [5]: help(NumpyImage)
+    ...
 
