@@ -5,8 +5,10 @@ Author: Marty Kraimer
 
 Date: 2020.11.09
 
-# Overview
-==========
+.. contents:: Contents
+
+Overview
+----------
 
 PY*NTNDA*Viewer is Python code that is similar to the Java EPICS*NTNDA*Viewer that comes with areaDetector.
 
@@ -16,14 +18,14 @@ It is a viewer for images obtained from an areaDetector pvAccess channel that pr
 
 There are currently 2 versions:
 
-1. P4P*NTNDA*Viewer.py This uses p4p.
+1) P4P*NTNDA*Viewer.py This uses p4p.
 
-2. PVAPY*NTNDA*Viewer.py This uses pvaPy.
+2) PVAPY*NTNDA*Viewer.py This uses pvaPy.
 
 Both are supported on Windows, Mac OSX, and Linux.
 
-# Required Python Modules
-=========================
+Required Python Modules
+-----------------------
 
 You must have python3 and pip installed.
 
@@ -35,39 +37,33 @@ For example issue the command:
 
 The following is a list of modules required by PY*NTNDA*Viewer
 
-	numpy
-
-	matplotlib
-
-	PyQt5
-
-	PyQt5\-sip
-
-	QtPy
-
-	p4p and/or pvapy
+- numpy
+- matplotlib
+- PyQt5
+- PyQt5-sip
+- QtPy
+- p4p and/or pvapy
 
 Mac users will need to install pvapy via conda:
 
 	conda install \-c epics pvapy
-
 	pip install \-r requirements.txt
 
 
-# User Interface
-================
+User Interface
+--------------
 
 When either version is started the following control window appears:
 
-![](PY*NTNDA*Viewer.png)
+.. image:: PY_NTNDA_Viewer.png
 
 When start is pressed the following appears:
 
-![](image.png)
+.. image:: image.png
 
 
-## First row of control window
-==============================
+First row of control window
+---------------------------
 
 - **start** Clicking this button starts communication with the server
 - **stop** Clicking this button stops communication with the server
