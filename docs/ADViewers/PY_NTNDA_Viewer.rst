@@ -3,7 +3,7 @@ PY_NTNDA_Viewer
 
 Author: Marty Kraimer
 
-Date: 2020.11.09
+Date: 2020.11.16
 
 .. contents:: Contents
 
@@ -118,7 +118,7 @@ It accesss the following fields:
 
 - **value** The image data. All integer and float data types are supported.
 - **codec** If the data is compressed, the compression type.
-- **dimension** The data is either a 2d or 3d(color) image. The size of x and y dimensions.
+- **dimension** The size of x,y,z dimensions. The data is either a 2d or 3d(color) image. If (2d,3d) nz = (1,3)
 
 When started, PY_NTNDA_Viewer creates a channel monitor.
 
@@ -144,9 +144,7 @@ Starting simDetector
 Start an IOC running the simDetector. For example I start it as follows:
 
 	mrk> pwd
-
 	/home/epics7/areaDetector/ADSimDetector/iocs/simDetectorIOC/iocBoot/iocSimDetector
-
 	mrk> ./start\_epics
 
 Start a display manager
@@ -157,19 +155,14 @@ At least the following choices are available: medm, edm, pydm, and css. For any 
 For example to use medm I have the files setEnv and startSimDetector, which are:
 
 	export PATH=$PATH:/home/epics7/extensions/bin/${EPICS\_HOST\_ARCH}
-
 	export EPICS\_DISPLAY\_PATH=/home/epics7/areaDetector/ADCore/ADApp/op/adl
-
 	export EPICS\_DISPLAY\_PATH=${EPICS\_DISPLAY\_PATH}:/home/epics7/areaDetector/pvaDriver/pvaDriverApp/op/adl
-
 	export EPICS\_DISPLAY\_PATH=${EPICS\_DISPLAY\_PATH}:/home/epics7/areaDetector/ADSimDetector/simDetectorApp/op/adl
-
 	export EPICS\_CA\_MAX\_ARRAY\_BYTES=40000000
 
 and:
 
 	source ./setEnv
-
 	medm  \-x \-macro "P=13SIM1:,R=cam1:" simDetector.adl
 
 then I just enter:
@@ -196,17 +189,13 @@ The details differ between Windows and Linux or MacOSX.
 An example is **exampleStartP4P**, which uses **p4p** for communication with the simDetector:
 
 	export LD\_LIBRARY\_PATH=$LD\_LIBRARY\_PATH:/home/epics7/areaDetector/ADSupport/lib/linux\-x86\_64
-
 	export EPICS\_NTNDA\_VIEWER\_CHANNELNAME="13SIM1:Pva1:Image"
-
 	python P4P\_NTNDA\_Viewer.py
 
 I start it via:
 
 	mrk> pwd
-
 	/home/epics7/modules/PY\_NTNDA\_Viewer
-
 	mrk> ./exampleStartP4P
 	
 You will see errors if You have not installed all the python packages required. If it shows no errors click connect and start.
