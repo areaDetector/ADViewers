@@ -1,4 +1,4 @@
-PY*NTNDA*Viewer
+PY_NTNDA_Viewer
 ===============
 
 Author: Marty Kraimer
@@ -10,7 +10,7 @@ Date: 2020.11.09
 Overview
 ----------
 
-PY*NTNDA*Viewer is Python code that is similar to the Java EPICS*NTNDA*Viewer that comes with areaDetector.
+PY_NTNDA_Viewer is Python code that is similar to the Java EPICS_NTNDA_Viewer that comes with areaDetector.
 
 It is available in `ADViewers <https://github.com/areaDetector/ADViewers>`_
 
@@ -18,9 +18,9 @@ It is a viewer for images obtained from an areaDetector pvAccess channel that pr
 
 There are currently 2 versions:
 
-1) P4P*NTNDA*Viewer.py This uses p4p.
+1) P4P_NTNDA_Viewer.py This uses p4p.
 
-2) PVAPY*NTNDA*Viewer.py This uses pvaPy.
+2) PVAPY_NTNDA_Viewer.py This uses pvaPy.
 
 Both are supported on Windows, Mac OSX, and Linux.
 
@@ -35,7 +35,7 @@ For example issue the command:
 
 	sudo pip install numpy
 
-The following is a list of modules required by PY*NTNDA*Viewer
+The following is a list of modules required by PY_NTNDA_Viewer
 
 - numpy
 - matplotlib
@@ -72,8 +72,8 @@ First row of control window
 - **channelName** This is the name of the channel that provides the NTNDArray. When in stopped mode a new channel name can be specified.
 
 
-## Second row of control window
-===============================
+Second row of control window
+----------------------------
 
 - **imageRate** This shows the number of images/second that are being displayed. Note that this is normally less than the number of images the server is producing.imageRate.
 - **imageSize** This specifies the maximum of width and height of the image display.
@@ -81,8 +81,8 @@ First row of control window
 - **codec** The compression type. **none** means no compression.
 - **clear** Clear the following status window.
 
-## Third row of control window
-==============================
+Third row of control window
+---------------------------
 
 - **autoScale** image pixel values are scaled.
 - **manualScale** image pixel values are scaled via manualMin and manualMax
@@ -93,8 +93,8 @@ First row of control window
 - **x1,...,x16** scale factor for zoomIn.
 - **zoomBack** revent to previous zoom.
 
-## Forth row of control window
-==============================
+Forth row of control window
+---------------------------
 
 This provides information about current image.
 
@@ -109,10 +109,10 @@ The following update as the mouse is moved over the image window
 - **y**
 - **value**
 
-# Brief description
-===================
+Brief description
+-----------------
 
-As mentioned above PY*NTNDA*Viewer is a viewer for images obtained from an areaDetector pvAccess channel that provides an NTNDArray.
+As mentioned above PY_NTNDA_Viewer is a viewer for images obtained from an areaDetector pvAccess channel that provides an NTNDArray.
 
 It accesss the following fields:
 
@@ -120,7 +120,7 @@ It accesss the following fields:
 - **codec** If the data is compressed, the compression type.
 - **dimension** The data is either a 2d or 3d(color) image. The size of x and y dimensions.
 
-When started, PY*NTNDA*Viewer creates a channel monitor.
+When started, PY_NTNDA_Viewer creates a channel monitor.
 
 For each monitor event the following happens:
 
@@ -135,11 +135,11 @@ This can be done in two ways:
 - Via the mouse. Press the mouse somewhere in the image, drag the mouse to another position, release the mouse.
 - Via the **zoomIn** button
 
-# Starting the example
-======================
+Starting the example
+--------------------
 
-## Starting simDetector
-=======================
+Starting simDetector
+~~~~~~~~~~~~~~~~~~~~
 
 Start an IOC running the simDetector. For example I start it as follows:
 
@@ -149,8 +149,8 @@ Start an IOC running the simDetector. For example I start it as follows:
 
 	mrk> ./start\_epics
 
-## Start a display manager
-==========================
+Start a display manager
+~~~~~~~~~~~~~~~~~~~~~~~
 
 At least the following choices are available: medm, edm, pydm, and css. For any choice the display file, with name simDetector, to load is located in areaDetector/ADSimDetector/simDetectorApp/op
 
@@ -176,8 +176,8 @@ then I just enter:
 
 	./startSimDetector
 
-## start P4P*NTNDA*Viewer or PVAPY*NTNDA*Viewer
-===============================================
+start P4P_NTNDA_Viewer or PVAPY_NTNDA_Viewer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The channelName can be specified in three ways:
 
@@ -219,18 +219,18 @@ Then:
 
 You should see images being displayed.
 
-**exampleStartPVAPY** starts **PVAPY*NTNDA*Viewer.py**, which uses **pvapy** for communication with the simDetector.
+**exampleStartPVAPY** starts **PVAPY_NTNDA_Viewer.py**, which uses **pvapy** for communication with the simDetector.
 
 	
-# Suggested simDetector setup
-=============================
+Suggested simDetector setup
+---------------------------
 
-## Main window
-==============
+Main window
+~~~~~~~~~~~
 
 The following is the main window for the simDetector:
 
-![](simDetector.png)
+.. image:: simDetector.png
 
 The following are the controls of interest:
 
@@ -248,10 +248,10 @@ The following are the controls of interest:
 
 6. **Gain** Suggestions are 1 for simulation mode linarRamp and 255 for simulation mode peaks.
 
-## commonPlugins
-================
+commonPlugins
+~~~~~~~~~~~~~
 
-![](commonPlugins.png)
+.. image:: commonPlugins.png
 
 The following are the ones of interest.
 
@@ -259,10 +259,10 @@ The following are the ones of interest.
 
 2. **CODEC1** If you want to use codecs click on the More botton on right side of window.
 
-## NDCodec
-==========
+NDCodec
+~~~~~~~
 
-![](NDCodec.png)
+.. image:: NDCodec.png
 
 This is the controller for **CODEC1**.
 
@@ -274,17 +274,17 @@ The controls of interest are:
 
 3. **Bloscc Compressor** If Compressor is **Blosc** this selects type.
 
-## Simulation Setup
-===================
+Simulation Setup
+~~~~~~~~~~~~~~~~
 
-![](simDetectorSetup.png)
+.. image:: simDetectorSetup.png
 
 This show setup options.
 
 The options shown are the ones for the examples shown in this document.
 
-# Image Zoom
-============
+Image Zoom
+----------
 
 The following are the ways to change the part of the image that is displayed.
 
@@ -296,16 +296,16 @@ The following are the ways to change the part of the image that is displayed.
 
 4. **resetZoom** Reverts to full image.
 
-# Mouse Move in Image window
-============================
+Mouse Move in Image window
+--------------------------
 
 
 This show the location and pixel value where the mouse is located.
 
-# Color Table
-=============
+Color Table
+-----------
 
-![](ColorTable.png)
+.. image:: ColorTable.png
 
 This provides psudo color maps for mono images.
 
@@ -315,45 +315,45 @@ of the peaks.
 
 For example if julia is selected and the image is zoomed, I see:
 
-![](zoomedImage.png)
+.. image:: zoomedImage.png
 
 Then issue mouse clicks in the image and look at the new widow that appears.
 
 Moving the mouse in the new window shows the pixel location and value.
 
-# plot3d
-========
+plot3d
+------
 
 If you have zoomed to the following:
 
-![](image1.png)
+.. image:: image1.png
 
 And then click plot3d the following appears:
 
-![](plot3d.png)
+.. image:: plot3d.png
 
 Other views appear by using the mouse to grab the bottom corner of the axes and moving the mouse.
 
 For example
 
-![](plot3d1.png)
+.. image:: plot3d1.png
 
 Now change medm color mode to RGB1 and then zoom to :
 
-![](image3.png)
+.. image:: image3.png
 
 And then click plot3d the following appears:
 
-![](plot3d2.png)
+.. image:: plot3d2.png
 
 Other views appear by using the mouse to grab the bottom corner of the axes and moving the mouse.
 
 For example
 
-![](plot3d3.png)
+.. image:: plot3d3.png
 
-# Some Code Details
-===================
+Some Code Details
+-----------------
 
 **NtNDA_Viewer.py** creates the control window.
 
@@ -369,19 +369,12 @@ Each provides Python documentation.
 To view the documentation do the following:
 
 	mrk> pwd
-
 	/home/epics7/testPython/PY\_NTNDA\_Viewer
-
 	mrk> ipython
-
 	In [1]: from numpyImage import NumpyImage, FollowMouse
-
 	In [2]: from codecAD import CodecAD
-
 	In [3]: from channelToImageAD import ChannelToImageAD
-
 	In [4]: from colorTable import ColorTable
-
 	In [5]: help(NumpyImage)
 
 	...
