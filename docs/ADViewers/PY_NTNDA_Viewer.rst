@@ -231,11 +231,11 @@ The following are the controls of interest:
 
 4. **start** and **stop** start and stop acquisition
 
-4. **Data Type** All data types work. For other than uint8 you may also want to adjust gain.
+5. **Data Type** All data types work. For other than uint8 you may also want to adjust gain.
 
-5. **ColorMode** All work
+6. **ColorMode** All work
 
-6. **Gain** Suggestions are 1 for simulation mode linearRamp and 255 for simulation mode peaks.
+7. **Gain** Suggestions are 1 for simulation mode linearRamp and 255 for simulation mode peaks.
 
 commonPlugins
 ~~~~~~~~~~~~~
