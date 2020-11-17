@@ -3,7 +3,7 @@ PY_NTNDA_Viewer
 
 Author: Marty Kraimer
 
-Date: 2020.11.16
+Date: 2020.11.17
 
 .. contents:: Contents
 
@@ -93,7 +93,7 @@ Third row of control window
 - **x1,...,x16** scale factor for zoomIn.
 - **zoomBack** revent to previous zoom.
 
-Forth row of control window
+Fourth row of control window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This provides information about current image.
@@ -235,7 +235,7 @@ The following are the controls of interest:
 
 5. **ColorMode** All work
 
-6. **Gain** Suggestions are 1 for simulation mode linarRamp and 255 for simulation mode peaks.
+6. **Gain** Suggestions are 1 for simulation mode linearRamp and 255 for simulation mode peaks.
 
 commonPlugins
 ~~~~~~~~~~~~~
@@ -294,7 +294,6 @@ Color Table
 This provides psudo color maps for mono images.
 
 Note that when peak mode is being used julia color comes close to showing the actual edges
-
 of the peaks.
 
 For example if julia is selected and the image is zoomed, I see:
