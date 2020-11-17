@@ -59,7 +59,7 @@ When either version is started the following control window appears:
 
 When start is pressed the following appears:
 
-.. image:: image.png
+.. image:: PY_NTNDA_image.png
 
 
 First row of control window
@@ -219,7 +219,7 @@ Main window
 
 The following is the main window for the simDetector:
 
-.. image:: simDetector.png
+.. image:: PY_NTNDA_simDetector.png
 
 The following are the controls of interest:
 
@@ -240,7 +240,7 @@ The following are the controls of interest:
 commonPlugins
 ~~~~~~~~~~~~~
 
-.. image:: commonPlugins.png
+.. image:: PY_NTNDA_commonPlugins.png
 
 The following are the ones of interest.
 
@@ -251,7 +251,7 @@ The following are the ones of interest.
 NDCodec
 ~~~~~~~
 
-.. image:: NDCodec.png
+.. image:: PY_NTNDA_NDCodec.png
 
 This is the controller for **CODEC1**.
 
@@ -266,7 +266,7 @@ The controls of interest are:
 Simulation Setup
 ~~~~~~~~~~~~~~~~
 
-.. image:: simDetectorSetup.png
+.. image:: PY_NTNDA_simDetectorSetup.png
 
 This show setup options.
 
@@ -289,7 +289,7 @@ The following are the ways to change the part of the image that is displayed.
 Color Table
 -----------
 
-.. image:: ColorTable.png
+.. image:: PY_NTNDA_ColorTable.png
 
 This provides psudo color maps for mono images.
 
@@ -298,7 +298,7 @@ of the peaks.
 
 For example if julia is selected and the image is zoomed, I see:
 
-.. image:: zoomedImage.png
+.. image:: PY_NTNDA_zoomedImage.png
 
 Then issue mouse clicks in the image and look at the new widow that appears.
 
@@ -309,31 +309,31 @@ plot3d
 
 If you have zoomed to the following:
 
-.. image:: image1.png
+.. image:: PY_NTNDA_image1.png
 
 And then click plot3d the following appears:
 
-.. image:: plot3d.png
+.. image:: PY_NTNDA_plot3d.png
 
 Other views appear by using the mouse to grab the bottom corner of the axes and moving the mouse.
 
 For example
 
-.. image:: plot3d1.png
+.. image:: PY_NTNDA_plot3d1.png
 
 Now change medm color mode to RGB1 and then zoom to :
 
-.. image:: image3.png
+.. image:: PY_NTNDA_image3.png
 
 And then click plot3d the following appears:
 
-.. image:: plot3d2.png
+.. image:: PY_NTNDA_plot3d2.png
 
 Other views appear by using the mouse to grab the bottom corner of the axes and moving the mouse.
 
 For example
 
-.. image:: plot3d3.png
+.. image:: PY_NTNDA_plot3d3.png
 
 Some Code Details
 -----------------
