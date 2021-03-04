@@ -8,7 +8,7 @@ Date: 2020.11.17
 .. contents:: Contents
 
 Overview
-----------
+--------
 
 PY_NTNDA_Viewer is Python code that is similar to the Java EPICS_NTNDA_Viewer that comes with areaDetector.
 
@@ -94,7 +94,7 @@ Third row of control window
 - **zoomBack** revent to previous zoom.
 
 Fourth row of control window
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This provides information about current image.
 
