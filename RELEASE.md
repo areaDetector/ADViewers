@@ -12,15 +12,21 @@ https://github.com/areaDetector/ADViewers/releases .
 
 Release Notes
 =============
+R1-7 (May 26, 2021)
+======================
+### PY_NTNDA_Viewer
+* Many enhancements.
+### EPICS Java libraries
+* Updated to latest versions.
 
 R1-6-1 (March 4, 2020)
-=========================
+======================
 ### ImageJ EPICS_NTNDA_Viewer
 * The pvAccess channel name can be specifed with the environment variable EPICS_NTNDA_VIEWER_CHANNELNAME.
 
 R1-6 (March 3, 2020)
 =========================
-### New Python viewer, PT_NTNDA_Viewer. It was written by Marty Kraimer. 
+### New Python viewer, PY_NTNDA_Viewer. It was written by Marty Kraimer. 
 This viewer has the following features:
 * Supports compressed NDArrays using any of the codecs in NDPluginCodec.
 * Supports all NDArray data types and color modes.
