@@ -127,7 +127,7 @@ public class EPICS_NTNDA_Viewer
      */
     public EPICS_NTNDA_Viewer()
     {
-        String temp = null;
+        String temp=null;
         readProperties();
         temp = System.getenv("EPICS_NTNDA_VIEWER_CHANNELNAME");
         if (temp != null) {
@@ -144,7 +144,7 @@ public class EPICS_NTNDA_Viewer
         if(isChannelConnected) {
             channelNameText.setBackground(Color.green);
             logMessage("State changed to connected for " + channelName, true, true);
-            if (pvaClientMonitor==null) {
+            if(pvaClientMonitor==null) {
                 pvaClientMonitor=pvaClientChannel.createMonitor("record[queueSize=" + QUEUE_SIZE + "]field()");
                 pvaClientMonitor.issueConnect();
             }
@@ -181,7 +181,7 @@ public class EPICS_NTNDA_Viewer
     {
         try
         {
-            if(pvaClientChannel == null) {
+            if(pvaClientChannel==null) {
                 throw new RuntimeException("Channel already disconnected");
             }
             isChannelConnected = false;
@@ -191,7 +191,8 @@ public class EPICS_NTNDA_Viewer
             pvaClientChannel = null;
             pvaClientMonitor = null;
             logMessage("Disconnected from EPICS PV:" + channelName, true, true);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             logMessage("Cannot disconnect from EPICS PV:" + channelName + ex.getMessage(), true, true);
         }
     }
@@ -204,7 +205,7 @@ public class EPICS_NTNDA_Viewer
 
     private void stopMonitor()
     {
-        synchronized (this) {
+        synchronized(this) {
             pvaClientMonitor.stop();
             isStarted = false;
         }
@@ -335,26 +336,26 @@ public class EPICS_NTNDA_Viewer
 
     private boolean updateImage(PvaClientMonitorData monitorData)
     {
-        Point oldWindowLocation = null;
+        Point oldWindowLocation =null;
         boolean madeNewWindow = false;
         PVStructure pvs = monitorData.getPVStructure();
-        PVStructureArray dimArray = pvs.getSubField(PVStructureArray.class, "dimension");
+        PVStructureArray dimArray = pvs.getSubField(PVStructureArray.class,"dimension");
         if(dimArray==null) {
-            logMessage("dimension not found", true, true);
+            logMessage("dimension not found",true,true);
             return false;
         }
         int ndim = dimArray.getLength();
         if(ndim<1) {
-            logMessage("dimension is empty", true, true);
+            logMessage("dimension is empty",true,true);
             return false;
         }
         int dimsint[] = new int[ndim];
         StructureArrayData dimdata=new StructureArrayData();
         dimArray.get(0,ndim,dimdata);
         for(int i=0; i<ndim; ++i) {
-            PVStructure dim = (PVStructure) dimdata.data[i];
-            PVInt pvLen=dim.getSubField(PVInt.class,"size");
-            if(pvLen == null) {
+            PVStructure dim = (PVStructure)dimdata.data[i];
+            PVInt pvLen = dim.getSubField(PVInt.class,"size");
+            if(pvLen==null) {
                 logMessage("dimension size not found",true,true);
                 return false;
             }
@@ -366,23 +367,23 @@ public class EPICS_NTNDA_Viewer
         if (ndim>=3)
             nz = dimsint[2];
         int cm = 0;
-        PVStructureArray attrArray = pvs.getSubField(PVStructureArray.class, "attribute");
+        PVStructureArray attrArray = pvs.getSubField(PVStructureArray.class,"attribute");
         if(attrArray!=null) {
             int nattr = attrArray.getLength();
-            StructureArrayData attrdata = new StructureArrayData();
-            attrArray.get(0, nattr, attrdata);
-            for (int i = 0; i < nattr; i++)
+            StructureArrayData attrdata=new StructureArrayData();
+            attrArray.get(0,nattr,attrdata);
+            for (int i = 0; i<nattr; i++)
             {
                 PVStructure pvAttr = attrdata.data[i];
                 PVString pvName = pvAttr.getSubField(PVString.class,"name");
                 if(pvName==null) continue;
                 String name = pvName.get();
                 if(!name.equals("ColorMode")) continue;
-                PVUnion pvUnion = pvAttr.getSubField(PVUnion.class, "value");
+                PVUnion pvUnion = pvAttr.getSubField(PVUnion.class,"value");
                 if(pvUnion==null) continue;
                 PVScalar pvcm = pvUnion.get(PVScalar.class);
                 if(pvcm==null) {
-                    logMessage("color mode is not a PVScalar", true, true);
+                    logMessage("color mode is not a PVScalar",true,true);
                     continue;
                 }
                 cm = ConvertFactory.getConvert().toInt(pvcm);
@@ -473,7 +474,7 @@ public class EPICS_NTNDA_Viewer
             makeNewWindow = false;
         }
         // If the window does not exist or is closed make a new one
-        if (img == null || img.getWindow() == null || img.getWindow().isClosed())
+        if (img==null || img.getWindow() == null || img.getWindow().isClosed())
         {
             switch (colorMode)
             {
@@ -530,12 +531,12 @@ public class EPICS_NTNDA_Viewer
 
         if (colorMode == 0 || colorMode == 1)
         {
-            if (dataType == ScalarType.pvUByte) {
-                byte[] pixels = new byte[numElements];
+            if(dataType==ScalarType.pvUByte) {
+                byte[] pixels= new byte[numElements];
                 convert.toByteArray(imagedata, 0, numElements, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             }
-            else if (dataType == ScalarType.pvUShort) {
+            else if(dataType==ScalarType.pvUShort) {
                 short[] pixels = new short[numElements];
                 convert.toShortArray(imagedata, 0, numElements, pixels, 0);
                 img.getProcessor().setPixels(pixels);
@@ -929,7 +930,8 @@ public class EPICS_NTNDA_Viewer
             properties.store(file, "EPICS_NTNDA_Viewer Properties");
             file.close();
             logMessage("Wrote properties file: " + path, true, true);
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             logMessage("writeProperties:exception: " + ex.getMessage(), true, true);
         }

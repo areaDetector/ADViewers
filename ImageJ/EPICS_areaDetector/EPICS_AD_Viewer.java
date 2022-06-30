@@ -80,7 +80,6 @@ public class EPICS_AD_Viewer implements PlugIn
     boolean isNewStack;
     boolean isConnected;
     boolean isLogOn;
-   // boolean startedLog;
     volatile boolean isNewImageAvailable;
 
     javax.swing.Timer timer;
@@ -106,8 +105,7 @@ public class EPICS_AD_Viewer implements PlugIn
 
             if (isDebugFile)
             {
-                debugFile = new FileOutputStream(System.getProperty("user.home") +
-                        System.getProperty("file.separator") + "IJEPICS_debug.txt");
+                debugFile = new FileOutputStream(System.getProperty("user.home") + System.getProperty("file.separator") + "IJEPICS_debug.txt");
                 debugPrintStream = new PrintStream(debugFile);
             }
             javax.swing.SwingUtilities.invokeLater(
@@ -317,12 +315,12 @@ public class EPICS_AD_Viewer implements PlugIn
         try
         {
             connected = (ch_nx != null && ch_nx.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                    ch_ny != null && ch_ny.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                    ch_nz != null && ch_nz.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                    ch_colorMode != null && ch_colorMode.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                    ch_dataType != null && ch_dataType.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                    ch_image != null && ch_image.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                    ch_image_id != null && ch_image_id.getConnectionState() == Channel.ConnectionState.CONNECTED);
+                         ch_ny != null && ch_ny.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                         ch_nz != null && ch_nz.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                         ch_colorMode != null && ch_colorMode.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                         ch_dataType != null && ch_dataType.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                         ch_image != null && ch_image.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                         ch_image_id != null && ch_image_id.getConnectionState() == Channel.ConnectionState.CONNECTED);
             if (connected && !isConnected)
             {
                 isConnected = true;
@@ -830,23 +828,19 @@ public class EPICS_AD_Viewer implements PlugIn
         });
 
         captureCheckBox.addItemListener(new ItemListener()
-                                        {
-                                            public void itemStateChanged(ItemEvent e)
-                                            {
-                                                if (e.getStateChange() == ItemEvent.SELECTED)
-                                                {
-                                                    isSaveToStack = true;
-                                                    isNewStack = true;
-                                                    IJ.log("record on");
-                                                }
-                                                else
-                                                {
-                                                    isSaveToStack = false;
-                                                    IJ.log("record off");
-                                                }
+        {
+             public void itemStateChanged(ItemEvent e) {
+                 if (e.getStateChange() == ItemEvent.SELECTED) {
+                     isSaveToStack = true;
+                     isNewStack = true;
+                     IJ.log("record on");
+                 } else {
+                     isSaveToStack = false;
+                     IJ.log("record off");
+                 }
 
-                                            }
-                                        }
+             }
+        }
         );
 
     }
