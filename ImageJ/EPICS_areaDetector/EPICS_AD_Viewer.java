@@ -24,9 +24,8 @@ public class EPICS_AD_Viewer implements PlugIn
 {
     ImagePlus img;
     ImageStack imageStack;
-    //ADDITION
     Object snapBackup = null;
-    //END ADDITION
+    Object altSnapBackup = null;
     int imageSizeX = 0;
     int imageSizeY = 0;
     int imageSizeZ = 0;
@@ -80,10 +79,8 @@ public class EPICS_AD_Viewer implements PlugIn
     boolean isSaveToStack;
     boolean isNewStack;
     boolean isConnected;
-    //ADDITION
     boolean isLogOn;
-    boolean startedLog;
-    //END ADDITION
+   // boolean startedLog;
     volatile boolean isNewImageAvailable;
 
     javax.swing.Timer timer;
@@ -100,10 +97,7 @@ public class EPICS_AD_Viewer implements PlugIn
             isNewImageAvailable = false;
             isSaveToStack = false;
             isNewStack = false;
-            //ADDITION
             isLogOn = false;
-            startedLog = false;
-            //END ADDITION
             Date date = new Date();
             prevTime = date.getTime();
             numImageUpdates = 0;
@@ -449,9 +443,6 @@ public class EPICS_AD_Viewer implements PlugIn
                 img.show();
                 if (oldWindowLocation != null) img.getWindow().setLocation(oldWindowLocation);
                 madeNewWindow = true;
-                //ADDITION
-                startedLog = false;
-                //END ADDITION
             }
 
             if (isNewStack)
@@ -552,17 +543,11 @@ public class EPICS_AD_Viewer implements PlugIn
                 }
                 img.getProcessor().setPixels(pixels);
             }
-
-            //ADDITION
-            if (isLogOn && startedLog)
+            if (isLogOn)
             {
-                img.getProcessor().snapshot();
-                snapBackup = img.getProcessor().getSnapshotPixels();
-                img.getProcessor().resetMinAndMax();
-                img.getProcessor().log();
+                snapBackup = takeLog(img);
+                if(dataType!= ScalarType.pvUShort && dataType!=ScalarType.pvUByte) resetContrast(img);
             }
-            //ADDITION
-
             if (isSaveToStack)
             {
                 img.getStack().addSlice(PVPrefix + ArrayCounter, img.getProcessor().duplicate());
@@ -576,9 +561,6 @@ public class EPICS_AD_Viewer implements PlugIn
                 img.mouseMoved(loc.x,loc.y);
             img.updateStatusbarValue();
             numImageUpdates++;
-            //ADDITION
-            if (isLogOn) startedLog = true;
-            //END ADDITION
             // Automatically set brightness and contrast if we made a new window
             if (madeNewWindow) new ContrastEnhancer().stretchHistogram(img, 0.5);
         }
@@ -666,9 +648,7 @@ public class EPICS_AD_Viewer implements PlugIn
         stopButton.setEnabled(false);
         snapButton = new JButton("Snap");
         JCheckBox captureCheckBox = new JCheckBox("");
-        //ADDITION
         JCheckBox logCheckBox = new JCheckBox("");
-        //END ADDITION
 
         frame = new JFrame("Image J EPICS_AD_Viewer Plugin");
         JPanel panel = new JPanel(new BorderLayout());
@@ -695,10 +675,8 @@ public class EPICS_AD_Viewer implements PlugIn
         panel.add(new JLabel("Frames/s"), c);
         c.gridx = 5;
         panel.add(new JLabel("Capture to Stack"), c);
-        //ADDITION
         c.gridx = 9;
         panel.add(new JLabel("Log"), c);
-        //END ADDITION
 
         // Middle row
         // These widgets should be centered
@@ -722,10 +700,8 @@ public class EPICS_AD_Viewer implements PlugIn
         panel.add(startButton, c);
         c.gridx = 8;
         panel.add(stopButton, c);
-        //ADDITION
         c.gridx = 9;
         panel.add(logCheckBox, c);
-        //END ADDITION
 
         // Bottom row
         c.gridy = 2;
@@ -793,36 +769,57 @@ public class EPICS_AD_Viewer implements PlugIn
                 logMessage("Image display stopped", true, true);
             }
         });
-        //ADDITION
         logCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                if(e.getStateChange() == ItemEvent.SELECTED)
-                {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
                     isLogOn = true;
                     logMessage("Log display on", true, true);
-                    if(!stopButton.isEnabled()){
-                        img.getProcessor().snapshot();
-                        snapBackup = img.getProcessor().getSnapshotPixels();
-                        img.getProcessor().resetMinAndMax();
-                        img.getProcessor().log();
-                        img.updateAndDraw();
+                    if (!stopButton.isEnabled()) {
+                        if (WindowManager.getCurrentWindow().equals(img.getWindow())) {
+                            snapBackup = takeLog(img);
+                            img.updateAndDraw();
+                            resetContrast(img);
+                        }
+                        else{
+                            ImagePlus imgC = WindowManager.getCurrentImage();
+                            altSnapBackup = takeLog(imgC);
+                            imgC.updateAndDraw();
+                            resetContrast(imgC);
+                        }
                     }
-                    startedLog = true;
-                }
-                else
-                {
+                    else if (!WindowManager.getCurrentWindow().equals(img.getWindow())){
+                        ImagePlus imgC = WindowManager.getCurrentImage();
+                        altSnapBackup = takeLog(imgC);
+                        imgC.updateAndDraw();
+                        resetContrast(imgC);
+                        isLogOn = false;
+                    }
+                } else {
                     logMessage("Log display off", true, true);
                     isLogOn = false;
-                    if(!stopButton.isEnabled()){
-                        WindowManager.setCurrentWindow(img.getWindow());
-                        img.getProcessor().setSnapshotPixels(snapBackup);
-                        Undo.undo();
+                    if (!stopButton.isEnabled()) {
+                        if (WindowManager.getCurrentWindow().equals(img.getWindow())) {
+                            WindowManager.setCurrentWindow(img.getWindow());
+                            img.getProcessor().setSnapshotPixels(snapBackup);
+                            Undo.undo();
+                            resetContrast(img);
+                        }
+                        else{
+                            ImagePlus imgC = WindowManager.getCurrentImage();
+                            imgC.getProcessor().setSnapshotPixels(altSnapBackup);
+                            Undo.undo();
+                            resetContrast(imgC);
+                        }
                     }
-                    startedLog = false;
+                    else if (!WindowManager.getCurrentWindow().equals(img.getWindow())){
+                        ImagePlus imgC = WindowManager.getCurrentImage();
+                        imgC.getProcessor().setSnapshotPixels(altSnapBackup);
+                        Undo.undo();
+                        resetContrast(imgC);
+                    }
                 }
             }
         });
-        //END ADDITION
 
         snapButton.addActionListener(new ActionListener()
         {
@@ -853,7 +850,17 @@ public class EPICS_AD_Viewer implements PlugIn
         );
 
     }
-
+    private Object takeLog(ImagePlus image){
+        image.getProcessor().snapshot();
+        image.getProcessor().resetMinAndMax();
+        image.getProcessor().log();
+        return image.getProcessor().getSnapshotPixels();
+    }
+    private void resetContrast(ImagePlus image){
+        image.getProcessor().resetMinAndMax();
+        if (image.getProcessor().getMin()<0) image.getProcessor().setMinAndMax(0, image.getProcessor().getMax());
+        new ContrastEnhancer().stretchHistogram(img, 0.5);
+    }
     public class FrameExitListener extends WindowAdapter
     {
         public void windowClosing(WindowEvent event)
