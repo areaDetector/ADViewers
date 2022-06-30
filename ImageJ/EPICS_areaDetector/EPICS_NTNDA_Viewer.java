@@ -75,7 +75,7 @@ public class EPICS_NTNDA_Viewer
 
     private static final int QUEUE_SIZE = 1;
     private static final int MS_WAIT = 100;
-    private static PvaClient pva = PvaClient.get("pva");
+    private static PvaClient pva=PvaClient.get("pva");
     private static Convert convert = ConvertFactory.getConvert();
     private PvaClientChannel pvaClientChannel = null;
     private PvaClientMonitor pvaClientMonitor = null;
@@ -125,7 +125,8 @@ public class EPICS_NTNDA_Viewer
     /**
      * Constructor
      */
-    public EPICS_NTNDA_Viewer() {
+    public EPICS_NTNDA_Viewer()
+    {
         String temp = null;
         readProperties();
         temp = System.getenv("EPICS_NTNDA_VIEWER_CHANNELNAME");
@@ -140,47 +141,53 @@ public class EPICS_NTNDA_Viewer
      */
     public void channelStateChange(PvaClientChannel channel, boolean connected) {
         isChannelConnected = connected;
-        if (isChannelConnected) {
+        if(isChannelConnected) {
             channelNameText.setBackground(Color.green);
             logMessage("State changed to connected for " + channelName, true, true);
-            if (pvaClientMonitor == null) {
-                pvaClientMonitor = pvaClientChannel.createMonitor("record[queueSize=" + QUEUE_SIZE + "]field()");
+            if (pvaClientMonitor==null) {
+                pvaClientMonitor=pvaClientChannel.createMonitor("record[queueSize=" + QUEUE_SIZE + "]field()");
                 pvaClientMonitor.issueConnect();
             }
             if (startIsTrue) startMonitor();
-        } else if (pvaClientMonitor != null) {
+        } else if(pvaClientMonitor!=null) {
             channelNameText.setBackground(Color.red);
             logMessage("State changed to disconnected for " + channelName, true, true);
             numImageUpdates = 0;
         }
     }
 
-    private void connectPV() {
-        try {
+    private void connectPV()
+    {
+        try
+        {
             if (pvaClientChannel != null) {
                 throw new RuntimeException("Channel already connected");
             }
             channelName = channelNameText.getText();
             logMessage("Trying to connect to : " + channelName, true, true);
-            pvaClientChannel = pva.createChannel(channelName, "pva");
+            pvaClientChannel = pva.createChannel(channelName,"pva");
             pvaClientChannel.setStateChangeRequester(this);
             isChannelConnected = false;
             channelNameText.setBackground(Color.red);
             pvaClientChannel.issueConnect();
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             logMessage("Could not connect to : " + channelName + " " + ex.getMessage(), true, false);
         }
     }
 
-    private void disconnectPV() {
-        try {
+    private void disconnectPV()
+    {
+        try
+        {
             if(pvaClientChannel == null) {
                 throw new RuntimeException("Channel already disconnected");
             }
             isChannelConnected = false;
             if(isStarted) stopMonitor();
             pvaClientChannel.destroy();
-            if(pvaClientMonitor!=null) pvaClientMonitor.destroy();
+            if(pvaClientMonitor!=null)  pvaClientMonitor.destroy();
             pvaClientChannel = null;
             pvaClientMonitor = null;
             logMessage("Disconnected from EPICS PV:" + channelName, true, true);
@@ -189,19 +196,22 @@ public class EPICS_NTNDA_Viewer
         }
     }
 
-    private void startMonitor() {
+    private void startMonitor()
+    {
         isStarted = true;
         pvaClientMonitor.start();
     }
 
-    private void stopMonitor() {
+    private void stopMonitor()
+    {
         synchronized (this) {
             pvaClientMonitor.stop();
             isStarted = false;
         }
     }
 
-    private void startDisplay() {
+    private void startDisplay()
+    {
         startButton.setEnabled(false);
         stopButton.setEnabled(true);
         snapButton.setEnabled(true);
@@ -210,7 +220,8 @@ public class EPICS_NTNDA_Viewer
         logMessage("Display started", true, false);
     }
 
-    private void stopDisplay() {
+    private void stopDisplay()
+    {
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
         snapButton.setEnabled(false);
@@ -219,13 +230,14 @@ public class EPICS_NTNDA_Viewer
         logMessage("Display stopped", true, false);
     }
 
-    private void handleEvents() {
+    private void handleEvents()
+    {
         boolean gotEvent = pvaClientMonitor.poll();
         if(!gotEvent) {
             try {
                 Thread.sleep(1);
-            } catch (Exception ex) {
-                logMessage("Thread.sleep exception " + ex, true, true);
+            } catch(Exception ex) {
+                logMessage("Thread.sleep exception " + ex,true,true);
             }
             return;
         }
@@ -234,11 +246,11 @@ public class EPICS_NTNDA_Viewer
             try {
                 boolean result = updateImage(pvaClientMonitor.getData());
                 if(!result) {
-                    logMessage("updateImage failed", true, true);
+                    logMessage("updateImage failed",true,true);
                     Thread.sleep(MS_WAIT);
                 }
-            } catch (Exception ex) {
-                logMessage("handleEvents caught exception " + ex, true, true);
+            } catch(Exception ex) {
+                logMessage("handleEvents caught exception " + ex,true,true);
             }
             pvaClientMonitor.releaseEvent();
             // Break out of the loop if the display is stopped
@@ -250,20 +262,24 @@ public class EPICS_NTNDA_Viewer
     /* (non-Javadoc)
      * @see ij.plugin.PlugIn#run(java.lang.String)
      */
-    public void run(String arg) {
+    public void run(String arg)
+    {
         IJ.showStatus("epics running");
-        try {
+        try
+        {
             isPluginRunning = true;
             Date date = new Date();
             prevTime = date.getTime();
-            if (isDebugFile) {
+            if (isDebugFile)
+            {
                 debugFile = new FileOutputStream(System.getProperty("user.home") +
                         System.getProperty("file.separator") + "IJEPICS_debug.txt");
                 debugPrintStream = new PrintStream(debugFile);
             }
             stopDisplay();
             connectPV();
-            while (isPluginRunning) {
+            while (isPluginRunning)
+            {
                 // A very short wait here lets stopMonitor run quickly when needed
                 Thread.sleep(1);
                 synchronized(this) {
@@ -276,7 +292,8 @@ public class EPICS_NTNDA_Viewer
             } // isPluginRunning
 
             if (isDebugMessages) logMessage("run: Plugin stopping", true, true);
-            if (isDebugFile) {
+            if (isDebugFile)
+            {
                 debugPrintStream.close();
                 debugFile.close();
                 logMessage("Closed debug file", true, true);
@@ -284,26 +301,31 @@ public class EPICS_NTNDA_Viewer
             disconnectPV();
             timer.stop();
             writeProperties();
-            if (img!=null) img.close();
+            if(img!=null) img.close();
             frame.setVisible(false);
             IJ.showStatus("Exiting Server");
 
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             logMessage("run: Got exception: " + e.getMessage(), true, true);
             e.printStackTrace();
             logMessage("Close EPICS_NTNDA_Viewer window, and reopen, try again", true, true);
             IJ.showStatus(e.toString());
-            try {
-                if (isDebugFile) {
+            try
+            {
+                if (isDebugFile)
+                {
                     debugPrintStream.close();
                     debugFile.close();
                 }
-            } catch (Exception ee) {
             }
+            catch (Exception ee) { }
         }
     }
 
-    private void makeImageCopy() {
+    private void makeImageCopy()
+    {
         ImageProcessor ip = img.getProcessor();
         if (ip == null) return;
         ImagePlus imgcopy = new ImagePlus(channelName + ":" + numImageUpdates, ip.duplicate());
@@ -311,28 +333,29 @@ public class EPICS_NTNDA_Viewer
     }
 
 
-    private boolean updateImage(PvaClientMonitorData monitorData) {
+    private boolean updateImage(PvaClientMonitorData monitorData)
+    {
         Point oldWindowLocation = null;
         boolean madeNewWindow = false;
         PVStructure pvs = monitorData.getPVStructure();
         PVStructureArray dimArray = pvs.getSubField(PVStructureArray.class, "dimension");
-        if (dimArray == null) {
+        if(dimArray==null) {
             logMessage("dimension not found", true, true);
             return false;
         }
         int ndim = dimArray.getLength();
-        if (ndim < 1) {
+        if(ndim<1) {
             logMessage("dimension is empty", true, true);
             return false;
         }
         int dimsint[] = new int[ndim];
-        StructureArrayData dimdata = new StructureArrayData();
-        dimArray.get(0, ndim, dimdata);
-        for (int i = 0; i < ndim; ++i) {
+        StructureArrayData dimdata=new StructureArrayData();
+        dimArray.get(0,ndim,dimdata);
+        for(int i=0; i<ndim; ++i) {
             PVStructure dim = (PVStructure) dimdata.data[i];
-            PVInt pvLen = dim.getSubField(PVInt.class, "size");
-            if (pvLen == null) {
-                logMessage("dimension size not found", true, true);
+            PVInt pvLen=dim.getSubField(PVInt.class,"size");
+            if(pvLen == null) {
+                logMessage("dimension size not found",true,true);
                 return false;
             }
             dimsint[i] = pvLen.get();
@@ -340,24 +363,25 @@ public class EPICS_NTNDA_Viewer
         int nx = dimsint[0];
         int ny = dimsint[1];
         int nz = 1;
-        if (ndim >= 3)
+        if (ndim>=3)
             nz = dimsint[2];
         int cm = 0;
         PVStructureArray attrArray = pvs.getSubField(PVStructureArray.class, "attribute");
-        if (attrArray != null) {
+        if(attrArray!=null) {
             int nattr = attrArray.getLength();
             StructureArrayData attrdata = new StructureArrayData();
             attrArray.get(0, nattr, attrdata);
-            for (int i = 0; i < nattr; i++) {
+            for (int i = 0; i < nattr; i++)
+            {
                 PVStructure pvAttr = attrdata.data[i];
-                PVString pvName = pvAttr.getSubField(PVString.class, "name");
-                if (pvName == null) continue;
+                PVString pvName = pvAttr.getSubField(PVString.class,"name");
+                if(pvName==null) continue;
                 String name = pvName.get();
-                if (!name.equals("ColorMode")) continue;
+                if(!name.equals("ColorMode")) continue;
                 PVUnion pvUnion = pvAttr.getSubField(PVUnion.class, "value");
-                if (pvUnion == null) continue;
+                if(pvUnion==null) continue;
                 PVScalar pvcm = pvUnion.get(PVScalar.class);
-                if (pvcm == null) {
+                if(pvcm==null) {
                     logMessage("color mode is not a PVScalar", true, true);
                     continue;
                 }
@@ -366,12 +390,12 @@ public class EPICS_NTNDA_Viewer
             }
         }
         PVUnion pvUnionValue = pvs.getSubField(PVUnion.class,"value");
-        if (pvUnionValue==null) {
+        if(pvUnionValue==null) {
             logMessage("value not found",true,true);
             return false;
         }
         PVScalarArray imagedata = pvUnionValue.get(PVScalarArray.class);
-        if (imagedata==null) {
+        if(imagedata==null) {
             logMessage("value is not a scalar array",true,true);
             return false;
         }
@@ -379,12 +403,12 @@ public class EPICS_NTNDA_Viewer
         PVString pvCodec = pvCodecStruct.getSubField(PVString.class, "name");
         String codec = pvCodec.get();
         if (!codec.isEmpty()) {
-            if (ntndCodec==null) {
+            if(ntndCodec==null) {
                 ntndCodec = new NTNDCodec();
             }
             NTNDArray ntndArray = NTNDArray.wrapUnsafe(pvs);
-            if (ntndArray==null) {
-                logMessage("value is not a valid NTNDArray", true, true);
+            if(ntndArray==null) {
+                logMessage("value is not a valid NTNDArray",true,true);
                 return false;
             }
             ntndCodec.decompress(ntndArray);
@@ -395,7 +419,7 @@ public class EPICS_NTNDA_Viewer
         if (ny == 0) ny = 1;  // 1-D images which are OK, useful with dynamic profiler
 
         if (isDebugMessages)
-            logMessage("UpdateImage: got image, sizes: " + nx + " " + ny + " " + nz, true, true);
+            logMessage("UpdateImage: got image, sizes: " + nx + " " + ny + " " + nz,true,true);
 
         int numElements = nx * ny * nz;
         if (numElements == 0) {
@@ -412,7 +436,7 @@ public class EPICS_NTNDA_Viewer
 
         // if image size changes we must close window and make a new one.
         boolean makeNewWindow = false;
-        if (nx != imageSizeX || ny != imageSizeY || nz != imageSizeZ || cm != colorMode || scalarType != dataType)
+        if (nx != imageSizeX || ny != imageSizeY || nz != imageSizeZ || cm != colorMode || scalarType !=dataType)
         {
             makeNewWindow = true;
             imageSizeX = nx;
@@ -430,7 +454,7 @@ public class EPICS_NTNDA_Viewer
         if(img==null) makeNewWindow = true;
 
         // If we need to make a new window then close the current one if it exists
-        if (img != null && makeNewWindow)
+        if (img!=null && makeNewWindow)
         {
             try
             {
@@ -443,14 +467,14 @@ public class EPICS_NTNDA_Viewer
                     img.close();
                 }
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logMessage("Exception closing window " + ex.getMessage(), true, true);
             }
             makeNewWindow = false;
         }
         // If the window does not exist or is closed make a new one
-        if (img == null || img.getWindow() == null || img.getWindow().isClosed()) {
+        if (img == null || img.getWindow() == null || img.getWindow().isClosed())
+        {
             switch (colorMode)
             {
                 case 0:
@@ -500,37 +524,33 @@ public class EPICS_NTNDA_Viewer
         }
         imagedata = pvUnionValue.get(PVScalarArray.class);
         if(imagedata==null) {
-            logMessage("value is not a scalar array", true, true);
+            logMessage("value is not a scalar array",true,true);
             return false;
         }
 
         if (colorMode == 0 || colorMode == 1)
         {
-            if (dataType == ScalarType.pvUByte)
-            {
+            if (dataType == ScalarType.pvUByte) {
                 byte[] pixels = new byte[numElements];
                 convert.toByteArray(imagedata, 0, numElements, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             }
-            else if (dataType == ScalarType.pvUShort)
-            {
+            else if (dataType == ScalarType.pvUShort) {
                 short[] pixels = new short[numElements];
                 convert.toShortArray(imagedata, 0, numElements, pixels, 0);
                 img.getProcessor().setPixels(pixels);
             }
             else if (dataType.isNumeric()) {
-                float[] pixels = new float[numElements];
+                float[] pixels =new float[numElements];
                 convert.toFloatArray(imagedata, 0, numElements, pixels, 0);
                 img.getProcessor().setPixels(pixels);
-            }
-            else
-            {
+            } else {
                 throw new RuntimeException("illegal array type " + dataType);
             }
         }
         else if (colorMode >= 2 && colorMode <= 4)
         {
-            int[] pixels = (int[]) img.getProcessor().getPixels();
+            int[] pixels = (int[])img.getProcessor().getPixels();
 
             byte inpixels[]=new byte[numElements];
 
@@ -548,7 +568,7 @@ public class EPICS_NTNDA_Viewer
                         if (i<dispMin)
                             colorLUT[i] = 0;
                         else if (i>dispMax)
-                            colorLUT[i] = (byte) 255;
+                            colorLUT[i] = (byte)255;
                         else
                             colorLUT[i] = (byte)((i-dispMin)*slope + 0.5);
                     }
@@ -859,7 +879,8 @@ public class EPICS_NTNDA_Viewer
         public void windowClosing(WindowEvent event) {
             isPluginRunning = false;
             // We need to wake up the main thread so it shuts down cleanly
-            synchronized (this) {
+            synchronized (this)
+            {
                 notify();
             }
         }
@@ -889,7 +910,8 @@ public class EPICS_NTNDA_Viewer
             temp = properties.getProperty("channelName");
             if (temp != null) channelName = temp;
             IJ.log("Read properties file: " + path + "  channelName= " + channelName);
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             IJ.log("readProperties:exception: " + ex.getMessage());
         }
@@ -912,4 +934,4 @@ public class EPICS_NTNDA_Viewer
             logMessage("writeProperties:exception: " + ex.getMessage(), true, true);
         }
     }
-}
+ }
