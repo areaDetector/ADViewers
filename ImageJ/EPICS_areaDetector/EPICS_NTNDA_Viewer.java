@@ -28,6 +28,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
+import com.sun.corba.se.pept.transport.ByteBufferPool;
+import ij.*;
+import ij.process.*;
 import org.epics.nt.NTNDArray;
 import org.epics.pvaClient.PvaClient;
 import org.epics.pvaClient.PvaClientChannel;
@@ -46,20 +49,12 @@ import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.StructureArrayData;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
 import ij.gui.ImageWindow;
 import ij.gui.ImageCanvas;
 import ij.plugin.ContrastEnhancer;
 import ij.plugin.PlugIn;
-import ij.process.ByteProcessor;
-import ij.process.ColorProcessor;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-import ij.Undo;
-import ij.WindowManager;
+
+import static ij.measure.Measurements.MIN_MAX;
 
 /**
  * ImageJ viewer for NTNDArray data.
@@ -83,6 +78,7 @@ public class EPICS_NTNDA_Viewer
     private ImagePlus img = null;
     private Object snapBackup = null;
     private Object altSnapBackup = null;
+    private ImageStatistics stats = null;
     private ImageStack imageStack = null;
     private int imageSizeX = 0;
     private int imageSizeY = 0;
@@ -103,6 +99,7 @@ public class EPICS_NTNDA_Viewer
     private volatile boolean isSaveToStack = false;
     private volatile boolean isNewStack = false;
     private volatile boolean isLogOn = false;
+    private volatile boolean firstLog = false;
     // These are used for the frames/second calculation
     private long prevTime = 0;
     private volatile int numImageUpdates = 0;
@@ -329,8 +326,13 @@ public class EPICS_NTNDA_Viewer
     {
         ImageProcessor ip = img.getProcessor();
         if (ip == null) return;
-        ImagePlus imgcopy = new ImagePlus(channelName + ":" + numImageUpdates, ip.duplicate());
-        imgcopy.show();
+        if(isLogOn) {
+            logMessage("turn off log to use Snap function", true, true);
+        }
+        else {
+            ImagePlus imgcopy = new ImagePlus(channelName + ":" + numImageUpdates, ip.duplicate());
+            imgcopy.show();
+        }
     }
 
 
@@ -619,8 +621,16 @@ public class EPICS_NTNDA_Viewer
         /*Takes log of image, stores snapshot for Undo if plugin is stopped.
         */
         if (isLogOn) {
-            snapBackup = takeLog(img);
-            if(dataType!= ScalarType.pvUShort && dataType!=ScalarType.pvUByte) resetContrast(img);
+            img.getProcessor().snapshot();
+            snapBackup=img.getProcessor().getSnapshotPixels();
+            if(dataType!=ScalarType.pvUShort && dataType!= ScalarType.pvUByte && dataType.isNumeric())
+                log(img);
+            else
+                img.getProcessor().log();
+            if (firstLog){
+                resetContrast(img);
+                firstLog = false;
+            }
         }
 
         if (isSaveToStack)
@@ -783,31 +793,35 @@ public class EPICS_NTNDA_Viewer
             }
         });
 
-        //Turns log on and off. If plugin is stopped, log checkbox takes log or undoes log on static image or other image depending on user selection
+        // Turns log on and off. If plugin is stopped, log checkbox takes log or undoes log on static image or other image depending on user selection
         logCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                    isLogOn = true;
-                    logMessage("Log display on", true, true);
-                    if (!stopButton.isEnabled()) {
-                        if (WindowManager.getCurrentWindow().equals(img.getWindow())) {
-                            snapBackup = takeLog(img);
-                            img.updateAndDraw();
-                            resetContrast(img);
-                        }
-                        else{
+                    if (colorMode >= 2 && colorMode <= 4) {
+                        logMessage("Log not intended for color images", true, true);
+                        logCheckBox.setSelected(false);
+                    } else {
+                        isLogOn = true;
+                        logMessage("Log display on", true, true);
+                        firstLog = true;
+                        if (!stopButton.isEnabled()) {
+                            if (WindowManager.getCurrentWindow().equals(img.getWindow())) {
+                                snapBackup = takeLog(img);
+                                img.updateAndDraw();
+                                resetContrast(img);
+                            } else {
+                                ImagePlus imgC = WindowManager.getCurrentImage();
+                                altSnapBackup = takeLog(imgC);
+                                imgC.updateAndDraw();
+                                resetContrast(imgC);
+                            }
+                        } else if (!WindowManager.getCurrentWindow().equals(img.getWindow())) {
                             ImagePlus imgC = WindowManager.getCurrentImage();
                             altSnapBackup = takeLog(imgC);
                             imgC.updateAndDraw();
                             resetContrast(imgC);
+                            isLogOn = false;
                         }
-                    }
-                    else if (!WindowManager.getCurrentWindow().equals(img.getWindow())){
-                        ImagePlus imgC = WindowManager.getCurrentImage();
-                        altSnapBackup = takeLog(imgC);
-                        imgC.updateAndDraw();
-                        resetContrast(imgC);
-                        isLogOn = false;
                     }
                 } else {
                     logMessage("Log display off", true, true);
@@ -831,6 +845,9 @@ public class EPICS_NTNDA_Viewer
                         imgC.getProcessor().setSnapshotPixels(altSnapBackup);
                         Undo.undo();
                         resetContrast(imgC);
+                    }
+                    else{
+                        resetContrast(img);
                     }
                 }
 
@@ -871,10 +888,22 @@ public class EPICS_NTNDA_Viewer
         image.getProcessor().log();
         return image.getProcessor().getSnapshotPixels();
     }
+    private void log(ImagePlus image){
+        float[] pixelArr = (float[]) image.getProcessor().getPixels();
+        int i = 0;
+        for(float x : pixelArr){
+            if(Math.abs(x - 0) < 1e-9)
+                pixelArr[i++]=Float.NEGATIVE_INFINITY;
+            else if(x<0)
+                pixelArr[i++]=Float.NaN;
+            else
+                pixelArr[i++]=(float)Math.log(x);
+        }
+        image.getProcessor().setPixels(pixelArr);
+    }
     private void resetContrast(ImagePlus image){
         image.getProcessor().resetMinAndMax();
-        if (image.getProcessor().getMin()<0) image.getProcessor().setMinAndMax(0, image.getProcessor().getMax());
-        new ContrastEnhancer().stretchHistogram(img, 0.5);
+        new ContrastEnhancer().stretchHistogram(image, 0.5);
     }
     private class FrameExitListener extends WindowAdapter {
         public void windowClosing(WindowEvent event) {
