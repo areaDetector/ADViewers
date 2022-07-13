@@ -71,6 +71,7 @@ public class EPICS_AD_Viewer implements PlugIn
     JButton startButton;
     JButton stopButton;
     JButton snapButton;
+    JCheckBox logCheckBox;
 
     boolean isDebugMessages;
     boolean isDebugFile;
@@ -662,7 +663,7 @@ public class EPICS_AD_Viewer implements PlugIn
         stopButton.setEnabled(false);
         snapButton = new JButton("Snap");
         JCheckBox captureCheckBox = new JCheckBox("");
-        JCheckBox logCheckBox = new JCheckBox("");
+        logCheckBox = new JCheckBox("");
 
         frame = new JFrame("Image J EPICS_AD_Viewer Plugin");
         JPanel panel = new JPanel(new BorderLayout());

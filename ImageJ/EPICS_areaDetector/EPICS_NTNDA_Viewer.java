@@ -28,9 +28,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-import com.sun.corba.se.pept.transport.ByteBufferPool;
-import ij.*;
-import ij.process.*;
 import org.epics.nt.NTNDArray;
 import org.epics.pvaClient.PvaClient;
 import org.epics.pvaClient.PvaClientChannel;
@@ -49,6 +46,8 @@ import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.StructureArrayData;
 
+import ij.*;
+import ij.process.*;
 import ij.gui.ImageWindow;
 import ij.gui.ImageCanvas;
 import ij.plugin.ContrastEnhancer;
@@ -116,6 +115,7 @@ public class EPICS_NTNDA_Viewer
     private JButton startButton = null;
     private JButton stopButton = null;
     private JButton snapButton = null;
+    private JCheckBox logCheckBox = null;
 
     private javax.swing.Timer timer = null;
 
@@ -679,7 +679,7 @@ public class EPICS_NTNDA_Viewer
         stopButton = new JButton("Stop");
         snapButton = new JButton("Snap");
         JCheckBox captureCheckBox = new JCheckBox("");
-        JCheckBox logCheckBox = new JCheckBox("");
+        logCheckBox = new JCheckBox("");
 
         frame = new JFrame("Image J EPICS_NTNDA_Viewer Plugin");
         JPanel panel = new JPanel(new BorderLayout());
