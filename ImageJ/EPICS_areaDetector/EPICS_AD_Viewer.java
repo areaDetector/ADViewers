@@ -184,7 +184,11 @@ public class EPICS_AD_Viewer implements PlugIn
         ImageProcessor ip = img.getProcessor();
         if (ip == null) return;
         if(isLogOn) {
-            logMessage("turn off log to use Snap function", true, true);
+            ImageProcessor ipcopy = ip.duplicate();
+            ipcopy.setPixels(snapBackup);
+            ImagePlus imgcopy = new ImagePlus(PVPrefix + ":" + ArrayCounter, ipcopy);
+            resetContrast(imgcopy);
+            imgcopy.show();
         }
         else {
             ImagePlus imgcopy = new ImagePlus(PVPrefix + ":" + ArrayCounter, ip.duplicate());
@@ -323,12 +327,12 @@ public class EPICS_AD_Viewer implements PlugIn
         try
         {
             connected = (ch_nx != null && ch_nx.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_ny != null && ch_ny.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_nz != null && ch_nz.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_colorMode != null && ch_colorMode.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_dataType != null && ch_dataType.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_image != null && ch_image.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_image_id != null && ch_image_id.getConnectionState() == Channel.ConnectionState.CONNECTED);
+                    ch_ny != null && ch_ny.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_nz != null && ch_nz.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_colorMode != null && ch_colorMode.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_dataType != null && ch_dataType.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_image != null && ch_image.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_image_id != null && ch_image_id.getConnectionState() == Channel.ConnectionState.CONNECTED);
             if (connected && !isConnected)
             {
                 isConnected = true;
@@ -455,7 +459,7 @@ public class EPICS_AD_Viewer implements PlugIn
             {
                 imageStack = new ImageStack(img.getWidth(), img.getHeight());
                 imageStack.addSlice(PVPrefix + ArrayCounter, img.getProcessor());
-                // Note: we need to add this first slice twice in order to get the slider bar 
+                // Note: we need to add this first slice twice in order to get the slider bar
                 // on the window - ImageJ won't put it there if there is only 1 slice.
                 imageStack.addSlice(PVPrefix + ArrayCounter, img.getProcessor());
                 img.close();
@@ -734,7 +738,7 @@ public class EPICS_AD_Viewer implements PlugIn
         frame.setVisible(true);
 
 
-        int timerDelay = 2000;  // 2 seconds 
+        int timerDelay = 2000;  // 2 seconds
         timer = new javax.swing.Timer(timerDelay, new ActionListener()
         {
             public void actionPerformed(ActionEvent event)
@@ -852,19 +856,19 @@ public class EPICS_AD_Viewer implements PlugIn
         });
 
         captureCheckBox.addItemListener(new ItemListener()
-        {
-             public void itemStateChanged(ItemEvent e) {
-                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                     isSaveToStack = true;
-                     isNewStack = true;
-                     IJ.log("record on");
-                 } else {
-                     isSaveToStack = false;
-                     IJ.log("record off");
-                 }
+                                        {
+                                            public void itemStateChanged(ItemEvent e) {
+                                                if (e.getStateChange() == ItemEvent.SELECTED) {
+                                                    isSaveToStack = true;
+                                                    isNewStack = true;
+                                                    IJ.log("record on");
+                                                } else {
+                                                    isSaveToStack = false;
+                                                    IJ.log("record off");
+                                                }
 
-             }
-        }
+                                            }
+                                        }
         );
 
     }
@@ -889,7 +893,7 @@ public class EPICS_AD_Viewer implements PlugIn
     }
     private void resetContrast(ImagePlus image){
         image.getProcessor().resetMinAndMax();
-        new ContrastEnhancer().stretchHistogram(img, 0.5);
+        new ContrastEnhancer().stretchHistogram(image, 0.51);
     }
     public class FrameExitListener extends WindowAdapter
     {

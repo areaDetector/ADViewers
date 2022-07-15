@@ -327,7 +327,11 @@ public class EPICS_NTNDA_Viewer
         ImageProcessor ip = img.getProcessor();
         if (ip == null) return;
         if(isLogOn) {
-            logMessage("turn off log to use Snap function", true, true);
+            ImageProcessor ipcopy = ip.duplicate();
+            ipcopy.setPixels(snapBackup);
+            ImagePlus imgcopy = new ImagePlus(channelName + ":" + numImageUpdates, ipcopy);
+            resetContrast(imgcopy);
+            imgcopy.show();
         }
         else {
             ImagePlus imgcopy = new ImagePlus(channelName + ":" + numImageUpdates, ip.duplicate());
@@ -619,7 +623,7 @@ public class EPICS_NTNDA_Viewer
         }
 
         /*Takes log of image, stores snapshot for Undo if plugin is stopped.
-        */
+         */
         if (isLogOn) {
             img.getProcessor().snapshot();
             snapBackup=img.getProcessor().getSnapshotPixels();
@@ -965,4 +969,4 @@ public class EPICS_NTNDA_Viewer
             logMessage("writeProperties:exception: " + ex.getMessage(), true, true);
         }
     }
- }
+}
