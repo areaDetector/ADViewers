@@ -18,7 +18,6 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Properties;
 
 import gov.aps.jca.*;
 import gov.aps.jca.dbr.*;
@@ -333,21 +332,7 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         plot.addPoints(x, profile,2);
 
         CurveFitter cv = new CurveFitter(x, profile);
-        double sum = 0.;
-        double mean = 0;
-        double max =0.;
-        double min = 1.e5;
-        for(int i =0; i<profile.length;i++){
-            sum +=profile[i];
-            mean += x[i] * profile[i];
-            if (profile[i]<min) min = profile[i];
-            if (profile[i]>max) max = profile[i];
-        }
-        mean = mean/sum;
-        double var = 0.;
-        for(int i=0;i<profile.length;i++){
-            var += (x[i]-mean)*(x[i]-mean)*profile[i]/sum;
-        }
+
         String fitName = (String) ffComboBox.getSelectedItem();
         if (fitName.equals("Slit Function")) {
             fitSlitFunction(cv, x, profile);
