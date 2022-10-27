@@ -282,21 +282,11 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
                 double dy = cal.pixelHeight*(line.y2 - line.y1);
                 double length = Math.sqrt(dx*dx + dy*dy);
                 xInc = length/(profile.length-1);
-                if (dy == 0.0 && Prefs.absolutePixelScale ) {
-                    xStart = line.x1d * cal.pixelWidth;
-                } else if (dx == 0.0 && Prefs.absolutePixelScale) {
-                    xStart = line.y1d * cal.pixelWidth;
-                }
                 xUnit = cal.getUnits();
             }
         } else if (roi.getType() == Roi.RECTANGLE) {
             if (cal != null) {
-                if(!Prefs.verticalProfile) xInc = roi.getBounds().getWidth()*cal.pixelWidth/(profile.length-1);
-                else xInc = roi.getBounds().getHeight()*cal.pixelWidth/(profile.length-1);
-                if (Prefs.absolutePixelScale) {
-                    if (!Prefs.verticalProfile) xStart = roi.getBounds().x * cal.pixelWidth;
-                    else xStart = roi.getBounds().y * cal.pixelWidth;
-                }
+                xInc = roi.getBounds().getWidth()*cal.pixelWidth/(profile.length-1);
                 xUnit = cal.getUnits();
             }
         } else return null;
@@ -306,8 +296,7 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         int n = profile.length;                 // create the x axis
         double[] x = new double[n];
         for (int i=0; i<n; i++) {
-            if (Prefs.absolutePixelScale) x[i] = xStart + i * xInc;
-            else x[i] = i * xInc;
+           x[i] = i * xInc;
         }
 
         String title = imp.getTitle();
@@ -413,7 +402,6 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         initialParams[5] = 5;
             cf.doCustomFit(new UserFunction() {
                 @Override
-                //TODO: adjust c limits, for absolute pixel scale....
                 public double userFunction(double[] params, double x) {
 //                    xMin, xMax, yMin, yMax
                     double[] limits = plot.getLimits();
