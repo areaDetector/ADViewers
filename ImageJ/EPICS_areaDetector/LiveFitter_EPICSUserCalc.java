@@ -1,4 +1,5 @@
 
+
 import ij.*;
 import ij.gui.*;
 import ij.measure.Calibration;
@@ -17,6 +18,7 @@ import java.awt.event.*;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
+import java.time.YearMonth;
 import java.util.Date;
 
 import gov.aps.jca.*;
@@ -24,11 +26,10 @@ import gov.aps.jca.dbr.*;
 import gov.aps.jca.configuration.*;
 import gov.aps.jca.event.*;
 
+import static java.lang.Integer.parseInt;
 
-/** 
- * Plugin allows for live fiting of any built in ImageJ equation and a custom Slit Function
- * Open two instances of the plugin to get two seperate live fits
-*/
+// Sections of code from AdViewers' EPICS_AD_Viewer and Gaussian Profiler plugins
+// IF YOU NEED TWO DIFFERENT LIVE FITS AT THE SAME TIME OPEN TWO INSTANCES OF THIS PLUGIN
 
 public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
     ImagePlus imp;
@@ -44,9 +45,12 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
     private JComboBox cComboBox = null;
     private JComboBox scComboBox = null;
     private JTextField lwText = null;
+    private JTextField fsText = null;
     private JComboBox sComboBox = null;
     private JTextField lText = null;
     private JCheckBox vCheckbox = null;
+    private JCheckBox apsCheckbox = null;
+    private boolean absolutePixelScale = true;
 
     private final String slitEquation = "y = a+b*x+e/2*Math.erf((x-c+d/2)/(f*Math.sqrt(2)))-e/2*Math.erf((x-c-d/2)/(f*Math.sqrt(2)))";
     JCALibrary jca;
@@ -104,7 +108,7 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
             "8th Degree Polynomial","Power", "Power (linear regression)", "Exponential", "Exponential (linear regression)", "Exponential with Offset",
             "Exponential Recovery", "Exponential Recovery (no offset)",
             "Log", "y = a+b*ln(x-c)", "Gaussian", "Gaussian (no offset)", "Error Function", "Rodbard", "Rodbard (NIH Image)",
-            "Inverse Rodbard", "Gamma Variate", "Chapman-Richards", "Slit Function"
+            "Inverse Rodbard", "Gamma Variate", "Chapman-Richards", "Slit - Positive" , "Slit - Negative"
     };
 
 
@@ -128,11 +132,15 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         catch (Exception e) { }
     }
 
+
     public void createAndShowGUI(){
         //Create and set up the window.
         lwText = new JTextField("1.0",6);
         lwText.setEditable(true);
         lwText.setHorizontalAlignment(JTextField.LEFT);
+        fsText = new JTextField("12",2);
+        fsText.setEditable(true);
+        fsText.setHorizontalAlignment(JTextField.CENTER);
         lText = new JTextField("", 6);
         lText.setEditable(true);
         statusText = new JTextField(40);
@@ -147,6 +155,7 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         scComboBox = new JComboBox(FILL_COLOR_CHOICES);
         sComboBox = new JComboBox(SORTED_SHAPES);
         vCheckbox = new JCheckBox("", true);
+        apsCheckbox = new JCheckBox("", true);
 
         frame = new JFrame("Image J LiveFitter_EPICSUserCalc Plugin");
         JPanel panel = new JPanel(new BorderLayout());
@@ -179,11 +188,27 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         panel.add(new JLabel("Label:"), c);
         c.gridx = 0;
         c.gridy = 6;
-        panel.add(new JLabel("Visible"), c);
-        c.anchor = GridBagConstraints.CENTER;
+        panel.add(new JLabel("Font Size:"), c);
         c.gridx = 2;
         c.gridy = 0;
+
+        c.anchor = GridBagConstraints.NORTHWEST;
+        panel.add(new JLabel("Absolute Pixel Scale"), c);
+        c.anchor = GridBagConstraints.SOUTH;
+        JLabel warning = new JLabel("HV/Rectangle only");
+        Font warningFont = warning.getFont();
+        warning.setFont(new Font(warningFont.getName(), Font.PLAIN, warningFont.getSize()-2));
+        panel.add(warning, c);
+
+        c.gridy = 1;
+        c.anchor = GridBagConstraints.CENTER;
+        panel.add(new JLabel("Visible"), c);
+        c.gridy = 2;
+        c.anchor = GridBagConstraints.SOUTH;
         panel.add(new JLabel("userCalc:"), c);
+        c.gridy = 4;
+        c.anchor = GridBagConstraints.NORTH;
+        panel.add(new JLabel("eg. 1bmc:userCalc7"), c);
 
         // Middle column
         c.anchor = GridBagConstraints.WEST;
@@ -207,14 +232,21 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         panel.add(lText, c);
         c.gridx = 1;
         c.gridy = 6;
-        panel.add(vCheckbox, c);
+        panel.add(fsText, c);
+
+        // Last column
         c.anchor = GridBagConstraints.CENTER;
         c.gridx = 2;
         c.gridy = 6;
         panel.add(fitButton, c);
+        c.gridy = 0;
         c.anchor = GridBagConstraints.EAST;
-        c.gridx = 2;
+        panel.add(apsCheckbox, c);
         c.gridy = 1;
+        panel.add(vCheckbox, c);
+        c.anchor = GridBagConstraints.CENTER;
+        c.gridx = 2;
+        c.gridy = 3;
         panel.add(channelNameTextA, c);
 
         //bottom (status bar)
@@ -240,7 +272,7 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
             }
         });
 
-        //calls newfit to display profile plot
+        // shows/opens plot
         fitButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
                 firstTime = true;
@@ -282,6 +314,7 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         double xInc = 1;
         double xStart = 0;
         Calibration cal = imp.getCalibration();
+        absolutePixelScale = apsCheckbox.isSelected();
         if (roi.getType() == Roi.LINE) {
             Line line = (Line)roi;
             if (cal != null) {
@@ -289,11 +322,21 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
                 double dy = cal.pixelHeight*(line.y2 - line.y1);
                 double length = Math.sqrt(dx*dx + dy*dy);
                 xInc = length/(profile.length-1);
+                if (dy == 0.0 && absolutePixelScale ) {
+                    xStart = line.x1d * cal.pixelWidth;
+                } else if (dx == 0.0 && absolutePixelScale) {
+                    xStart = line.y1d * cal.pixelWidth;
+                }
                 xUnit = cal.getUnits();
             }
         } else if (roi.getType() == Roi.RECTANGLE) {
             if (cal != null) {
-                xInc = roi.getBounds().getWidth()*cal.pixelWidth/(profile.length-1);
+                if(!Prefs.verticalProfile) xInc = roi.getBounds().getWidth()*cal.pixelWidth/(profile.length-1);
+                else xInc = roi.getBounds().getHeight()*cal.pixelWidth/(profile.length-1);
+                if (absolutePixelScale) {
+                    if (!Prefs.verticalProfile) xStart = roi.getBounds().x * cal.pixelWidth;
+                    else xStart = roi.getBounds().y * cal.pixelWidth;
+                }
                 xUnit = cal.getUnits();
             }
         } else return null;
@@ -303,7 +346,8 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         int n = profile.length;                 // create the x axis
         double[] x = new double[n];
         for (int i=0; i<n; i++) {
-            x[i] = i * xInc;
+            if (absolutePixelScale) x[i] = xStart + i * xInc;
+            else x[i] = i * xInc;
         }
 
         String title = imp.getTitle();
@@ -314,6 +358,10 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         if(label.equals("")) label = " Fit: " + ffComboBox.getSelectedItem();
         else label = " " + label;
         Plot plot = new Plot("Profile Plot: "+title + label , xLabel, yLabel);
+        if(this.plot!=null){
+            Dimension oldSize = this.plot.getSize();
+            plot.setSize(oldSize.width, oldSize.height);
+        }
         this.plot = plot;
 
         plot.add("Line", x, profile);
@@ -328,10 +376,27 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         plot.addPoints(x, profile,2);
 
         CurveFitter cv = new CurveFitter(x, profile);
-
+        double sum = 0.;
+        double mean = 0;
+        double max =0.;
+        double min = 1.e5;
+        for(int i =0; i<profile.length;i++){
+            sum +=profile[i];
+            mean += x[i] * profile[i];
+            if (profile[i]<min) min = profile[i];
+            if (profile[i]>max) max = profile[i];
+        }
+        mean = mean/sum;
+        double var = 0.;
+        for(int i=0;i<profile.length;i++){
+            var += (x[i]-mean)*(x[i]-mean)*profile[i]/sum;
+        }
         String fitName = (String) ffComboBox.getSelectedItem();
-        if (fitName.equals("Slit Function")) {
-            fitSlitFunction(cv, x, profile);
+        if (fitName.equals("Slit - Positive")) {
+            fitSlitFunction(cv, x, profile, 1);
+        }
+        else if (fitName.equals("Slit - Negative")) {
+            fitSlitFunction(cv, x, profile, 0);
         }
         else {
             cv.doFit(CurveFitter.sortedTypes[ffComboBox.getSelectedIndex()]);
@@ -349,7 +414,11 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         String symbol = (String)sComboBox.getSelectedItem();
         Boolean visible = vCheckbox.isSelected();
         boolean numWidth = isNumeric(lwText.getText());
+        boolean fontSize = isNumeric(lwText.getText());
         double width;
+        int font;
+        if(fontSize) font = parseInt(fsText.getText(),12);
+        else font = 12;
         if(numWidth) width = Tools.parseDouble(lwText.getText(),1.0);
         else width = 1.0;
         if(width<0) width = -width;
@@ -361,17 +430,17 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         char pChar = 'a';
         double[] pVal = cv.getParams();
         for (int i = 0; i < cv.getNumParams(); i++) {
-            legend += pChar + "=" + IJ.d2s(pVal[i], 3) + " ";
+            legend += pChar + "=" + IJ.d2s(pVal[i], 3) + "    ";
             pChar++;
         }
         legend = legend + "  " + cv.getFormula();
+        plot.setFontSize(font);
         plot.setColor(Color.MAGENTA);
         plot.addLabel(0,0,legend);
-        plot.setLineWidth(1);
         if(!firstTime) {
             win.drawPlot(plot);
-            win.getPlot().getProcessor().setColor(Color.MAGENTA);
-            win.getPlot().getProcessor().drawString(legend,75,17);
+            plot.setColor(Color.MAGENTA);
+            plot.addLabel(0,0,legend);
         }
         return plot;
     }
@@ -382,8 +451,8 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         return imp;
     }
 
-    //    "y = a+b*x+e/2*Math.erf((x-c+d/2)/(f*2^(1/2)))-e/2*Math.erf((x-c+d/2)/(f*2^(1/2)))" custom fitting
-    private double[] fitSlitFunction(CurveFitter cf, double[] x, double[] profile){
+//    "y = a+b*x+e/2*Math.erf((x-c+d/2)/(f*2^(1/2)))-e/2*Math.erf((x-c+d/2)/(f*2^(1/2)))"
+    private double[] fitSlitFunction(CurveFitter cf, double[] x, double[] profile, int positive){
         double yMax = profile[0];
         double yMin = profile[0];
         for(int i = 0; i<profile.length; i++){
@@ -399,42 +468,54 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
             cEst2 += profile[i]-yMin;
             eEst += profile[i];
         }
+
         double[] initialParams = new double[6];
-        initialParams[0] = yMin;
-        if(initialParams[0]<0 || initialParams[0]>20000) initialParams[0] = 1;
+        if(positive==1) initialParams[0] = yMin;
+        else initialParams[0] = (yMax-yMin)/2.0;
+        if(initialParams[0]<0 || initialParams[0]>yMax) initialParams[0] = 1;
         initialParams[1] = 0;
         initialParams[2] = cEst1/cEst2;
-        if(initialParams[2]<0 || initialParams[2]<x[x.length-1]) initialParams[0] = x.length/2+x[0];
+//        if(initialParams[2]<0 || initialParams[2]<x[x.length-1]) initialParams[0] = x.length/2+x[0];
         initialParams[4] = (eEst - x.length*yMin)/x.length;
         initialParams[3] = (eEst - x.length*yMin)/initialParams[4];
         initialParams[5] = 5;
-        cf.doCustomFit(new UserFunction() {
-            @Override
-            public double userFunction(double[] params, double x) {
-//                    xMin, xMax, yMin, yMax
-                double[] limits = plot.getLimits();
-                double xMin = limits[0];
-                double xMax = limits[1];
-                double yMin = limits[2];
-                double yMax = limits[3];
-                if(params[0] > yMax) return Double.NaN;
-                if(params[0] < 0) return Double.NaN;
-                if(params[1] > 0.05) return Double.NaN;
-                if(params[1] < -0.05) return Double.NaN;
-                if(params[2] > xMax) return Double.NaN;
-                if(params[2] < 0) return Double.NaN;
-                if(params[3] > xMax-xMin) return Double.NaN;
-                if(params[3] < 0) return Double.NaN;
-                if(params[4] >= yMax) return Double.NaN;
-                if(params[4] < yMin) return Double.NaN;
-                if(params[5] > 30) return Double.NaN;
-                if(params[5] < 0) return Double.NaN;
-                return params[0]+params[1]*x+params[4]/2* IJMath.erf((x-params[2]+params[3]/2)/(params[5]*Math.pow(2,0.5)))-params[4]/2*IJMath.erf((x-params[2]-params[3]/2)/(params[5]*Math.pow(2,0.5)));
-            }}, 6, slitEquation, initialParams, null, false);
+        if((positive==0 && initialParams[4]>0) || (positive==1 && initialParams[4]<0)) initialParams[4] *= -1;
+        double goodness= 0.0;
+        int attempts = 0;
+           while ((goodness <0.7) && attempts<4) {
+                cf.doCustomFit(new UserFunction() {
+                    @Override
+                    public double userFunction(double[] params, double x) {
+//                      xMin, xMax, yMin, yMax
+                        double[] limits = plot.getLimits();
+                        double xMin = limits[0];
+                        double xMax = limits[1];
+//                        double yMin = limits[2];
+                        double yMax = limits[3];
+                        if (params[0] > yMax) return Double.NaN;
+                        if (params[0] < 0) return Double.NaN;
+                        if (params[1] > 3) return Double.NaN;
+                        if (params[1] < -3) return Double.NaN;
+                        if (params[2] > xMax) return Double.NaN;
+                        if (params[2] < 0) return Double.NaN;
+                        if (params[3] > xMax - xMin) return Double.NaN;
+                        if (params[3] < 0.01) return Double.NaN;
+                        if (params[4] >= yMax) return Double.NaN;
+//                      if(params[4] < yMin) return Double.NaN;
+                        if (params[4] < 1 && positive == 1) return Double.NaN;
+                        if (params[4] > -1 && positive == 0) return Double.NaN;
+                        if (params[5] > 30) return Double.NaN;
+                        if (params[5] < 0.5) return Double.NaN;
+                        return params[0] + params[1] * x + params[4] / 2 * IJMath.erf((x - params[2] + params[3] / 2) / (params[5] * Math.pow(2, 0.5))) - params[4] / 2 * IJMath.erf((x - params[2] - params[3] / 2) / (params[5] * Math.pow(2, 0.5)));
+                        }}, 6, slitEquation, initialParams, null, false);
+                        goodness = cf.getFitGoodness();
+                        initialParams[0] *= 0.9;
+                        attempts++;
+                    }
         return (cf.getStatus() == Minimizer.SUCCESS ? cf.getParams() : initialParams);
     }
-    
-// displays fit plot for the first time, checks to make sure a proper roi and image are selected
+
+    // displays fit plot for the first time, checks to make sure a proper roi and image are selected
     public void newFit(){
         ImagePlus holderImg = imp;
         imp = WindowManager.getCurrentImage();
@@ -553,8 +634,8 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         }
         catch (Exception e) {}
     }
-    
-    //clears userCalc - set values to 0 or ""
+
+    //clears userCalc - set to 0 or ""
     public void clearPVS(){
         checkConnections();
         if (!isConnected) return;
@@ -603,10 +684,7 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         try
         {
             UCPrefix = channelNameTextA.getText();
-            if(UCPrefix.equals("") || UCPrefix.charAt(0)=='_') {
-                channelNameTextA.setBackground(Color.RED);
-                return;
-            }
+            if(UCPrefix.equals("") || UCPrefix.charAt(0)=='_') return;
 
             logMessage("Trying to connect to EPICS PVs: " + UCPrefix, true, true);
             if (isDebugFile)
@@ -624,6 +702,10 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
                 jca.listProperties(debugPrintStream);
             }
             ch_a = createEPICSChannel(UCPrefix +".A");
+//            ch_a.addMonitor(
+//                    Monitor.VALUE,
+//                    new LiveFitter_EPICSUserCalc.newACallback()
+//            );
             ch_b = createEPICSChannel(UCPrefix + ".B");
             ch_c = createEPICSChannel(UCPrefix + ".C");
             ch_d = createEPICSChannel(UCPrefix + ".D");
@@ -740,7 +822,6 @@ public class LiveFitter_EPICSUserCalc implements PlugIn, PlotMaker {
         {
             if(UCPrefix.equals("")) {
                 isConnected = false;
-                channelNameTextA.setBackground(Color.red);
                 return;
             }
             connected = (ch_a != null && ch_a.getConnectionState() == Channel.ConnectionState.CONNECTED &&
