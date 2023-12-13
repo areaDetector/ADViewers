@@ -145,6 +145,8 @@ public class NTNDCodec
             }
             decompressBSLZ4Dll.bshuf_decompress_lz4(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize/elemSize), 
                                      new NativeLong(elemSize), new NativeLong(blockSize));
+        } else if (codecName.equals("h264")) {
+            decompressH264Dll.H264_decompress(decompressInBuffer, decompressOutBuffer, new NativeLong(compressedSize));
         } else {
             message = "Unknown compression=" +codecName
                    + " compressedSize=" + compressedSize 
