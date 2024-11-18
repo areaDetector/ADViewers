@@ -19,6 +19,10 @@ import java.awt.event.WindowEvent;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -829,17 +833,21 @@ public class EPICS_NTNDA_Viewer
 
     private void readProperties()
     {
-        String temp, path = null;
+        String temp = null;
+        Path path = Paths.get(System.getProperty("user.home"), ".config");
         try
         {
-            String fileSep = System.getProperty("file.separator");
-            path = System.getProperty("user.home") + fileSep + propertyFile;
-            FileInputStream file = new FileInputStream(path);
+            if (!Files.exists(path)){
+                path = path.getParent();
+            }
+            path = Paths.get(path.toString(), propertyFile);
+
+            FileInputStream file = new FileInputStream(path.toString());
             properties.load(file);
             file.close();
             temp = properties.getProperty("channelName");
             if (temp != null) channelName = temp;
-            IJ.log("Read properties file: " + path + "  channelName= " + channelName);
+            IJ.log("Read properties file: " + path.toString() + "  channelName= " + channelName);
         }
         catch (Exception ex)
         {
@@ -849,16 +857,19 @@ public class EPICS_NTNDA_Viewer
 
     private void writeProperties()
     {
-        String path;
+        Path path = Paths.get(System.getProperty("user.home"), ".config");
         try
         {
-            String fileSep = System.getProperty("file.separator");
-            path = System.getProperty("user.home") + fileSep + propertyFile;
+            if (!Files.exists(path)){
+                path = path.getParent();
+            }
+            path = Paths.get(path.toString(), propertyFile);
+
             properties.setProperty("channelName", channelName);
-            FileOutputStream file = new FileOutputStream(path);
+            FileOutputStream file = new FileOutputStream(path.toString());
             properties.store(file, "EPICS_NTNDA_Viewer Properties");
             file.close();
-            logMessage("Wrote properties file: " + path, true, true);
+            logMessage("Wrote properties file: " + path.toString(), true, true);
         }
         catch (Exception ex)
         {
