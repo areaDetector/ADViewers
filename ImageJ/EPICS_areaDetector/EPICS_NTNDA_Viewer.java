@@ -20,7 +20,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
@@ -837,6 +836,7 @@ public class EPICS_NTNDA_Viewer
         Path path = Paths.get(System.getProperty("user.home"), ".config");
         try
         {
+            // If the .config directory does not exist, move back up to the home dir
             if (!Files.exists(path)){
                 path = path.getParent();
             }
@@ -860,6 +860,7 @@ public class EPICS_NTNDA_Viewer
         Path path = Paths.get(System.getProperty("user.home"), ".config");
         try
         {
+            // If the .config directory does not exist, move back up to the home dir
             if (!Files.exists(path)){
                 path = path.getParent();
             }
