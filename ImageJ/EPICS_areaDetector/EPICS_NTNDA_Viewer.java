@@ -4,12 +4,7 @@
 //      Tim Madden, APS
 //      Mark Rivers, University of Chicago
 //      Marty Kraimer
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -51,40 +46,38 @@ import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.StructureArrayData;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
+import ij.*;
+import ij.process.*;
 import ij.gui.ImageWindow;
 import ij.gui.ImageCanvas;
 import ij.plugin.ContrastEnhancer;
 import ij.plugin.PlugIn;
-import ij.process.ByteProcessor;
-import ij.process.ColorProcessor;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
+
+import static ij.measure.Measurements.MIN_MAX;
 
 /**
  * ImageJ viewer for NTNDArray data.
  *
  */
-public class EPICS_NTNDA_Viewer 
-    implements PvaClientChannelStateChangeRequester,PlugIn
-{
+public class EPICS_NTNDA_Viewer
+        implements PvaClientChannelStateChangeRequester,PlugIn {
     // may want to change these
     private String channelName = "13SIM1:Pva1:Image";
     private boolean isDebugMessages = false;
     private boolean isDebugFile = false;
     private String propertyFile = "EPICS_NTNDA_Viewer.properties";
-    
+
     private static final int QUEUE_SIZE = 1;
     private static final int MS_WAIT = 100;
     private static PvaClient pva=PvaClient.get("pva");
     private static Convert convert = ConvertFactory.getConvert();
     private PvaClientChannel pvaClientChannel = null;
     private PvaClientMonitor pvaClientMonitor = null;
-    
+
     private ImagePlus img = null;
+    private Object snapBackup = null;
+    private Object altSnapBackup = null;
+    private ImageStatistics stats = null;
     private ImageStack imageStack = null;
     private int imageSizeX = 0;
     private int imageSizeY = 0;
@@ -104,13 +97,14 @@ public class EPICS_NTNDA_Viewer
     private volatile boolean isPluginRunning = false;
     private volatile boolean isSaveToStack = false;
     private volatile boolean isNewStack = false;
-    
+    private volatile boolean isLogOn = false;
+    private volatile boolean firstLog = false;
     // These are used for the frames/second calculation
     private long prevTime = 0;
     private volatile int numImageUpdates = 0;
-    
+
     private NTNDCodec ntndCodec = null;
- 
+
     private JFrame frame = null;
     private JTextField channelNameText = null;
     private JTextField nxText = null;
@@ -121,8 +115,10 @@ public class EPICS_NTNDA_Viewer
     private JButton startButton = null;
     private JButton stopButton = null;
     private JButton snapButton = null;
+    private JCheckBox logCheckBox = null;
 
     private javax.swing.Timer timer = null;
+
     /**
      * Constructor
      */
@@ -136,6 +132,7 @@ public class EPICS_NTNDA_Viewer
         }
         createAndShowGUI();
     }
+
     /* (non-Javadoc)
      * @see org.epics.pvaClient.PvaClientChannelStateChangeRequester#channelStateChange(org.epics.pvaClient.PvaClientChannel, boolean)
      */
@@ -145,7 +142,7 @@ public class EPICS_NTNDA_Viewer
             channelNameText.setBackground(Color.green);
             logMessage("State changed to connected for " + channelName, true, true);
             if(pvaClientMonitor==null) {
-                pvaClientMonitor=pvaClientChannel.createMonitor("record[queueSize="+QUEUE_SIZE+"]field()");
+                pvaClientMonitor=pvaClientChannel.createMonitor("record[queueSize=" + QUEUE_SIZE + "]field()");
                 pvaClientMonitor.issueConnect();
             }
             if (startIsTrue) startMonitor();
@@ -155,12 +152,12 @@ public class EPICS_NTNDA_Viewer
             numImageUpdates = 0;
         }
     }
-    
+
     private void connectPV()
     {
         try
         {
-            if(pvaClientChannel!=null) {
+            if (pvaClientChannel != null) {
                 throw new RuntimeException("Channel already connected");
             }
             channelName = channelNameText.getText();
@@ -176,7 +173,7 @@ public class EPICS_NTNDA_Viewer
             logMessage("Could not connect to : " + channelName + " " + ex.getMessage(), true, false);
         }
     }
-    
+
     private void disconnectPV()
     {
         try
@@ -192,18 +189,17 @@ public class EPICS_NTNDA_Viewer
             pvaClientMonitor = null;
             logMessage("Disconnected from EPICS PV:" + channelName, true, true);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             logMessage("Cannot disconnect from EPICS PV:" + channelName + ex.getMessage(), true, true);
         }
     }
-    
+
     private void startMonitor()
     {
         isStarted = true;
         pvaClientMonitor.start();
     }
-    
+
     private void stopMonitor()
     {
         synchronized(this) {
@@ -211,7 +207,7 @@ public class EPICS_NTNDA_Viewer
             isStarted = false;
         }
     }
-    
+
     private void startDisplay()
     {
         startButton.setEnabled(false);
@@ -221,7 +217,7 @@ public class EPICS_NTNDA_Viewer
         if (isChannelConnected) startMonitor();
         logMessage("Display started", true, false);
     }
-    
+
     private void stopDisplay()
     {
         startButton.setEnabled(true);
@@ -230,8 +226,8 @@ public class EPICS_NTNDA_Viewer
         startIsTrue = false;
         if (isChannelConnected) stopMonitor();
         logMessage("Display stopped", true, false);
-     }
-    
+    }
+
     private void handleEvents()
     {
         boolean gotEvent = pvaClientMonitor.poll();
@@ -260,6 +256,7 @@ public class EPICS_NTNDA_Viewer
             gotEvent = pvaClientMonitor.poll();
         }
     }
+
     /* (non-Javadoc)
      * @see ij.plugin.PlugIn#run(java.lang.String)
      */
@@ -324,13 +321,22 @@ public class EPICS_NTNDA_Viewer
             catch (Exception ee) { }
         }
     }
-    
+
     private void makeImageCopy()
     {
         ImageProcessor ip = img.getProcessor();
         if (ip == null) return;
-        ImagePlus imgcopy = new ImagePlus(channelName + ":" + numImageUpdates, ip.duplicate());
-        imgcopy.show();
+        if(isLogOn) {
+            ImageProcessor ipcopy = ip.duplicate();
+            ipcopy.setPixels(snapBackup);
+            ImagePlus imgcopy = new ImagePlus(channelName + ":" + numImageUpdates, ipcopy);
+            resetContrast(imgcopy);
+            imgcopy.show();
+        }
+        else {
+            ImagePlus imgcopy = new ImagePlus(channelName + ":" + numImageUpdates, ip.duplicate());
+            imgcopy.show();
+        }
     }
 
 
@@ -468,7 +474,7 @@ public class EPICS_NTNDA_Viewer
                     img.close();
                 }
             }
-            catch (Exception ex) { 
+            catch (Exception ex) {
                 logMessage("Exception closing window " + ex.getMessage(), true, true);
             }
             makeNewWindow = false;
@@ -478,32 +484,33 @@ public class EPICS_NTNDA_Viewer
         {
             switch (colorMode)
             {
-            case 0:
-            case 1:
-                if(dataType==ScalarType.pvUByte)
-                {
-                    img = new ImagePlus(channelName, new ByteProcessor(imageSizeX, imageSizeY));
-                }
-                else if(dataType==ScalarType.pvUShort)
-                {
-                    img = new ImagePlus(channelName, new ShortProcessor(imageSizeX, imageSizeY));
-                }
-                else if (dataType.isNumeric()) 
-                {
-                    img = new ImagePlus(channelName, new FloatProcessor(imageSizeX, imageSizeY));
-                } else {
-                    throw new RuntimeException("illegal array type " + dataType);
-                }
-                break;
-            case 2:
-                img = new ImagePlus(channelName, new ColorProcessor(imageSizeY, imageSizeZ));
-                break;
-            case 3:
-                img = new ImagePlus(channelName, new ColorProcessor(imageSizeX, imageSizeZ));
-                break;
-            case 4:
-                img = new ImagePlus(channelName, new ColorProcessor(imageSizeX, imageSizeY));
-                break;
+                case 0:
+                case 1:
+                    if (dataType == ScalarType.pvUByte)
+                    {
+                        img = new ImagePlus(channelName, new ByteProcessor(imageSizeX, imageSizeY));
+                    }
+                    else if (dataType == ScalarType.pvUShort)
+                    {
+                        img = new ImagePlus(channelName, new ShortProcessor(imageSizeX, imageSizeY));
+                    }
+                    else if (dataType.isNumeric()) {
+                        img = new ImagePlus(channelName, new FloatProcessor(imageSizeX, imageSizeY));
+                    }
+                    else
+                    {
+                        throw new RuntimeException("illegal array type " + dataType);
+                    }
+                    break;
+                case 2:
+                    img = new ImagePlus(channelName, new ColorProcessor(imageSizeY, imageSizeZ));
+                    break;
+                case 3:
+                    img = new ImagePlus(channelName, new ColorProcessor(imageSizeX, imageSizeZ));
+                    break;
+                case 4:
+                    img = new ImagePlus(channelName, new ColorProcessor(imageSizeX, imageSizeY));
+                    break;
             }
             img.show();
             if (oldWindowLocation != null) img.getWindow().setLocation(oldWindowLocation);
@@ -565,11 +572,11 @@ public class EPICS_NTNDA_Viewer
                     prevDispMax = dispMax;
                     double slope = 255/(dispMax - dispMin);
                     for (i=0; i<256; i++) {
-                        if (i<dispMin) 
+                        if (i<dispMin)
                             colorLUT[i] = 0;
                         else if (i>dispMax)
                             colorLUT[i] = (byte)255;
-                        else 
+                        else
                             colorLUT[i] = (byte)((i-dispMin)*slope + 0.5);
                     }
                 }
@@ -580,44 +587,54 @@ public class EPICS_NTNDA_Viewer
 
             switch (colorMode)
             {
-            case 2:
-            {
-                int in = 0, out = 0;
-                while (in < numElements)
+                case 2:
                 {
-                    pixels[out++] = (inpixels[in++] & 0xFF) << 16 | (inpixels[in++] & 0xFF) << 8 | (inpixels[in++] & 0xFF);
+                    int in = 0, out = 0;
+                    while (in < numElements) {
+                        pixels[out++] = (inpixels[in++] & 0xFF) << 16 | (inpixels[in++] & 0xFF) << 8 | (inpixels[in++] & 0xFF);
+                    }
                 }
-            }
-            break;
-            case 3:
-            {
-                int nCols = imageSizeX, nRows = imageSizeZ, row, col;
-                int redIn, greenIn, blueIn, out = 0;
-                for (row = 0; row < nRows; row++)
+                break;
+                case 3:
                 {
-                    redIn = row * nCols * 3;
-                    greenIn = redIn + nCols;
-                    blueIn = greenIn + nCols;
-                    for (col = 0; col < nCols; col++)
-                    {
+                    int nCols = imageSizeX, nRows = imageSizeZ, row, col;
+                    int redIn, greenIn, blueIn, out = 0;
+                    for (row = 0; row < nRows; row++) {
+                        redIn = row * nCols * 3;
+                        greenIn = redIn + nCols;
+                        blueIn = greenIn + nCols;
+                        for (col = 0; col < nCols; col++) {
+                            pixels[out++] = (inpixels[redIn++] & 0xFF) << 16 | (inpixels[greenIn++] & 0xFF) << 8 | (inpixels[blueIn++] & 0xFF);
+                        }
+                    }
+                }
+                break;
+                case 4:
+                {
+                    int imageSize = imageSizeX * imageSizeY;
+                    int redIn = 0, greenIn = imageSize, blueIn = 2 * imageSize, out = 0;
+                    while (redIn < imageSize) {
                         pixels[out++] = (inpixels[redIn++] & 0xFF) << 16 | (inpixels[greenIn++] & 0xFF) << 8 | (inpixels[blueIn++] & 0xFF);
                     }
                 }
-            }
-            break;
-            case 4:
-            {
-                int imageSize = imageSizeX * imageSizeY;
-                int redIn = 0, greenIn = imageSize, blueIn = 2 * imageSize, out = 0;
-                while (redIn < imageSize)
-                {
-                    pixels[out++] = (inpixels[redIn++] & 0xFF) << 16 | (inpixels[greenIn++] & 0xFF) << 8 | (inpixels[blueIn++] & 0xFF);
-                }
-            }
-            break;
+                break;
             }
             img.getProcessor().setPixels(pixels);
+        }
 
+        /*Takes log of image, stores snapshot for Undo if plugin is stopped.
+         */
+        if (isLogOn) {
+            img.getProcessor().snapshot();
+            snapBackup=img.getProcessor().getSnapshotPixels();
+            if(dataType!=ScalarType.pvUShort && dataType!= ScalarType.pvUByte && dataType.isNumeric())
+                log(img);
+            else
+                img.getProcessor().log();
+            if (firstLog){
+                resetContrast(img);
+                firstLog = false;
+            }
         }
 
         if (isSaveToStack)
@@ -666,6 +683,7 @@ public class EPICS_NTNDA_Viewer
         stopButton = new JButton("Stop");
         snapButton = new JButton("Snap");
         JCheckBox captureCheckBox = new JCheckBox("");
+        logCheckBox = new JCheckBox("");
 
         frame = new JFrame("Image J EPICS_NTNDA_Viewer Plugin");
         JPanel panel = new JPanel(new BorderLayout());
@@ -692,6 +710,8 @@ public class EPICS_NTNDA_Viewer
         panel.add(new JLabel("Frames/s"), c);
         c.gridx = 7;
         panel.add(new JLabel("Capture to Stack"), c);
+        c.gridx = 8;
+        panel.add(new JLabel("Log"), c);
 
         // Middle row
         // These widgets should be centered
@@ -714,8 +734,10 @@ public class EPICS_NTNDA_Viewer
         c.gridx = 7;
         panel.add(captureCheckBox, c);
         c.gridx = 8;
+        panel.add(logCheckBox, c);
+        c.gridx = 9;
         panel.add(snapButton, c);
-        
+
         // Bottom row
         c.gridy = 2;
         c.gridx = 0;
@@ -730,7 +752,7 @@ public class EPICS_NTNDA_Viewer
         frame.pack();
         frame.addWindowListener(new FrameExitListener());
         frame.setVisible(true);
-        
+
         int timerDelay = 2000;  // 2 seconds 
         timer = new javax.swing.Timer(timerDelay, new ActionListener()
         {
@@ -742,7 +764,7 @@ public class EPICS_NTNDA_Viewer
                 NumberFormat form = DecimalFormat.getInstance();
                 ((DecimalFormat)form).applyPattern("0.0");
                 fpsText.setText("" + form.format(fps));
-                if (isPluginRunning && isStarted && numImageUpdates > 0) 
+                if (isPluginRunning && isStarted && numImageUpdates > 0)
                     logMessage(String.format("Received %d images in %.2f sec", numImageUpdates, elapsedTime), true, false);
                 prevTime = time;
                 numImageUpdates = 0;
@@ -775,6 +797,67 @@ public class EPICS_NTNDA_Viewer
             }
         });
 
+        // Turns log on and off. If plugin is stopped, log checkbox takes log or undoes log on static image or other image depending on user selection
+        logCheckBox.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    if (colorMode >= 2 && colorMode <= 4) {
+                        logMessage("Log not intended for color images", true, true);
+                        logCheckBox.setSelected(false);
+                    } else {
+                        isLogOn = true;
+                        logMessage("Log display on", true, true);
+                        firstLog = true;
+                        if (!stopButton.isEnabled()) {
+                            if (WindowManager.getCurrentWindow().equals(img.getWindow())) {
+                                snapBackup = takeLog(img);
+                                img.updateAndDraw();
+                                resetContrast(img);
+                            } else {
+                                ImagePlus imgC = WindowManager.getCurrentImage();
+                                altSnapBackup = takeLog(imgC);
+                                imgC.updateAndDraw();
+                                resetContrast(imgC);
+                            }
+                        } else if (!WindowManager.getCurrentWindow().equals(img.getWindow())) {
+                            ImagePlus imgC = WindowManager.getCurrentImage();
+                            altSnapBackup = takeLog(imgC);
+                            imgC.updateAndDraw();
+                            resetContrast(imgC);
+                            isLogOn = false;
+                        }
+                    }
+                } else {
+                    logMessage("Log display off", true, true);
+                    isLogOn = false;
+                    if (!stopButton.isEnabled()) {
+                        if (WindowManager.getCurrentWindow().equals(img.getWindow())) {
+                            WindowManager.setCurrentWindow(img.getWindow());
+                            img.getProcessor().setSnapshotPixels(snapBackup);
+                            Undo.undo();
+                            resetContrast(img);
+                        }
+                        else{
+                            ImagePlus imgC = WindowManager.getCurrentImage();
+                            imgC.getProcessor().setSnapshotPixels(altSnapBackup);
+                            Undo.undo();
+                            resetContrast(imgC);
+                        }
+                    }
+                    else if (!WindowManager.getCurrentWindow().equals(img.getWindow())){
+                        ImagePlus imgC = WindowManager.getCurrentImage();
+                        imgC.getProcessor().setSnapshotPixels(altSnapBackup);
+                        Undo.undo();
+                        resetContrast(imgC);
+                    }
+                    else{
+                        resetContrast(img);
+                    }
+                }
+
+            }
+        });
+
         snapButton.addActionListener(new ActionListener()
         {
             public void actionPerformed(ActionEvent event)
@@ -803,10 +886,31 @@ public class EPICS_NTNDA_Viewer
         });
     }
 
-    private class FrameExitListener extends WindowAdapter
-    {
-        public void windowClosing(WindowEvent event)
-        {
+    private Object takeLog(ImagePlus image){
+        image.getProcessor().snapshot();
+        image.getProcessor().resetMinAndMax();
+        image.getProcessor().log();
+        return image.getProcessor().getSnapshotPixels();
+    }
+    private void log(ImagePlus image){
+        float[] pixelArr = (float[]) image.getProcessor().getPixels();
+        int i = 0;
+        for(float x : pixelArr){
+            if(Math.abs(x - 0) < 1e-9)
+                pixelArr[i++]=Float.NEGATIVE_INFINITY;
+            else if(x<0)
+                pixelArr[i++]=Float.NaN;
+            else
+                pixelArr[i++]=(float)Math.log(x);
+        }
+        image.getProcessor().setPixels(pixelArr);
+    }
+    private void resetContrast(ImagePlus image){
+        image.getProcessor().resetMinAndMax();
+        new ContrastEnhancer().stretchHistogram(image, 0.5);
+    }
+    private class FrameExitListener extends WindowAdapter {
+        public void windowClosing(WindowEvent event) {
             isPluginRunning = false;
             // We need to wake up the main thread so it shuts down cleanly
             synchronized (this)
@@ -865,4 +969,4 @@ public class EPICS_NTNDA_Viewer
             logMessage("writeProperties:exception: " + ex.getMessage(), true, true);
         }
     }
- }
+}
