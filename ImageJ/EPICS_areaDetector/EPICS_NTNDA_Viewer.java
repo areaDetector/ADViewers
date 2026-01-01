@@ -418,7 +418,10 @@ public class EPICS_NTNDA_Viewer
                 logMessage("value is not a valid NTNDArray",true,true);
                 return false;
             }
-            ntndCodec.decompress(ntndArray);
+            if (!ntndCodec.decompress(ntndArray)) {
+                logMessage("decompress failed: " + ntndCodec.getMessage(), true, true);
+                return false;
+            }
         }
         imagedata = pvUnionValue.get(PVScalarArray.class);
         ScalarType scalarType = imagedata.getScalarArray().getElementType();
