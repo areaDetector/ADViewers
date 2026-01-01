@@ -85,6 +85,10 @@ public class NTNDCodec
         int uncompressedSize = (int)ntndArray.getUncompressedDataSize().get();
         PVUnion pvCodecParamUnion = pvCodec.getSubField(PVUnion.class, "parameters");
         PVInt pvCodecParams = pvCodecParamUnion.get(PVInt.class);
+        if (pvCodecParams==null) {
+            message = "pvCodeParams is not an int";
+            return false;
+        }
         int decompressedDataType = pvCodecParams.get();
         ScalarType scalarType  = ScalarType.values()[decompressedDataType];
         if (decompressInBuffer.capacity() < compressedSize) {
