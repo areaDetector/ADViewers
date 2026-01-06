@@ -86,7 +86,7 @@ public class NTNDCodec
         PVUnion pvCodecParamUnion = pvCodec.getSubField(PVUnion.class, "parameters");
         PVInt pvCodecParams = pvCodecParamUnion.get(PVInt.class);
         if (pvCodecParams==null) {
-            message = "pvCodeParams is not an int";
+            message = "pvCodecParams is not an int";
             return false;
         }
         int decompressedDataType = pvCodecParams.get();
