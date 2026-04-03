@@ -1,6 +1,6 @@
 // NTNDCodec.java
 //
-// Decompresses NTNDrrays that are compressed with Blosc, JPEG, LZ4, or Bitshuffle/LZ4.
+// Decompresses NTNDrrays that are compressed with Blosc, JPEG, LZ4, LZ4HDF5, or Bitshuffle/LZ4.
 // Original authors
 //      Marty Kraimer
 //      Mark Rivers
@@ -123,6 +123,8 @@ public class NTNDCodec
             }
         } else if (codecName.equals("lz4")) {
             decompressLZ4Dll.LZ4_decompress_fast(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize));
+        } else if (codecName.equals("lz4hdf5")) {
+            decompressLZ4HDF5Dll.decompress_lz4hdf5(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize));
         } else if (codecName.equals("bslz4")) {
             int blockSize=0;
             int elemSize;
