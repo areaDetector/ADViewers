@@ -27,6 +27,7 @@ import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.ScalarType;
 
 import com.sun.jna.NativeLong;
+import com.sun.jna.ptr.LongByReference;
 
 /**
  * Codec processor for an NTNDArray
@@ -124,7 +125,8 @@ public class NTNDCodec
         } else if (codecName.equals("lz4")) {
             decompressLZ4Dll.LZ4_decompress_fast(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize));
         } else if (codecName.equals("lz4hdf5")) {
-            decompressLZ4HDF5Dll.decompress_lz4hdf5(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize));
+            LongByReference blockSize = new LongByReference(0L);
+            decompressLZ4HDF5Dll.decompress_lz4hdf5(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize), blockSize);
         } else if (codecName.equals("bslz4")) {
             int blockSize=0;
             int elemSize;

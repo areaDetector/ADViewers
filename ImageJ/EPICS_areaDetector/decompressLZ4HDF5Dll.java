@@ -1,6 +1,7 @@
 import java.nio.Buffer;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
+import com.sun.jna.ptr.LongByReference;
 
 public class decompressLZ4HDF5Dll {
 
@@ -16,5 +17,5 @@ public class decompressLZ4HDF5Dll {
 		return archDataModel;
 	}
 
-	public static native void decompress_lz4hdf5(Buffer src, Buffer dest, NativeLong destSize);
+	public static native void decompress_lz4hdf5(Buffer src, Buffer dest, NativeLong destSize, LongByReference blockSize);
 }
