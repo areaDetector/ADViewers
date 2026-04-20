@@ -1,6 +1,6 @@
 // NTNDCodec.java
 //
-// Decompresses NTNDrrays that are compressed with Blosc, JPEG, LZ4, Bitshuffle/LZ4, or zlib.
+// Decompresses NTNDrrays that are compressed with Blosc, JPEG, LZ4, LZ4HDF5, Bitshuffle/LZ4, or zlib.
 // Original authors
 //      Marty Kraimer
 //      Mark Rivers
@@ -27,7 +27,7 @@ import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.ScalarType;
 
 import com.sun.jna.NativeLong;
-import com.sun.jna.ptr.NativeLongByReference;
+import com.sun.jna.ptr.LongByReference;
 
 /**
  * Codec processor for an NTNDArray
@@ -86,6 +86,10 @@ public class NTNDCodec
         int uncompressedSize = (int)ntndArray.getUncompressedDataSize().get();
         PVUnion pvCodecParamUnion = pvCodec.getSubField(PVUnion.class, "parameters");
         PVInt pvCodecParams = pvCodecParamUnion.get(PVInt.class);
+        if (pvCodecParams==null) {
+            message = "pvCodecParams is not an int";
+            return false;
+        }
         int decompressedDataType = pvCodecParams.get();
         ScalarType scalarType  = ScalarType.values()[decompressedDataType];
         if (decompressInBuffer.capacity() < compressedSize) {
@@ -120,6 +124,9 @@ public class NTNDCodec
             }
         } else if (codecName.equals("lz4")) {
             decompressLZ4Dll.LZ4_decompress_fast(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize));
+        } else if (codecName.equals("lz4hdf5")) {
+            LongByReference blockSize = new LongByReference(0L);
+            decompressLZ4HDF5Dll.decompress_lz4hdf5(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize), blockSize);
         } else if (codecName.equals("bslz4")) {
             int blockSize=0;
             int elemSize;
@@ -147,7 +154,7 @@ public class NTNDCodec
             decompressBSLZ4Dll.bshuf_decompress_lz4(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize/elemSize), 
                                      new NativeLong(elemSize), new NativeLong(blockSize));
         } else if (codecName.equals("zlib")) {
-            NativeLongByReference destLen = new NativeLongByReference(new NativeLong(uncompressedSize));
+            LongByReference destLen = new LongByReference((long)uncompressedSize);
             int status = decompressZlibDll.uncompress(decompressOutBuffer, destLen, decompressInBuffer, new NativeLong(compressedSize));
             if (status != 0) {
                 message = "zlib uncompress returned status="+status;

@@ -24,7 +24,8 @@ public class EPICS_AD_Viewer implements PlugIn
 {
     ImagePlus img;
     ImageStack imageStack;
-
+    Object snapBackup = null;
+    Object altSnapBackup = null;
     int imageSizeX = 0;
     int imageSizeY = 0;
     int imageSizeZ = 0;
@@ -70,6 +71,7 @@ public class EPICS_AD_Viewer implements PlugIn
     JButton startButton;
     JButton stopButton;
     JButton snapButton;
+    JCheckBox logCheckBox;
 
     boolean isDebugMessages;
     boolean isDebugFile;
@@ -78,6 +80,8 @@ public class EPICS_AD_Viewer implements PlugIn
     boolean isSaveToStack;
     boolean isNewStack;
     boolean isConnected;
+    boolean isLogOn;
+    boolean firstLog;
     volatile boolean isNewImageAvailable;
 
     javax.swing.Timer timer;
@@ -94,6 +98,8 @@ public class EPICS_AD_Viewer implements PlugIn
             isNewImageAvailable = false;
             isSaveToStack = false;
             isNewStack = false;
+            isLogOn = false;
+            firstLog=false;
             Date date = new Date();
             prevTime = date.getTime();
             numImageUpdates = 0;
@@ -102,19 +108,18 @@ public class EPICS_AD_Viewer implements PlugIn
 
             if (isDebugFile)
             {
-                debugFile = new FileOutputStream(System.getProperty("user.home") +
-                                                 System.getProperty("file.separator") + "IJEPICS_debug.txt");
+                debugFile = new FileOutputStream(System.getProperty("user.home") + System.getProperty("file.separator") + "IJEPICS_debug.txt");
                 debugPrintStream = new PrintStream(debugFile);
             }
             javax.swing.SwingUtilities.invokeLater(
-                new Runnable()
-            {
-                public void run()
-                {
-                    createAndShowGUI();
-                }
-            }
-        );
+                    new Runnable()
+                    {
+                        public void run()
+                        {
+                            createAndShowGUI();
+                        }
+                    }
+            );
 
             img = new ImagePlus(PVPrefix, new ByteProcessor(100, 100));
             img.show();
@@ -178,8 +183,17 @@ public class EPICS_AD_Viewer implements PlugIn
     {
         ImageProcessor ip = img.getProcessor();
         if (ip == null) return;
-        ImagePlus imgcopy = new ImagePlus(PVPrefix + ":" + ArrayCounter, ip.duplicate());
-        imgcopy.show();
+        if(isLogOn) {
+            ImageProcessor ipcopy = ip.duplicate();
+            ipcopy.setPixels(snapBackup);
+            ImagePlus imgcopy = new ImagePlus(PVPrefix + ":" + ArrayCounter, ipcopy);
+            resetContrast(imgcopy);
+            imgcopy.show();
+        }
+        else {
+            ImagePlus imgcopy = new ImagePlus(PVPrefix + ":" + ArrayCounter, ip.duplicate());
+            imgcopy.show();
+        }
     }
 
     public void connectPVs()
@@ -210,9 +224,9 @@ public class EPICS_AD_Viewer implements PlugIn
             ch_image = createEPICSChannel(PVPrefix + "ArrayData");
             ch_image_id = createEPICSChannel(PVPrefix + "ArrayCounter_RBV");
             ch_image_id.addMonitor(
-                Monitor.VALUE,
-                new newArrayCounterCallback()
-                );
+                    Monitor.VALUE,
+                    new newArrayCounterCallback()
+            );
             ctxt.flushIO();
             checkConnections();
         }
@@ -313,12 +327,12 @@ public class EPICS_AD_Viewer implements PlugIn
         try
         {
             connected = (ch_nx != null && ch_nx.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_ny != null && ch_ny.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_nz != null && ch_nz.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_colorMode != null && ch_colorMode.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_dataType != null && ch_dataType.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_image != null && ch_image.getConnectionState() == Channel.ConnectionState.CONNECTED &&
-                         ch_image_id != null && ch_image_id.getConnectionState() == Channel.ConnectionState.CONNECTED);
+                    ch_ny != null && ch_ny.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_nz != null && ch_nz.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_colorMode != null && ch_colorMode.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_dataType != null && ch_dataType.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_image != null && ch_image.getConnectionState() == Channel.ConnectionState.CONNECTED &&
+                    ch_image_id != null && ch_image_id.getConnectionState() == Channel.ConnectionState.CONNECTED);
             if (connected && !isConnected)
             {
                 isConnected = true;
@@ -402,7 +416,7 @@ public class EPICS_AD_Viewer implements PlugIn
                     }
                 }
                 catch (Exception ex) {
-                    IJ.log("updateImage got exception: " + ex.getMessage()); 
+                    IJ.log("updateImage got exception: " + ex.getMessage());
                 }
                 makeNewWindow = false;
             }
@@ -445,7 +459,7 @@ public class EPICS_AD_Viewer implements PlugIn
             {
                 imageStack = new ImageStack(img.getWidth(), img.getHeight());
                 imageStack.addSlice(PVPrefix + ArrayCounter, img.getProcessor());
-                // Note: we need to add this first slice twice in order to get the slider bar 
+                // Note: we need to add this first slice twice in order to get the slider bar
                 // on the window - ImageJ won't put it there if there is only 1 slice.
                 imageStack.addSlice(PVPrefix + ArrayCounter, img.getProcessor());
                 img.close();
@@ -487,11 +501,11 @@ public class EPICS_AD_Viewer implements PlugIn
                         prevDispMax = dispMax;
                         double slope = 255/(dispMax - dispMin);
                         for (i=0; i<256; i++) {
-                            if (i<dispMin) 
+                            if (i<dispMin)
                                 colorLUT[i] = 0;
                             else if (i>dispMax)
                                 colorLUT[i] = (byte)255;
-                            else 
+                            else
                                 colorLUT[i] = (byte)((i-dispMin)*slope + 0.5);
                         }
                     }
@@ -502,44 +516,57 @@ public class EPICS_AD_Viewer implements PlugIn
                 switch (colorMode)
                 {
                     case 2:
+                    {
+                        int in = 0, out = 0;
+                        while (in < getsize)
                         {
-                            int in = 0, out = 0;
-                            while (in < getsize)
-                            {
-                                pixels[out++] = (inpixels[in++] & 0xFF) << 16 | (inpixels[in++] & 0xFF) << 8 | (inpixels[in++] & 0xFF);
-                            }
+                            pixels[out++] = (inpixels[in++] & 0xFF) << 16 | (inpixels[in++] & 0xFF) << 8 | (inpixels[in++] & 0xFF);
                         }
-                        break;
+                    }
+                    break;
                     case 3:
+                    {
+                        int nCols = imageSizeX, nRows = imageSizeZ, row, col;
+                        int redIn, greenIn, blueIn, out = 0;
+                        for (row = 0; row < nRows; row++)
                         {
-                            int nCols = imageSizeX, nRows = imageSizeZ, row, col;
-                            int redIn, greenIn, blueIn, out = 0;
-                            for (row = 0; row < nRows; row++)
-                            {
-                                redIn = row * nCols * 3;
-                                greenIn = redIn + nCols;
-                                blueIn = greenIn + nCols;
-                                for (col = 0; col < nCols; col++)
-                                {
-                                    pixels[out++] = (inpixels[redIn++] & 0xFF) << 16 | (inpixels[greenIn++] & 0xFF) << 8 | (inpixels[blueIn++] & 0xFF);
-                                }
-                            }
-                        }
-                        break;
-                    case 4:
-                        {
-                            int imageSize = imageSizeX * imageSizeY;
-                            int redIn = 0, greenIn = imageSize, blueIn = 2 * imageSize, out = 0;
-                            while (redIn < imageSize)
+                            redIn = row * nCols * 3;
+                            greenIn = redIn + nCols;
+                            blueIn = greenIn + nCols;
+                            for (col = 0; col < nCols; col++)
                             {
                                 pixels[out++] = (inpixels[redIn++] & 0xFF) << 16 | (inpixels[greenIn++] & 0xFF) << 8 | (inpixels[blueIn++] & 0xFF);
                             }
                         }
-                        break;
+                    }
+                    break;
+                    case 4:
+                    {
+                        int imageSize = imageSizeX * imageSizeY;
+                        int redIn = 0, greenIn = imageSize, blueIn = 2 * imageSize, out = 0;
+                        while (redIn < imageSize)
+                        {
+                            pixels[out++] = (inpixels[redIn++] & 0xFF) << 16 | (inpixels[greenIn++] & 0xFF) << 8 | (inpixels[blueIn++] & 0xFF);
+                        }
+                    }
+                    break;
                 }
                 img.getProcessor().setPixels(pixels);
             }
-
+            if (isLogOn)
+            {
+                img.getProcessor().snapshot();
+                snapBackup=img.getProcessor().getSnapshotPixels();
+                if(ADDataType!=3 && ADDataType!=1)
+                    log(img);
+                else {
+                    img.getProcessor().log();
+                }
+                if (firstLog){
+                    resetContrast(img);
+                    firstLog = false;
+                }
+            }
             if (isSaveToStack)
             {
                 img.getStack().addSlice(PVPrefix + ArrayCounter, img.getProcessor().duplicate());
@@ -640,6 +667,7 @@ public class EPICS_AD_Viewer implements PlugIn
         stopButton.setEnabled(false);
         snapButton = new JButton("Snap");
         JCheckBox captureCheckBox = new JCheckBox("");
+        logCheckBox = new JCheckBox("");
 
         frame = new JFrame("Image J EPICS_AD_Viewer Plugin");
         JPanel panel = new JPanel(new BorderLayout());
@@ -666,6 +694,8 @@ public class EPICS_AD_Viewer implements PlugIn
         panel.add(new JLabel("Frames/s"), c);
         c.gridx = 5;
         panel.add(new JLabel("Capture to Stack"), c);
+        c.gridx = 9;
+        panel.add(new JLabel("Log"), c);
 
         // Middle row
         // These widgets should be centered
@@ -689,6 +719,8 @@ public class EPICS_AD_Viewer implements PlugIn
         panel.add(startButton, c);
         c.gridx = 8;
         panel.add(stopButton, c);
+        c.gridx = 9;
+        panel.add(logCheckBox, c);
 
         // Bottom row
         c.gridy = 2;
@@ -706,7 +738,7 @@ public class EPICS_AD_Viewer implements PlugIn
         frame.setVisible(true);
 
 
-        int timerDelay = 2000;  // 2 seconds 
+        int timerDelay = 2000;  // 2 seconds
         timer = new javax.swing.Timer(timerDelay, new ActionListener()
         {
             public void actionPerformed(ActionEvent event)
@@ -756,6 +788,64 @@ public class EPICS_AD_Viewer implements PlugIn
                 logMessage("Image display stopped", true, true);
             }
         });
+        logCheckBox.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    if (colorMode >= 2 && colorMode <= 4) {
+                        logMessage("Log not intended for color images", true, true);
+                        logCheckBox.setSelected(false);
+                    } else {
+                        isLogOn = true;
+                        logMessage("Log display on", true, true);
+                        firstLog = true;
+                        if (!stopButton.isEnabled()) {
+                            if (WindowManager.getCurrentWindow().equals(img.getWindow())) {
+                                snapBackup = takeLog(img);
+                                img.updateAndDraw();
+                                resetContrast(img);
+                            } else {
+                                ImagePlus imgC = WindowManager.getCurrentImage();
+                                altSnapBackup = takeLog(imgC);
+                                imgC.updateAndDraw();
+                                resetContrast(imgC);
+                            }
+                        } else if (!WindowManager.getCurrentWindow().equals(img.getWindow())) {
+                            ImagePlus imgC = WindowManager.getCurrentImage();
+                            altSnapBackup = takeLog(imgC);
+                            imgC.updateAndDraw();
+                            resetContrast(imgC);
+                            isLogOn = false;
+                        }
+                    }
+                } else {
+                    logMessage("Log display off", true, true);
+                    isLogOn = false;
+                    if (!stopButton.isEnabled()) {
+                        if (WindowManager.getCurrentWindow().equals(img.getWindow())) {
+                            WindowManager.setCurrentWindow(img.getWindow());
+                            img.getProcessor().setSnapshotPixels(snapBackup);
+                            Undo.undo();
+                            resetContrast(img);
+                        }
+                        else{
+                            ImagePlus imgC = WindowManager.getCurrentImage();
+                            imgC.getProcessor().setSnapshotPixels(altSnapBackup);
+                            Undo.undo();
+                            resetContrast(imgC);
+                        }
+                    }
+                    else if (!WindowManager.getCurrentWindow().equals(img.getWindow())){
+                        ImagePlus imgC = WindowManager.getCurrentImage();
+                        imgC.getProcessor().setSnapshotPixels(altSnapBackup);
+                        Undo.undo();
+                        resetContrast(imgC);
+                    }
+                    else{
+                        resetContrast(img);
+                    }
+                }
+            }
+        });
 
         snapButton.addActionListener(new ActionListener()
         {
@@ -766,27 +856,45 @@ public class EPICS_AD_Viewer implements PlugIn
         });
 
         captureCheckBox.addItemListener(new ItemListener()
-        {
-            public void itemStateChanged(ItemEvent e)
-            {
-                if (e.getStateChange() == ItemEvent.SELECTED)
-                {
-                    isSaveToStack = true;
-                    isNewStack = true;
-                    IJ.log("record on");
-                }
-                else
-                {
-                    isSaveToStack = false;
-                    IJ.log("record off");
-                }
+                                        {
+                                            public void itemStateChanged(ItemEvent e) {
+                                                if (e.getStateChange() == ItemEvent.SELECTED) {
+                                                    isSaveToStack = true;
+                                                    isNewStack = true;
+                                                    IJ.log("record on");
+                                                } else {
+                                                    isSaveToStack = false;
+                                                    IJ.log("record off");
+                                                }
 
-            }
-        }
+                                            }
+                                        }
         );
 
     }
-
+    private Object takeLog(ImagePlus image){
+        image.getProcessor().snapshot();
+        image.getProcessor().resetMinAndMax();
+        image.getProcessor().log();
+        return image.getProcessor().getSnapshotPixels();
+    }
+    private void log(ImagePlus image){
+        float[] pixelArr = (float[]) image.getProcessor().getPixels();
+        int i = 0;
+        for(float x : pixelArr){
+            if(Math.abs(x - 0) < 1e-9)
+                pixelArr[i++]=Float.NEGATIVE_INFINITY;
+            else if(x<0)
+                pixelArr[i++]=Float.NaN;
+            else
+                pixelArr[i++]=(float)Math.log(x);
+        }
+        image.getProcessor().setPixels(pixelArr);
+    }
+    private void resetContrast(ImagePlus image){
+        image.getProcessor().resetMinAndMax();
+        new ContrastEnhancer().stretchHistogram(image, 0.51);
+    }
     public class FrameExitListener extends WindowAdapter
     {
         public void windowClosing(WindowEvent event)

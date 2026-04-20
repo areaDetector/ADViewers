@@ -3,14 +3,10 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.LongByReference;
 
-public class decompressZlibDll {
+public class decompressLZ4HDF5Dll {
 
 	static {
-		try {
-			Native.register("z" + getArchPlatform());
-		} catch (UnsatisfiedLinkError e) {
-			Native.register("zlib" + getArchPlatform());
-		}
+		Native.register("lz4hdf5" + getArchPlatform());
 	}
 
 	public static String getArchPlatform() {
@@ -21,5 +17,5 @@ public class decompressZlibDll {
 		return archDataModel;
 	}
 
-	public static native int uncompress(Buffer dest, LongByReference destLen, Buffer src, NativeLong srcLen);
+	public static native void decompress_lz4hdf5(Buffer src, Buffer dest, NativeLong destSize, LongByReference blockSize);
 }
