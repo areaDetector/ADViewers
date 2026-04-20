@@ -1,6 +1,6 @@
 // NTNDCodec.java
 //
-// Decompresses NTNDrrays that are compressed with Blosc, JPEG, LZ4, or Bitshuffle/LZ4.
+// Decompresses NTNDrrays that are compressed with Blosc, JPEG, LZ4, Bitshuffle/LZ4, or zlib.
 // Original authors
 //      Marty Kraimer
 //      Mark Rivers
@@ -27,6 +27,7 @@ import org.epics.pvdata.pv.PVUnion;
 import org.epics.pvdata.pv.ScalarType;
 
 import com.sun.jna.NativeLong;
+import com.sun.jna.ptr.NativeLongByReference;
 
 /**
  * Codec processor for an NTNDArray
@@ -145,6 +146,13 @@ public class NTNDCodec
             }
             decompressBSLZ4Dll.bshuf_decompress_lz4(decompressInBuffer, decompressOutBuffer, new NativeLong(uncompressedSize/elemSize), 
                                      new NativeLong(elemSize), new NativeLong(blockSize));
+        } else if (codecName.equals("zlib")) {
+            NativeLongByReference destLen = new NativeLongByReference(new NativeLong(uncompressedSize));
+            int status = decompressZlibDll.uncompress(decompressOutBuffer, destLen, decompressInBuffer, new NativeLong(compressedSize));
+            if (status != 0) {
+                message = "zlib uncompress returned status="+status;
+                return false;
+            }
         } else {
             message = "Unknown compression=" +codecName
                    + " compressedSize=" + compressedSize 

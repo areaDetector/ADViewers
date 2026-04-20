@@ -202,6 +202,10 @@ class CodecAD:
             lib = self.__findLibrary("decompressJPEG")
         elif self.__codecName == "lz4" or self.__codecName == "bslz4":
             lib = self.__findLibrary("bitshuffle")
+        elif self.__codecName == "zlib":
+            lib = self.__findLibrary("z")
+            if lib is None:
+                lib = self.__findLibrary("zlib")
         else:
             lib = None
         if lib == None:
@@ -245,6 +249,18 @@ class CodecAD:
             )
             data = np.array(outarray)
             data = data.flatten()
+        elif self.__codecName == "zlib":
+            destLen = ctypes.c_ulong(uncompressed)
+            status = lib.uncompress(
+                out_char_array.from_buffer(outarray),
+                ctypes.byref(destLen),
+                in_char_array.from_buffer(inarray),
+                compressed,
+            )
+            if status != 0:
+                raise Exception("zlib uncompress returned status=" + str(status))
+            data = np.array(outarray)
+            data = np.frombuffer(data, dtype=dtype)
         else:
             raise Exception(self.__codecName + " is unsupported codec")
         self.__compressRatio = round(float(uncompressed / compressed))
