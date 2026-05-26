@@ -64,10 +64,11 @@ To use this ImageJ plugin do the following:
       native Java code for jpeg decompression is signifcantly more
       complicated (and probably slower) than just using the C library.
       The required libraries on Linux are ``decompressJPEG.so``, ``libjpeg.so``,
-      ``libblosc.so``, ``libz.so`` (or ``libzlib.so``), and ``libbitshuffle.so``.
+      ``libblosc.so``, ``libz.so`` (or ``libzlib.so``), ``libbitshuffle.so``,
+      and ``liblz4hdf5.so``.
       On Windows the libraries are
       ``decompressJPEG.dll``, ``jpeg.dll``, ``blosc.dll``, ``zlib.dll``,
-      and ``bitshuffle.dll``.
+      ``bitshuffle.dll`` and ``lz4hdf5.dll``.
    -  These libraries can all be built as part of
       ``areaDetector/ADSupport``, and this is recommended. If the ImageJ
       viewers are being installed at a location which is not building
