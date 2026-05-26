@@ -202,6 +202,8 @@ class CodecAD:
             lib = self.__findLibrary("decompressJPEG")
         elif self.__codecName == "lz4" or self.__codecName == "bslz4":
             lib = self.__findLibrary("bitshuffle")
+        elif self.__codecName == "lz4hdf5":
+            lib = self.__findLibrary("lz4hdf5")
         elif self.__codecName == "zlib":
             lib = self.__findLibrary("z")
             if lib is None:
@@ -227,6 +229,16 @@ class CodecAD:
                 in_char_array.from_buffer(inarray),
                 out_char_array.from_buffer(outarray),
                 uncompressed,
+            )
+            data = np.array(outarray)
+            data = np.frombuffer(data, dtype=dtype)
+        elif self.__codecName == "lz4hdf5":
+            blockSize = ctypes.c_size_t(0)
+            lib.decompress_lz4hdf5(
+                in_char_array.from_buffer(inarray),
+                out_char_array.from_buffer(outarray),
+                uncompressed, 
+                ctypes.byref(blockSize),
             )
             data = np.array(outarray)
             data = np.frombuffer(data, dtype=dtype)
