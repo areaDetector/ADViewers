@@ -371,7 +371,7 @@ class NumpyImage(QWidget):
             image = image[yoffset:ny, xoffset:nx]
             image = np.transpose(image)
             fig = plt.figure()
-            ax = fig.gca(projection="3d")
+            ax = fig.add_subplot(111, projection="3d")
             ax.set_xlabel("x")
             ax.set_ylabel("y")
             ax.set_zlabel("value")
